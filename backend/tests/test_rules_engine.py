@@ -101,6 +101,16 @@ def test_domestic_vendor_with_nda_and_no_core_tech_can_proceed():
     assert res.recommendation == "진행 가능" and not res.on_hold
 
 
+def test_domestic_core_tech_needs_internal_release_approval():
+    # P1: 걸리는 규칙이 없어도 기술 후보가 있으면 '진행 가능'이 아니다 (지침 제13조 제4호 사내 반출 승인)
+    req = {"purpose": "설계 외주", "channel": "CH-05", "recipient_type": "설계 외주", "recipient_country": "KR",
+           "transfer_method": "클라우드 링크", "contract_basis": "NDA", "national_rnd_output": False, "export_clearance": None}
+    res = evaluate(req, [FileFacts("a", "포함", "아니오", {"S06"}, "후보 있음")])
+    assert res.recommendation == "조건부 진행" and not res.on_hold
+    assert ids(res, "a") == ["P1"]
+    assert "사내 반출 승인" in res.file_hits["a"][0].conditions[0]
+
+
 def test_plain_reasons_are_filled():
     res = evaluate(BASE, scenario_files())
     assert all(h.plain for hs in res.file_hits.values() for h in hs)

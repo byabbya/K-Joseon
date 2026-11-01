@@ -36,9 +36,12 @@ def ingestion(s: State) -> State:
         return {"log": [f"ingestion: 파일 {len(s['files'])}건 (해시 기록됨)"]}
     # 파일 없이 가볍게 묻는 경우: 질문에 설명된 자료를 판단 대상 하나로 둔다
     meta = s["input"].get("described_item") or {}
+    said = request_parse.extract(s["input"].get("free_text", ""))     # 문장에 적힌 사실 (답이 없을 때만 씀)
+    listed = meta.get("on_approved_list", "모름")
+    supplier = meta.get("contains_supplier_data", "아니오")
     item = {"asset_id": DESCRIBED_ID, "filename": "질문에 설명한 자료", "path": "", "sha256": "", "kind": "description",
-            "on_approved_list": meta.get("on_approved_list", "모름"),
-            "contains_supplier_data": meta.get("contains_supplier_data", "아니오")}
+            "on_approved_list": said["on_approved_list"][0] if listed == "모름" and "on_approved_list" in said else listed,
+            "contains_supplier_data": said["contains_supplier_data"][0] if supplier == "아니오" and "contains_supplier_data" in said else supplier}
     return {"files": [item], "log": ["ingestion: 첨부 없음 — 질문 문장으로 판단"]}
 
 
@@ -119,7 +122,10 @@ def wiki_curator(s: State) -> State:
 def technology(s: State) -> State:
     c = {}
     for aid, ms in s["matches"].items():
-        cands = terms.candidates(ms, min_distinct=1 if s["extracted"][aid]["kind"] == "description" else terms.CONFIDENT_DISTINCT_TERMS)
+        is_desc = s["extracted"][aid]["kind"] == "description"
+        cands = terms.candidates(ms, min_distinct=1 if is_desc else terms.CONFIDENT_DISTINCT_TERMS)
+        if is_desc and not cands:                      # 질문에 '탱크'·'펌프' 같은 약한 단서만 있으면 '미확정'
+            cands = terms.weak_candidates(" ".join(s["extracted"][aid]["pages"]))
         for sc in s["extracted"][aid].get("symbol_candidates", []):        # 도면 심볼 근거를 합친다
             same = next((x for x in cands if x["code"] == sc["code"]), None)
             if same:
@@ -129,6 +135,15 @@ def technology(s: State) -> State:
                 cands.append(sc)
         c[aid] = cands
     return {"candidates": c, "log": s["log"] + ["technology: S코드 후보 산출"]}
+
+
+# 공통 원칙(P1·P2)에도 근거 조항을 붙인다 — P2(기술 미확정)는 국가핵심기술 해당 여부 판정 신청 절차
+# 원칙(P1·P2)으로 정해진 권고의 근거 — 원칙 이름으로 찾는다 (P1 중 '필수 항목 미입력'은 근거 없음)
+PRINCIPLE_BASIS = {
+    "기술 후보 미확정": {"id": "P2", "legal_basis": ["ITPA-제9조의2"], "basis_note": "", "precedent_cards": ["PREC-2025도15967"]},
+    "핵심기술 자료 사내 반출 승인": {"id": "P1", "legal_basis": ["ITP-GUIDE-제13조"],
+                             "basis_note": "지침 제13조 제4호(반출 시 관리책임자 승인)", "precedent_cards": []},
+}
 
 
 def _resolve(inp: dict) -> dict[str, dict]:
@@ -171,7 +186,7 @@ def compliance(s: State) -> State:
     fired: dict[str, dict] = {}
     for hits in res.file_hits.values():
         for h in hits:
-            rule = next((r for r in cfg["rules"] if r["id"] == h.rule_id), None)
+            rule = next((r for r in cfg["rules"] if r["id"] == h.rule_id), None) or PRINCIPLE_BASIS.get(h.name)
             if rule and h.rule_id not in fired:
                 fired[h.rule_id] = {"rule": rule, "reason": h.reason}
     fired_order = sorted(fired, key=lambda rid: -max((reference.rules()["outcomes"].get(h.outcome, 0)

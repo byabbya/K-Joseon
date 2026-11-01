@@ -1,0 +1,1422 @@
+{
+ "run_at": "2026-11-02T03:02:44",
+ "split": "dev",
+ "summary": {
+  "n": 30,
+  "① 기술 항목 매칭 일치율": {
+   "exact_match": 0.9,
+   "precision": 0.864,
+   "recall": 1.0,
+   "f1": 0.927
+  },
+  "② 근거 ID 일치율": {
+   "gold_id_recall": 1.0,
+   "precision": 0.514,
+   "cases_all_gold_found": 1.0
+  },
+  "③ 권고 분류 일치율": {
+   "accuracy": 1.0,
+   "confusion(gold→pred)": {
+    "진행 가능": {
+     "진행 가능": 5
+    },
+    "조건부 진행": {
+     "조건부 진행": 7
+    },
+    "법무팀 검토 필요": {
+     "법무팀 검토 필요": 13
+    },
+    "반출 불가": {
+     "반출 불가": 5
+    }
+   }
+  },
+  "④ 누락 질문 적중률": {
+   "hit_rate(recall)": 1.0,
+   "precision": 0.974,
+   "exact_match": 0.967
+  },
+  "참고: 규칙 ID": {
+   "precision": 0.938,
+   "recall": 0.732,
+   "f1": 0.822
+  }
+ },
+ "cases": [
+  {
+   "id": "D01",
+   "question": "BV 사전검토용으로 LNG 화물창 단열 상세도랑 1차·2차 방벽 사양서 메일로 보내도 될까요?",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R07"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제19조의3"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "contract_basis",
+     "export_clearance",
+     "on_approved_list"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R06"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S02",
+     "PREC-2011도1614",
+     "PREC-2022도7718",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "contract_basis",
+     "export_clearance",
+     "national_rnd_output",
+     "on_approved_list"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D02",
+   "question": "프랑스 선급 사전 검토용으로 LNG 화물창 단열 시스템 상세 설계도와 방벽 사양서를 이메일로 공유합니다",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R06",
+     "R07"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제13조",
+     "PREC-2011도1614"
+    ],
+    "missing": [
+     "contract_basis",
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S02",
+     "S08"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R06"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S02",
+     "NCT-NOTICE-별표-S08",
+     "PREC-2011도1614",
+     "PREC-2022도7718",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "contract_basis",
+     "export_clearance"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": false,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D03",
+   "question": "BV 파리 본사에 도면승인용으로 방벽 사양서, 단열 상세도, P&ID 1장 메일 송부 예정입니다. 선급 계약 있고 이번 건 수출신고 수리 완료됐어요.",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R05"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S02",
+     "S08"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R05"
+    ],
+    "evidence": [
+     "FTC-의결제2020-305호",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3",
+     "NCT-NOTICE-별표-S02",
+     "NCT-NOTICE-별표-S08",
+     "PREC-2011도1614"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": false,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D04",
+   "question": "방벽 사양서 영문본이 급하게 필요해서 ChatGPT에 통째로 넣고 번역 돌려도 되나요?",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01",
+     "R07",
+     "R09"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITP-GUIDE-제13조",
+     "ITPA-제14조",
+     "ITP-GUIDE-제17조"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "contract_basis",
+     "recipient_country"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S02",
+     "S08"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITPA-제14조",
+     "NCT-NOTICE-별표-S02",
+     "NCT-NOTICE-별표-S08",
+     "PREC-2024노1770"
+    ],
+    "missing": [
+     "contract_basis",
+     "national_rnd_output",
+     "recipient_country"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": false,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D05",
+   "question": "협력사(밸브 업체)가 납품승인용으로 준 원격 밸브 액추에이터 제작도면을, 이원화 검토 때문에 다른 국내 밸브 업체한테 견적 요청하면서 같이 보내려고 합니다. 그 업체랑 NDA는 맺었고 메일로 보낼 거예요. 국가과제 아님.",
+   "gold": {
+    "tech": [],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R08"
+    ],
+    "evidence": [
+     "SUBCON-제12조의3",
+     "PREC-2018누77120"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R08"
+    ],
+    "evidence": [
+     "FTC-의결제2020-244호",
+     "FTC-의결제2020-306호",
+     "FTC-의결제2021-322호",
+     "FTC-의결제2024-343호",
+     "PREC-2018누77120",
+     "SUBCON-제12조의3"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D06",
+   "question": "국내 도료사에 거주구 내부 도장 사양서(색상, 도막두께) 견적용으로 보내려고요. NDA 체결돼 있고 메일 송부, 자체 작성 문서라 국가과제랑 무관합니다.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D07",
+   "question": "첨부한 P&ID 한 장 국내 펌프 업체랑 인터페이스 협의용으로 메일 보내려 합니다. NDA 있고 국책과제 산출물 아니에요. 우리 회사가 그린 도면입니다.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D08",
+   "question": "노르웨이 구명설비(LSA) 업체에 구명정 대빗 배치도 보내도 되죠? 인터페이스 협의용이고 NDA 있음, 이메일, 국가과제 아니에요.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D09",
+   "question": "거주구 GA(accommodation general arrangement) 수정 작업을 부산 설계 외주사에 맡기려고 합니다. 외주계약서에 비밀유지 조항 있고 웹하드 링크로 공유 예정이에요. 국가 R&D 산출물 아님.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D10",
+   "question": "베트남 법인 생산팀에 거주구 계단·난간 제작도면 보내도 되나요? 사내 메일 쓰고, 법인 간 NDA 있고, 국책과제 아닙니다.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D11",
+   "question": "배관 서포트 상세도 미국 쪽에 보내도 되나요?",
+   "gold": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R07",
+     "P1"
+    ],
+    "evidence": [],
+    "missing": [
+     "purpose",
+     "recipient_type",
+     "transfer_method",
+     "national_rnd_output",
+     "contract_basis"
+    ]
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P1"
+    ],
+    "evidence": [],
+    "missing": [
+     "contract_basis",
+     "national_rnd_output",
+     "purpose",
+     "recipient_type",
+     "transfer_method"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D12",
+   "question": "국내 가구 업체에 캐빈 가구 배치도 보내서 견적 받으려는데 아직 NDA는 안 썼어요. 이메일이고 국가과제랑 상관없음.",
+   "gold": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R07"
+    ],
+    "evidence": [
+     "ITPA-제14조"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R07"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제19조의3",
+     "ITPA-제14조",
+     "PREC-2007카합3903",
+     "PREC-2013나27475"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D13",
+   "question": "국내 협력사에 탱크 관련 배치 도면 보내야 하는데 8개 중 어디 해당하는지 잘 모르겠어요. 기자재 인터페이스 협의용, NDA 있고 메일, 국가과제 아님.",
+   "gold": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P2"
+    ],
+    "evidence": [
+     "ITPA-제9조의2"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P2"
+    ],
+    "evidence": [
+     "ITPA-제9조의2",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "category_choice"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": false,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D14",
+   "question": "한국선급에 3만톤급 탱커 메가블록 탑재 정도관리 절차서 제출하려는데, 승인도면 목록에 들어 있는지는 확인을 못 했어요. 선급 계약 있고 포털로 올립니다. 자체 개발 절차예요.",
+   "gold": {
+    "tech": [
+     "S03"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R06"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S03",
+     "ITP-GUIDE-제13조",
+     "PREC-2011도1614"
+    ],
+    "missing": [
+     "on_approved_list"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S03"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R06"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "NCT-NOTICE-별표-S03",
+     "PREC-2011도1614",
+     "PREC-2022도7718",
+     "PREC-2024노5872"
+    ],
+    "missing": [
+     "on_approved_list"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D15",
+   "question": "국내 선주 감독관한테 174K LNG운반선 기본설계 GA 승인도 EDM으로 올리면 되죠? 선주 사양서 기반 제출이고 승인도면 리스트에 있는 도면입니다. 국가과제 X.",
+   "gold": {
+    "tech": [
+     "S01"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R05"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S01",
+     "ITP-GUIDE-제13조"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S01"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R05"
+    ],
+    "evidence": [
+     "FTC-의결제2020-305호",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3",
+     "NCT-NOTICE-별표-S01",
+     "PREC-2011도1614"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D16",
+   "question": "사내 조선 PLM 연동 CAD 설계지원 매크로(블록 분할, 물량 산출 자동화) 패키지를 국내 설계 외주사에 설치용으로 전달하려고 합니다. 외주계약 NDA 있고 클라우드 링크로 줄 예정, 국책과제 아님.",
+   "gold": {
+    "tech": [
+     "S06"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P1"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S06",
+     "ITP-GUIDE-제13조"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S06"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P1"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "NCT-NOTICE-별표-S06"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D17",
+   "question": "DNV 승인용으로 ME-GA 엔진 연료가스공급장치(FGSS) P&ID랑 BOG 압축기 사양서 제출합니다. 선급 계약 있음, 승인도면 리스트 포함. 메일로 보내요. 카테고리는 일단 S02로 골랐어요.",
+   "gold": {
+    "tech": [
+     "S08"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S08",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제19조의3"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S08"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S02",
+     "NCT-NOTICE-별표-S08",
+     "PREC-2011도1614",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance",
+     "national_rnd_output"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D18",
+   "question": "Need to send the cargo tank pump tower structural drawings to ABS Houston for plan approval through their portal. We have a class contract and the drawings are on the approved list. No export filing has been made. Not a national R&D project.",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제19조의3"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S02",
+     "PREC-2011도1614",
+     "PREC-2025도15967"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D19",
+   "question": "LR에 EGCS(open-loop 스크러버) 세정탑 설계도 승인 요청 보낼 예정입니다. 선급 계약 O, 국가과제 아님, 승인도면 목록 포함. 수출신고는 잘 모르겠어요.",
+   "gold": {
+    "tech": [
+     "S07"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S07",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제19조의3"
+    ],
+    "missing": [
+     "transfer_method"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S07"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S07",
+     "PREC-2011도1614",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "transfer_method"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D20",
+   "question": "GTT에 Mark III Flex 화물창 코너부 단열 박스 수정 설계안 기술승인 받으려고 합니다. 라이선스 계약 기반이고 승인도면 목록 포함. 이메일 송부.",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S02",
+     "PREC-2011도1614",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance",
+     "national_rnd_output"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D21",
+   "question": "인도 설계센터(외주)에 쇄빙 LNG선 선형·구조 기본설계 일부 맡기려고 해요. 외주계약서에 NDA 포함돼 있고 클라우드 링크로 공유합니다. 국가과제 아님.",
+   "gold": {
+    "tech": [
+     "S01"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R03"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S01",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조"
+    ],
+    "missing": [
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S01"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R03"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITPA-제11조",
+     "ITPA-제14조의4",
+     "NCT-NOTICE-별표-S01",
+     "PREC-2022도8664",
+     "PREC-2023고합1098",
+     "PREC-2024노5872"
+    ],
+    "missing": [
+     "export_clearance"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D22",
+   "question": "해외법인 야드에서 블록 탑재 시작하는데, 우리 메가블록 탑재 정도관리·연동제어 매뉴얼 그대로 넘겨도 되나요? 대상 선박은 15만톤급 원유운반선이에요.",
+   "gold": {
+    "tech": [
+     "S03"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R03",
+     "R07",
+     "R09"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S03",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조"
+    ],
+    "missing": [
+     "transfer_method",
+     "national_rnd_output",
+     "contract_basis",
+     "recipient_country",
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S03"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R03"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITPA-제11조",
+     "ITPA-제14조의4",
+     "NCT-NOTICE-별표-S03",
+     "PREC-2022도8664",
+     "PREC-2023고합1098",
+     "PREC-2024노5872"
+    ],
+    "missing": [
+     "contract_basis",
+     "export_clearance",
+     "national_rnd_output",
+     "recipient_country",
+     "transfer_method"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D23",
+   "question": "러시아 선주 쪽에서 Arc7 쇄빙 LNG선 기본설계 GA 요청이 왔는데, 선주 승인용으로 EDM에 올려도 될까요? 선주 사양서 있습니다.",
+   "gold": {
+    "tech": [
+     "S01"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R09"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S01",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "FTA-제19조",
+     "FTA-제19조의2"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "export_clearance",
+     "on_approved_list"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S01"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R06",
+     "R09"
+    ],
+    "evidence": [
+     "FTA-제19조",
+     "FTA-제19조의2",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S01",
+     "PREC-2011도1614",
+     "PREC-2022도7718",
+     "PREC-2023고합1098",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance",
+     "national_rnd_output",
+     "on_approved_list"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D24",
+   "question": "이란 선주사에서 거주구 인테리어 마감 사양서를 메일로 보내달라는데요, 선주 사양서 계약 있고 승인도면 목록에 있는 문서예요. 국가과제 아님.",
+   "gold": {
+    "tech": [],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R05",
+     "R09"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "FTA-제19조",
+     "FTA-제19조의2"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R05",
+     "R09"
+    ],
+    "evidence": [
+     "FTA-제19조",
+     "FTA-제19조의2",
+     "FTC-의결제2020-305호",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3",
+     "PREC-2011도1614",
+     "PREC-2023고합1098"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D25",
+   "question": "국내 엔진 협력사에 7,000마력급 2행정 디젤 주기관 크랭크샤프트 가공 도면 보내야 해요. 부품 제작 견적용인데 아직 계약이나 NDA 없음. 메일로, 국책과제 아님.",
+   "gold": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R07"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S04",
+     "ITPA-제14조"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R07"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제19조의3",
+     "ITPA-제14조",
+     "NCT-NOTICE-별표-S04",
+     "PREC-2007카합3903",
+     "PREC-2013나27475"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D26",
+   "question": "정부 과제(국가R&D)로 개발한 BWMS 전기분해 셀 제조 공정서를 베트남 해외법인 공장으로 이관해서 현지 생산하려고 합니다. 법인 간 기술사용(라이선스) 계약 있고 사내 메일로 보낼 예정이에요.",
+   "gold": {
+    "tech": [
+     "S07"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R02",
+     "R03"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S07",
+     "ITPA-제11조",
+     "ITPA-제14조",
+     "ITP-GUIDE-제17조",
+     "NRDI-제21조",
+     "ITP-GUIDE-제21조"
+    ],
+    "missing": [
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S07"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R02",
+     "R03"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITPA-제11조",
+     "ITPA-제14조",
+     "ITPA-제14조의4",
+     "NCT-NOTICE-별표-S07",
+     "NRDI-제21조",
+     "PREC-2022도7718",
+     "PREC-2022도8664",
+     "PREC-2023고합1098",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D27",
+   "question": "[대외비] 표기된 사내 AVEVA Marine 기반 배관 자동 라우팅 설계지원 프로그램 사용자 매뉴얼이랑 스크립트 일부를 베트남 설계 외주사에 넘겨야 하는데 가능할까요? 원드라이브 링크로 공유, 외주 NDA 있음, 국가과제 아님.",
+   "gold": {
+    "tech": [
+     "S06"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R03"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S06",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조"
+    ],
+    "missing": [
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S06"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R03"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITPA-제11조",
+     "ITPA-제14조의4",
+     "NCT-NOTICE-별표-S06",
+     "PREC-2022도8664",
+     "PREC-2023고합1098",
+     "PREC-2024노5872"
+    ],
+    "missing": [
+     "export_clearance"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D28",
+   "question": "재액화 장치(PRS) 공정 설명서 요약하려고 Gemini에 올려도 되나요? 주간회의 자료 만들어야 해서요.",
+   "gold": {
+    "tech": [
+     "S08"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01",
+     "R07",
+     "R09"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S08",
+     "ITP-GUIDE-제13조",
+     "ITPA-제14조",
+     "ITP-GUIDE-제17조"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "contract_basis",
+     "recipient_country"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S08"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITPA-제14조",
+     "NCT-NOTICE-별표-S08",
+     "PREC-2024노1770"
+    ],
+    "missing": [
+     "contract_basis",
+     "national_rnd_output",
+     "recipient_country"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D29",
+   "question": "선실 가구 사양서 영문 번역을 파파고 웹으로 돌려도 되죠? 내부 검토용이에요.",
+   "gold": {
+    "tech": [],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01",
+     "R07",
+     "R09"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITPA-제14조"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "contract_basis",
+     "recipient_country"
+    ]
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITPA-제14조",
+     "PREC-2024노1770"
+    ],
+    "missing": [
+     "contract_basis",
+     "national_rnd_output",
+     "recipient_country"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "D30",
+   "question": "산업부 국책과제로 개발한 자율운항 상황인식(카메라·레이더 퓨전) 알고리즘 설계서를 노르웨이 연구소와 공동연구하려고 공유해야 합니다. 공동연구 협약서에 NDA 포함돼 있고 메일로 보낼 예정.",
+   "gold": {
+    "tech": [
+     "S05"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R02",
+     "R03"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S05",
+     "ITPA-제11조",
+     "ITPA-제14조",
+     "ITP-GUIDE-제17조",
+     "NRDI-제21조",
+     "ITP-GUIDE-제21조"
+    ],
+    "missing": [
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S05"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R02",
+     "R03"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITPA-제11조",
+     "ITPA-제14조",
+     "ITPA-제14조의4",
+     "NCT-NOTICE-별표-S05",
+     "NRDI-제21조",
+     "PREC-2022도7718",
+     "PREC-2022도8664",
+     "PREC-2023고합1098",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  }
+ ]
+}

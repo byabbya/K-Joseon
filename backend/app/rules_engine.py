@@ -154,13 +154,20 @@ def evaluate(req: dict, files: list[FileFacts]) -> EngineResult:
     for f in files:
         outs = [h.outcome for h in file_hits[f.asset_id] if h.outcome]
         out = max(outs, key=_severity, default="진행 가능")
-        # P1: 필수 항목이 비어 있으면 '진행 가능'을 내지 않는다
+        # P1: 필수 항목이 비어 있거나 기술 후보가 있으면 '진행 가능'을 내지 않는다
         if on_hold and out == "진행 가능":
             out = "조건부 진행"
             file_hits[f.asset_id].append(Hit("P1", "필수 항목 미입력", out,
                                              "필수 항목이 모두 입력되어야 '진행 가능'을 판단할 수 있습니다.",
                                              ["빠진 항목에 답하고 다시 확인하기"], [],
                                              "몇 가지 정보가 빠져 있어서 확정 답을 드리지 못했어요."))
+        elif f.s_codes and out == "진행 가능":
+            out = "조건부 진행"
+            labels = ", ".join(reference.category_label(c) for c in sorted(f.s_codes))
+            file_hits[f.asset_id].append(Hit("P1", "핵심기술 자료 사내 반출 승인", out,
+                                             f"{', '.join(sorted(f.s_codes))} 관련 자료는 걸리는 규칙이 없어도 반출 시 관리책임자 승인이 필요합니다.",
+                                             ["보내기 전에 사내 반출 승인(관리책임자) 받기"], [],
+                                             f"{labels} 관련 자료예요. 국내로 보내더라도 회사 밖으로 나가면 사내 반출 승인이 필요해요."))
         file_outcomes[f.asset_id] = out
 
     overall = max(file_outcomes.values(), key=_severity, default="법무팀 검토 필요")

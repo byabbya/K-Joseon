@@ -57,9 +57,10 @@ npm --prefix frontend run dev
 | [docs/FRAMEWORK.md](docs/FRAMEWORK.md) | 기술 스택 결정, 개발 환경 메모 |
 | [docs/API.md](docs/API.md) | API 계약 |
 | [docs/FRONTEND.md](docs/FRONTEND.md) | 프론트엔드 구조 |
+| [docs/EVAL.md](docs/EVAL.md) | 평가 결과 (정의서 측정 지표 4개, 합성 시나리오 40건) |
 
 ## 남은 일
 
 - 판례 카드 5W1H·위키 용어 사람 검수 (현재 LLM 초안·자동 후보)
-- 평가 시나리오 30+10건과 정의서 측정 지표
+- 문장 추출 보강 (영어 문장, 축약 표현) · 별표 수치 조건(직경·출력) 확인 — [평가](docs/EVAL.md) 오류 분석 참고
 - YOLO: 펌프·장비류 탐지가 약함 (샘플 라벨이 불완전) — 전체 데이터·GPU로 재학습 필요

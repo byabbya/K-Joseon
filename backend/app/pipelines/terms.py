@@ -62,6 +62,28 @@ def match_pages(pages: list[str]) -> list[Match]:
     return out
 
 
+WEAK_HEADS = ("탱크", "펌프", "압축기", "엔진", "보일러", "추진기")
+
+
+def weak_candidates(text: str) -> list[dict]:
+    """'탱크', '펌프'처럼 핵심기술 복합어의 일부만 나온 경우 — 어느 기술인지 확정할 수 없는 약한 단서('미확정')."""
+    by_head: dict[str, set[str]] = {}
+    for t in dictionary():
+        for head in WEAK_HEADS:
+            if t.surface.endswith(head) and len(t.surface) > len(head):
+                by_head.setdefault(head, set()).add(t.code)
+    out: dict[str, list[dict]] = {}
+    for head, codes in by_head.items():
+        m = re.search(rf"(?<![가-힣]){head}", text)
+        if m:
+            snippet = re.sub(r"\s+", " ", text[max(0, m.start() - 30): m.end() + 30]).strip()
+            for code in codes:
+                out.setdefault(code, []).append({"term": head, "term_id": f"WEAK-{head}", "page": 1,
+                                                  "snippet": snippet, "source": "text"})
+    return [{"code": c, "label": reference.category_label(c), "score": 0.1, "confident": False, "evidence": ev}
+            for c, ev in sorted(out.items())]
+
+
 def candidates(matches: list[Match], min_distinct: int = CONFIDENT_DISTINCT_TERMS) -> list[dict]:
     """min_distinct: 후보 확정에 필요한 서로 다른 용어 수. 질문 문장(짧음)은 1개로도 확정한다."""
     by_code: dict[str, list[Match]] = {}

@@ -1,0 +1,532 @@
+{
+ "run_at": "2026-11-02T03:04:04",
+ "split": "holdout",
+ "summary": {
+  "n": 10,
+  "① 기술 항목 매칭 일치율": {
+   "exact_match": 0.8,
+   "precision": 0.778,
+   "recall": 1.0,
+   "f1": 0.875
+  },
+  "② 근거 ID 일치율": {
+   "gold_id_recall": 0.941,
+   "precision": 0.478,
+   "cases_all_gold_found": 0.8
+  },
+  "③ 권고 분류 일치율": {
+   "accuracy": 0.8,
+   "confusion(gold→pred)": {
+    "진행 가능": {
+     "조건부 진행": 1,
+     "법무팀 검토 필요": 1
+    },
+    "조건부 진행": {
+     "조건부 진행": 2
+    },
+    "법무팀 검토 필요": {
+     "법무팀 검토 필요": 4
+    },
+    "반출 불가": {
+     "반출 불가": 2
+    }
+   }
+  },
+  "④ 누락 질문 적중률": {
+   "hit_rate(recall)": 1.0,
+   "precision": 0.562,
+   "exact_match": 0.5
+  },
+  "참고: 규칙 ID": {
+   "precision": 0.867,
+   "recall": 0.812,
+   "f1": 0.839
+  }
+ },
+ "cases": [
+  {
+   "id": "H01",
+   "question": "Quick one: OK to email the engine room ladder & grating layout to our Korean outfitting supplier for fit-up coordination? NDA signed, and it's not from any government-funded R&D.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P1"
+    ],
+    "evidence": [],
+    "missing": [
+     "national_rnd_output",
+     "recipient_country"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": false,
+    "missing": false,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H02",
+   "question": "중국 프로펠러 업체에 직경 4.2m 프로펠러 형상도 견적 문의차 메일로 보내려 합니다. NDA 체결했고 정부 과제랑은 무관해요.",
+   "gold": {
+    "tech": [],
+    "recommendation": "진행 가능",
+    "rules": [],
+    "evidence": [],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S04",
+     "PREC-2011도1614",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": false,
+    "recommendation": false,
+    "missing": false,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H03",
+   "question": "KC LNG Tech(국내 라이선서)에 KC-1 멤브레인 화물창 적용 호선의 단열 패널 배치도 기술승인 요청 보내려 합니다. 라이선스 계약 있고 승인도면 목록에 포함된 도면이에요. 메일 발송, 국가과제 산출물 아님.",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R05"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITP-GUIDE-제13조"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "R05"
+    ],
+    "evidence": [
+     "FTC-의결제2020-305호",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3",
+     "NCT-NOTICE-별표-S02",
+     "PREC-2011도1614"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H04",
+   "question": "해수부 국책과제 결과물인 디지털 브릿지 통합플랫폼 아키텍처 문서를 국내 대학 연구실과 후속 공동연구용으로 공유하려 합니다. 협약서에 비밀유지 조항 있고, 학교 쪽 클라우드 링크에 올릴 예정입니다.",
+   "gold": {
+    "tech": [
+     "S05"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P1"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S05",
+     "ITP-GUIDE-제13조",
+     "NRDI-제21조"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S05"
+    ],
+    "recommendation": "조건부 진행",
+    "rules": [
+     "P1"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "NCT-NOTICE-별표-S05"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": false
+   }
+  },
+  {
+   "id": "H05",
+   "question": "일본 펌프 메이커에 펌프 배치 상세도 회신해야 하는데, 카테고리는 뭔지 몰라서 '모름'으로 했어요. NDA O / 메일 / 국책 X / 인터페이스 협의용.",
+   "gold": {
+    "tech": [],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "P2"
+    ],
+    "evidence": [
+     "ITPA-제9조의2"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "P2"
+    ],
+    "evidence": [
+     "ITPA-제9조의2",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "category_choice",
+     "national_rnd_output"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": false,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H06",
+   "question": "지난번 반려된 건 다시 올립니다. 선급 계약 근거 있고 수출신고도 수리됐어요. 첨부 4개 전부 프랑스 선급에 메일로 보낼게요.",
+   "gold": {
+    "tech": [
+     "S02"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R05",
+     "R06"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S02",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3",
+     "PREC-2011도1614"
+    ],
+    "missing": []
+   },
+   "pred": {
+    "tech": [
+     "S02",
+     "S08"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R05",
+     "R06"
+    ],
+    "evidence": [
+     "FTC-의결제2020-305호",
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제19조의3",
+     "NCT-NOTICE-별표-S02",
+     "NCT-NOTICE-별표-S08",
+     "PREC-2011도1614",
+     "PREC-2022도7718",
+     "PREC-2024노5872"
+    ],
+    "missing": [],
+    "on_hold": false
+   },
+   "ok": {
+    "tech": false,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H07",
+   "question": "독일 선주 감독이 9,500kW급 메인엔진 크랭크샤프트 단조·가공 절차서(대외비)도 같이 달라고 하네요. 승인도면 리스트엔 없는 문서고, 선주 사양서 계약으로 EDM 업로드합니다. 수출신고는 안 했어요.",
+   "gold": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R06"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S04",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제13조",
+     "PREC-2011도1614"
+    ],
+    "missing": [
+     "national_rnd_output"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R06"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S04",
+     "PREC-2011도1614",
+     "PREC-2022도7718",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "on_approved_list"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": false,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H08",
+   "question": "협력업체에서 받은 SCR 반응기 제작도면을 중국 업체에 넘겨서 단가 비교 견적 받아보려고 하는데 괜찮을까요?",
+   "gold": {
+    "tech": [
+     "S07"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R07",
+     "R08"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S07",
+     "ITPA-제11조",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "SUBCON-제12조의3",
+     "PREC-2018누77120"
+    ],
+    "missing": [
+     "transfer_method",
+     "national_rnd_output",
+     "contract_basis",
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S07"
+    ],
+    "recommendation": "법무팀 검토 필요",
+    "rules": [
+     "R04",
+     "R08"
+    ],
+    "evidence": [
+     "FTC-의결제2020-244호",
+     "FTC-의결제2020-306호",
+     "FTC-의결제2021-322호",
+     "FTC-의결제2024-343호",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제19조의3",
+     "ITP-GUIDE-제21조",
+     "ITP-GUIDE-제25조",
+     "ITPA-제11조",
+     "NCT-NOTICE-별표-S07",
+     "PREC-2011도1614",
+     "SUBCON-제12조의3"
+    ],
+    "missing": [
+     "contract_basis",
+     "export_clearance",
+     "national_rnd_output",
+     "transfer_method"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": false
+   }
+  },
+  {
+   "id": "H09",
+   "question": "산업부 국책과제 산출물인 암모니아 추진선 연료공급장치(FGSS) 설계 패키지를 러시아 조선소에 기술이전하려고 합니다. 라이선스 계약은 체결 완료했고 자료는 클라우드로 넘길 계획입니다.",
+   "gold": {
+    "tech": [
+     "S08"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R02",
+     "R03",
+     "R09"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S08",
+     "ITPA-제11조",
+     "ITPA-제14조",
+     "ITP-GUIDE-제17조",
+     "NRDI-제21조",
+     "ITP-GUIDE-제21조",
+     "FTA-제19조",
+     "FTA-제19조의2"
+    ],
+    "missing": [
+     "export_clearance"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S08"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R02",
+     "R03",
+     "R09"
+    ],
+    "evidence": [
+     "FTA-제19조",
+     "FTA-제19조의2",
+     "ITP-GUIDE-제17조",
+     "ITP-GUIDE-제21조",
+     "ITPA-제11조",
+     "ITPA-제14조",
+     "ITPA-제14조의4",
+     "NCT-NOTICE-별표-S08",
+     "NRDI-제21조",
+     "PREC-2022도7718",
+     "PREC-2022도8664",
+     "PREC-2023고합1098",
+     "PREC-2024노5872",
+     "PREC-2025도15967"
+    ],
+    "missing": [
+     "export_clearance",
+     "recipient_type"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": false,
+    "evidence": true
+   }
+  },
+  {
+   "id": "H10",
+   "question": "Can I upload our 6,500 bhp main engine crankshaft drawing set to ChatGPT to double-check the tolerance tables? Internal use only.",
+   "gold": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01",
+     "R07",
+     "R09"
+    ],
+    "evidence": [
+     "NCT-NOTICE-별표-S04",
+     "ITP-GUIDE-제13조",
+     "ITPA-제14조",
+     "ITP-GUIDE-제17조"
+    ],
+    "missing": [
+     "national_rnd_output",
+     "contract_basis",
+     "recipient_country"
+    ]
+   },
+   "pred": {
+    "tech": [
+     "S04"
+    ],
+    "recommendation": "반출 불가",
+    "rules": [
+     "R01"
+    ],
+    "evidence": [
+     "ITP-GUIDE-제13조",
+     "ITP-GUIDE-제17조",
+     "ITPA-제14조",
+     "NCT-NOTICE-별표-S04",
+     "PREC-2024노1770"
+    ],
+    "missing": [
+     "contract_basis",
+     "national_rnd_output",
+     "recipient_country"
+    ],
+    "on_hold": true
+   },
+   "ok": {
+    "tech": true,
+    "recommendation": true,
+    "missing": true,
+    "evidence": true
+   }
+  }
+ ]
+}
