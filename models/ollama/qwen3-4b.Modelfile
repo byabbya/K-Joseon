@@ -1,0 +1,4 @@
+# 원본 GGUF는 Ollama 등록 후 삭제함 (같은 파일이 ~/.ollama/models/blobs 에 있음).
+# 다시 등록하려면: python -I scripts/download_models.py llm-small  →  ollama create kship-qwen3-4b -f qwen3-4b.Modelfile
+FROM ../llm/Qwen3-4B-Q4_K_M.gguf
+PARAMETER num_ctx 8192

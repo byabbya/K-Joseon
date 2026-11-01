@@ -1,0 +1,272 @@
+{
+  "fetched_at": "2026-11-01T19:42:07",
+  "source": "https://www.law.go.kr",
+  "laws": [
+    {
+      "id": "ITPA",
+      "name": "산업기술의유출방지및보호에관한법률",
+      "lsiSeq": "280043",
+      "efYd": "20260603",
+      "header": "법률 제21154호, 2025. 12. 2., 타법개정",
+      "articles": 54,
+      "url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=280043&efYd=20260603"
+    },
+    {
+      "id": "ITPA-ENF",
+      "name": "산업기술의유출방지및보호에관한법률시행령",
+      "lsiSeq": "281125",
+      "efYd": "20260102",
+      "header": "대통령령 제35947호, 2025. 12. 30., 타법개정",
+      "articles": 53,
+      "url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=281125&efYd=20260102"
+    },
+    {
+      "id": "FTA",
+      "name": "대외무역법",
+      "lsiSeq": "285575",
+      "efYd": "20261022",
+      "header": "법률 제21568호, 2026. 4. 21., 일부개정",
+      "articles": 72,
+      "url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=285575&efYd=20261022"
+    },
+    {
+      "id": "NRDI",
+      "name": "국가연구개발혁신법",
+      "lsiSeq": "290757",
+      "efYd": "20261002",
+      "header": "법률 제21857호, 2026. 8. 4., 타법개정",
+      "articles": 42,
+      "url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=290757&efYd=20261002"
+    },
+    {
+      "id": "SUBCON",
+      "name": "하도급거래공정화에관한법률",
+      "lsiSeq": "288625",
+      "efYd": "20261002",
+      "header": "법률 제21857호, 2026. 8. 4., 타법개정",
+      "articles": 69,
+      "url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=288625&efYd=20261002"
+    },
+    {
+      "id": "UCPA",
+      "name": "부정경쟁방지및영업비밀보호에관한법률",
+      "lsiSeq": "277201",
+      "efYd": "20260528",
+      "header": "법률 제21065호, 2025. 10. 1., 타법개정",
+      "articles": 46,
+      "url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=277201&efYd=20260528"
+    }
+  ],
+  "admin_rules": [
+    {
+      "id": "NCT-NOTICE",
+      "name": "국가핵심기술지정등에관한고시",
+      "admRulSeq": "2100000272798",
+      "effective": "2025-10-02",
+      "header": "산업통상부고시 제2025-2호, 2025. 10. 2., 일부개정",
+      "articles": 8,
+      "attachments": [
+        {
+          "flSeq": "160938369",
+          "name": "[별표] 국가핵심기술(법 제9조 관련)",
+          "file": "raw/admrul_NCT-NOTICE_[별표]_국가핵심기술(법_제9조_관련)_160938369.hwp"
+        },
+        {
+          "flSeq": "160938377",
+          "name": "[별표] 국가핵심기술(법 제9조 관련)",
+          "file": "raw/admrul_NCT-NOTICE_[별표]_국가핵심기술(법_제9조_관련)_160938377.pdf"
+        }
+      ],
+      "url": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000272798"
+    },
+    {
+      "id": "ITP-GUIDE",
+      "name": "산업기술보호지침",
+      "admRulSeq": "2100000281960",
+      "effective": "2026-06-30",
+      "header": "산업통상부고시 제2026-76호, 2026. 6. 30., 폐지제정",
+      "articles": 47,
+      "attachments": [
+        {
+          "flSeq": "166799703",
+          "name": "[별표 1] 국가핵심기술 등의 비밀유지 및 경업금지 서약서",
+          "file": "raw/admrul_ITP-GUIDE_[별표_1]_국가핵심기술_등의_비밀유지_및_경업금지_서약서_166799703.hwp"
+        },
+        {
+          "flSeq": "166799709",
+          "name": "[별표 1] 국가핵심기술 등의 비밀유지 및 경업금지 서약서",
+          "file": "raw/admrul_ITP-GUIDE_[별표_1]_국가핵심기술_등의_비밀유지_및_경업금지_서약서_166799709.pdf"
+        },
+        {
+          "flSeq": "166799711",
+          "name": "[별표 2] 비밀유지 서약서",
+          "file": "raw/admrul_ITP-GUIDE_[별표_2]_비밀유지_서약서_166799711.hwp"
+        },
+        {
+          "flSeq": "166799717",
+          "name": "[별표 2] 비밀유지 서약서",
+          "file": "raw/admrul_ITP-GUIDE_[별표_2]_비밀유지_서약서_166799717.pdf"
+        },
+        {
+          "flSeq": "166799673",
+          "name": "[별지 1] 개선권고 통지서",
+          "file": "raw/admrul_ITP-GUIDE_[별지_1]_개선권고_통지서_166799673.hwp"
+        },
+        {
+          "flSeq": "166799677",
+          "name": "[별지 1] 개선권고 통지서",
+          "file": "raw/admrul_ITP-GUIDE_[별지_1]_개선권고_통지서_166799677.pdf"
+        },
+        {
+          "flSeq": "166799679",
+          "name": "[별지 2] 개선권고 처리결과",
+          "file": "raw/admrul_ITP-GUIDE_[별지_2]_개선권고_처리결과_166799679.hwp"
+        },
+        {
+          "flSeq": "166799683",
+          "name": "[별지 2] 개선권고 처리결과",
+          "file": "raw/admrul_ITP-GUIDE_[별지_2]_개선권고_처리결과_166799683.pdf"
+        },
+        {
+          "flSeq": "166799685",
+          "name": "[별지 3] 개선권고 이행 기간 연장 요청서",
+          "file": "raw/admrul_ITP-GUIDE_[별지_3]_개선권고_이행_기간_연장_요청서_166799685.hwp"
+        },
+        {
+          "flSeq": "166799689",
+          "name": "[별지 3] 개선권고 이행 기간 연장 요청서",
+          "file": "raw/admrul_ITP-GUIDE_[별지_3]_개선권고_이행_기간_연장_요청서_166799689.pdf"
+        },
+        {
+          "flSeq": "166799691",
+          "name": "[별지 4] 조치명령 통보서",
+          "file": "raw/admrul_ITP-GUIDE_[별지_4]_조치명령_통보서_166799691.hwp"
+        },
+        {
+          "flSeq": "166799695",
+          "name": "[별지 4] 조치명령 통보서",
+          "file": "raw/admrul_ITP-GUIDE_[별지_4]_조치명령_통보서_166799695.pdf"
+        },
+        {
+          "flSeq": "166799697",
+          "name": "[별지 5] 조치명령 이행결과",
+          "file": "raw/admrul_ITP-GUIDE_[별지_5]_조치명령_이행결과_166799697.hwp"
+        },
+        {
+          "flSeq": "166799701",
+          "name": "[별지 5] 조치명령 이행결과",
+          "file": "raw/admrul_ITP-GUIDE_[별지_5]_조치명령_이행결과_166799701.pdf"
+        }
+      ],
+      "url": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000281960"
+    }
+  ],
+  "precedents": [
+    {
+      "case_id": "PREC-2011도1614",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=167550",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2022가합42330",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=608473",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2023나51086",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=608475",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2024다209783",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=607835",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2022도8664",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=608471",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2007노4229",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=64573",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2025도15967",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=625219",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2022도7718",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=609587",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2024노5872",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=622125",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2024노1770",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=606563",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2023고합1098",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=616625",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2018누77120",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=231623",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2013나27475",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=211039",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "PREC-2007카합3903",
+      "source_url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=71029",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2020-244호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=14713&type=HTML",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2020-306호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=14691&type=HTML",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2021-322호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=14533&type=HTML",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2020-305호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=15525&type=HTML",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2021-246호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=15453&type=HTML",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2024-343호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=18043&type=HTML",
+      "review_status": "llm_draft"
+    },
+    {
+      "case_id": "FTC-의결제2019-085호",
+      "source_url": "https://www.law.go.kr/DRF/lawService.do?target=ftc&ID=12037&type=HTML",
+      "review_status": "llm_draft"
+    }
+  ],
+  "precedents_missing": []
+}

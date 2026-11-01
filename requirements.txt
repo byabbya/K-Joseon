@@ -1,0 +1,36 @@
+# K-Ship Guard AX 백엔드·ML 의존성 (Python 3.12, CPU 전용)
+#
+# 설치 순서 — PyTorch를 CPU 버전으로 먼저 깔아야 다른 패키지가 GPU 버전(수 GB)을 끌어오지 않음:
+#   .venv/Scripts/python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   .venv/Scripts/python -m pip install -r requirements.txt
+
+# API 서버
+fastapi
+uvicorn[standard]
+python-multipart
+httpx
+
+# 오케스트레이션·DB
+langgraph
+sqlmodel
+pyyaml
+
+# 문서 파이프라인
+pymupdf
+python-docx
+paddlepaddle
+paddleocr
+
+# 도면 파이프라인
+ultralytics
+
+# 검색
+sentence-transformers
+kiwipiepy
+rank-bm25
+sqlite-vec
+
+# 데이터 준비 스크립트
+pypdf
+huggingface_hub
+reportlab

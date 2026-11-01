@@ -1,0 +1,195 @@
+# K-Ship Guard AX 규칙 엔진 정의 (초안 v0.1, 2026-11-01)
+#
+# - 정의서 2-2 "규칙 엔진(LLM과 독립): 경로 코드 × 수신자 × 기술 후보 × 계약 근거 × 플래그로 권고 분류 결정"
+# - R01·R03·R05·R06·R09·R10 은 정의서 예시, R02·R04·R07·R08 은 법령 원문을 근거로 이번에 채운 초안
+# - status: draft — 법무·기술보호 담당 확인 전. 근거 조항 ID는 data/legal/laws.jsonl 의 clause_id,
+#   판례 카드 ID는 data/legal/precedents.jsonl 의 case_id
+# - 사람이 읽는 설명과 미결 사항: docs/RULES.md
+
+version: 0.1.0
+status: draft
+
+# 권고 분류 (정의서 2-1). 숫자가 클수록 엄격. 파일별로 판정하고, 요청 전체 권고는 가장 엄격한 파일을 따른다.
+outcomes:
+  진행 가능: 1
+  조건부 진행: 2
+  법무팀 검토 필요: 3
+  반출 불가: 4
+
+# 목적 → 반출 경로 코드 (정의서: 목적 선택지 9개가 CH-01~09 로 변환. 순서 대응은 가정)
+channels:
+  CH-01: 선급 도면승인
+  CH-02: 선주 승인
+  CH-03: 라이선서 기술승인
+  CH-04: 기자재 인터페이스 협의
+  CH-05: 설계 외주
+  CH-06: 해외법인 생산
+  CH-07: 입찰·견적
+  CH-08: 기술이전·공동연구
+  CH-09: 기타
+
+# 입력 필드 값 (정의서 2-1 필수 구조화 항목)
+enums:
+  recipient_type: [선급, 선주, 라이선서, 기자재 벤더, 설계 외주, 해외법인, 기타]
+  transfer_method: [이메일, 선급 포털, 선주 EDM, 클라우드 링크, 외부 AI 서비스]
+  contract_basis: [선급 계약, 선주 사양서, 라이선스, NDA, 없음]
+  on_approved_list: [포함, 미포함, 모름]
+  # 추가 제안 필드 (정의서에 없음)
+  contains_supplier_data: [예, 아니오, 모름]   # R08 — 파일별
+  export_clearance: [받음, 안 받음, 모름]       # R04·R05 — 정부 수출 신고(또는 승인) 여부. 받음이면 신고번호(export_clearance_ref) 입력
+
+# 파생 값 정의 (규칙 조건에서 사용)
+derived:
+  foreign_recipient: "recipient_country 가 KR 이 아니거나 recipient_type == 해외법인"
+  tech_candidate: "파일의 S코드 후보(사원 선택 ∪ 모델 후보)가 1개 이상. 사원 선택과 모델 후보가 다르면 합집합을 쓴다(위험을 올리는 쪽)"
+  needs_export_check: "foreign_recipient 이고 tech_candidate 인 파일이 하나라도 있음 → 이때만 export_clearance 질문을 화면에 띄운다"
+  export_clearance_ok: "needs_export_check 가 아니거나, 사원이 export_clearance = 받음 으로 답함 (신고번호는 법무팀이 확인)"
+
+rules:
+  - id: R01
+    name: 외부 생성형 AI 입력
+    origin: 정의서
+    scope: request
+    when: {transfer_method: 외부 AI 서비스}
+    outcome: 반출 불가
+    reason_template: "외부 생성형 AI 서비스로의 입력은 사내 반출 승인과 이력 관리를 벗어나므로 반출할 수 없습니다."
+    legal_basis: [ITP-GUIDE-제13조, ITP-GUIDE-제17조, ITPA-제14조]
+    basis_note: "지침 제13조 제4호(반출 시 관리책임자 승인), 제17조 제10호(클라우드 등 외국기업 접근권한 부여도 수출 방법), 법 제14조 제4호(지정 장소 밖 무단 유출)"
+    precedent_cards: [PREC-2024노1770]
+
+  - id: R02
+    name: 국가 R&D 산출물의 국외 제공
+    origin: 추가
+    scope: file
+    when: {national_rnd_output: true, tech_candidate: true, foreign_recipient: true}
+    outcome: 반출 불가
+    reason_template: "국가 연구개발비로 개발한 국가핵심기술의 국외 제공은 산업통상부장관의 사전 승인 대상일 수 있어, 승인 확인 전에는 반출할 수 없습니다."
+    internal_review_options: [국가 R&D 전담기관 확인, 제9조의2 판정 신청 검토]
+    legal_basis: [ITPA-제11조, ITPA-제14조, ITP-GUIDE-제17조, NRDI-제21조]
+    basis_note: "법 제11조 제1항(국가 R&D 국가핵심기술 수출은 사전 승인), 제14조 제7호(승인 없는 수출 금지), 지침 제17조(자료전송·인증용 자료 제공 등도 수출 방법)"
+    precedent_cards: [PREC-2025도15967, PREC-2022도7718]
+
+  - id: R03
+    name: 외국 수신자에게 외주·해외생산·기술이전
+    origin: 정의서
+    scope: file
+    when: {foreign_recipient: true, tech_candidate: true, channel_in: [CH-05, CH-06, CH-08]}
+    outcome: 법무팀 검토 필요
+    reason_template: "수신자가 외국 기업·법인이고 {s_codes} 관련 자료를 {channel} 목적으로 제공하므로 법 제11조(국가핵심기술 수출 승인·신고) 검토 대상입니다."
+    internal_review_options: [기술보호 담당 확인, 제9조의2 판정 신청 검토, 전략물자 자가판정]
+    legal_basis: [ITPA-제11조, ITP-GUIDE-제17조, ITP-GUIDE-제21조, ITPA-제14조의4]
+    basis_note: "지침 제17조 제2호(자료전송·위탁연구·위탁생산), 제4호(공동연구) / 제21조(승인 대상 외는 사전 신고)"
+    precedent_cards: [PREC-2023고합1098, PREC-2022도8664, PREC-2024노5872]
+
+  - id: R04
+    name: 외국 수신자 제공 — 정부 수출 신고 미확인
+    origin: 추가
+    scope: file
+    when: {foreign_recipient: true, tech_candidate: true, channel_in: [CH-01, CH-02, CH-03, CH-04, CH-07, CH-09], export_clearance_ok: false}
+    outcome: 법무팀 검토 필요
+    question: "이번 반출에 대해 정부 수출 신고(또는 승인)를 받았나요? (받음 — 신고번호 입력 / 안 받음 / 모름)"
+    question_when: "needs_export_check 이고 export_clearance 미입력"
+    reason_template: "외국 {recipient_type}에게 {s_codes} 관련 기술자료를 제공합니다. 해외 인증·인허가를 위한 기술자료 제공도 국가핵심기술 수출 방법에 포함되므로, 정부 수출 신고(또는 간소화 절차)를 받았는지 확인되지 않으면 법무 검토가 필요합니다."
+    internal_review_options: [기술보호 담당 확인, 제9조의2 판정 신청 검토]
+    legal_basis: [ITPA-제11조, ITP-GUIDE-제17조, ITP-GUIDE-제19조의3, ITP-GUIDE-제21조, ITP-GUIDE-제25조]
+    basis_note: "지침 제17조 제8호(해외 인증·인허가용 기술자료 제공), 제2호(자료전송) / 제19조의3 제4호(제8호 수출은 간소화 가능, 단 비밀유지 계약 필요) / 제25조(공개 기술 등 예외)"
+    precedent_cards: [PREC-2011도1614, PREC-2025도15967]
+
+  - id: R05
+    name: 승인 경로 정상 제출
+    origin: 정의서
+    scope: file
+    when: {recipient_type_in: [선급, 선주, 라이선서], contract_basis_in: [선급 계약, 선주 사양서, 라이선스, NDA], on_approved_list: 포함, export_clearance_ok: true}
+    outcome: 조건부 진행
+    conditions:
+      - "승인도면 목록에 포함된 파일만 전송"
+      - "문서의 보호등급 표기를 유지 (지침 제13조 제1호)"
+      - "반출 승인 기록을 남김 (지침 제13조 제4호)"
+      - "외국 수신자이면 수신처 취급자와 비밀유지 계약 확인 (지침 제19조의3 제4호)"
+      - "사원이 입력한 수출 신고번호를 법무팀이 확인 (export_clearance = 받음 인 경우)"
+    reason_template: "{recipient_type} 제출 경로이고 계약 근거({contract_basis})가 있으며 승인도면 목록에 포함된 파일입니다."
+    legal_basis: [ITP-GUIDE-제13조, ITP-GUIDE-제19조의3]
+    precedent_cards: [PREC-2011도1614, FTC-의결제2020-305호]
+    note: "R04 등 더 엄격한 규칙이 같이 걸리면 그쪽이 우선한다"
+
+  - id: R06
+    name: 승인도면 목록 밖 파일
+    origin: 정의서
+    scope: file
+    when: {on_approved_list_in: [미포함, 모름]}
+    outcome: 법무팀 검토 필요
+    reason_template: "이 파일은 선급·선주 승인도면 목록에 {on_approved_list}으로 표시되어 제출 범위를 넘을 수 있습니다. 파일별로 판단합니다."
+    internal_review_options: [승인도면 목록 재확인, 설계 부서장 확인]
+    legal_basis: [ITP-GUIDE-제13조]
+    precedent_cards: [PREC-2011도1614, PREC-2024노5872, PREC-2022도7718]
+
+  - id: R07
+    name: 계약 근거 미입력·없음
+    origin: 추가
+    scope: request
+    cases:
+      - when: {contract_basis: null}
+        outcome: null
+        question: "수신자와의 계약 근거(선급 계약 / 선주 사양서 / 라이선스 / NDA / 없음)를 선택해 주세요."
+      - when: {contract_basis: 없음, tech_candidate: true}
+        outcome: 법무팀 검토 필요
+        reason_template: "비밀유지 등 계약 근거 없이 {s_codes} 관련 자료를 외부에 제공합니다."
+      - when: {contract_basis: 없음, tech_candidate: false}
+        outcome: 조건부 진행
+        conditions: ["전송 전 NDA 체결"]
+    legal_basis: [ITPA-제14조, ITP-GUIDE-제19조의3]
+    basis_note: "법 제14조 제2호(계약상 비밀유지의무), 지침 제19조의3 제4호(간소화 조건인 비밀유지 계약)"
+    precedent_cards: [PREC-2013나27475, PREC-2007카합3903]
+
+  - id: R08
+    name: 협력사 기술자료 제3자 제공
+    origin: 추가
+    scope: file
+    when: {contains_supplier_data_in: [예, 모름], recipient_type_in: [기자재 벤더, 설계 외주, 해외법인, 기타]}
+    outcome: 법무팀 검토 필요
+    question_if_unknown: "이 파일에 협력사(수급사업자)로부터 받은 도면·기술자료가 포함되어 있나요?"
+    reason_template: "협력사로부터 취득한 기술자료를 제3자에게 제공하는 것은 하도급법 제12조의3 제4항 위반이 될 수 있습니다."
+    detection: "입력 질문 + 도면 표제란·문서 머리말의 작성 회사명이 자사와 다르면 '모름'으로 올림"
+    legal_basis: [SUBCON-제12조의3]
+    precedent_cards: [FTC-의결제2020-244호, FTC-의결제2020-306호, FTC-의결제2021-322호, FTC-의결제2024-343호, PREC-2018누77120]
+
+  - id: R09
+    name: 수신 국가 미입력·제재 대상
+    origin: 정의서
+    scope: request
+    cases:
+      - when: {recipient_country: null}
+        outcome: null
+        question: "수신 국가를 입력해 주세요."
+      - when: {recipient_country_in_sanctions: true}
+        outcome: 법무팀 검토 필요
+        reason_template: "수신 국가({recipient_country})가 수출통제·제재 확인 대상입니다."
+        internal_review_options: [전략물자 자가판정]
+    legal_basis: [FTA-제19조, FTA-제19조의2]
+    precedent_cards: [PREC-2023고합1098]
+
+  - id: R10
+    name: 시행일 불일치 조항 제거
+    origin: 정의서
+    scope: evidence
+    when: {clause_effective_date_after_request: true}
+    action: remove_evidence
+    note: "요청 시점에 시행 중이 아닌 조항은 근거에서 빼고 '구버전'으로만 표시. 권고 분류에는 영향 없음"
+
+# 규칙 외 공통 원칙 (정의서)
+principles:
+  - id: P1
+    text: "어떤 규칙도 걸리지 않고 기술 후보가 없으며 필수 항목이 모두 채워졌을 때만 '진행 가능'"
+  - id: P2
+    text: "기술 후보를 정하지 못하면(사원 '잘 모르겠음' + 모델 신뢰도 기준 미만) '판단 보류 + 추가 확인 항목'으로 반환하고 권고는 '법무팀 검토 필요', 하위 선택지로 '기술보호 담당 확인', '제9조의2 판정 신청 검토'"
+  - id: P3
+    text: "실패·불확실은 '법무팀 검토 필요'로 전환. 자동 승인 없음"
+  - id: P4
+    text: "조항·판례 ID가 연결되지 않은 주장은 출력에서 제거"
+
+# 조직 설정 (시연용 시드 — 실제 값 아님)
+org_config:
+  home_country: KR
+  # 수출통제·제재 확인 대상 국가 예시. 실제 목록은 전략물자관리원 등 공식 자료로 교체 필요
+  sanctions_watchlist_example: [KP, IR, SY, RU, BY]
+  # 수출 신고 여부는 사원 입력(export_clearance)으로 받는다. 운영 단계에서는 사내 신고 이력과 연동해 자동 확인

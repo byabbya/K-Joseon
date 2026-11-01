@@ -1,0 +1,166 @@
+{
+  "scenario_id": "scenario_01",
+  "title": "프랑스 선급 사전 검토용 LNG 화물창 단열 상세도 + 방벽 사양서 이메일 반출",
+  "synthetic_notice": "해커톤 시연용 합성 문서 — 실제 설계와 무관 (K-Ship Guard AX) / 회사명 가상조선(주)은 가상이며 모든 수치·인명은 합성 데이터",
+  "generator": "scripts/make_demo_docs.py",
+  "request": {
+    "free_text": "프랑스 선급 사전 검토용으로 LNG 화물창 단열 시스템 상세 설계도와 방벽 사양서를 이메일로 공유합니다",
+    "purpose": "선급 도면승인",
+    "channel_code": "CH-01",
+    "recipient_type": "선급",
+    "recipient_country": "FR",
+    "transfer_method": "이메일",
+    "contract_basis": "",
+    "national_rnd_output": false,
+    "export_clearance": "",
+    "export_clearance_ref": "",
+    "employee_category_choice": "S02"
+  },
+  "request_notes": "contract_basis·export_clearance 는 의도적으로 공란 → 시스템이 계약 근거와 정부 수출 신고 여부를 질의해야 함 (docs/RULES.md 시연 흐름 참고)",
+  "approved_drawing_list": [
+    "DS-CCS-2601_방벽사양서_Rev.B.pdf",
+    "DG-CCS-2602_단열상세도_Rev.A.pdf",
+    "V01_03_036_128_2.png"
+  ],
+  "files": [
+    {
+      "filename": "DS-CCS-2601_방벽사양서_Rev.B.pdf",
+      "doc_no": "DS-CCS-2601",
+      "rev": "B",
+      "title": "LNG 화물창 방벽 사양서",
+      "doc_type": "사양서",
+      "on_approved_list": true,
+      "expected_S_codes": [
+        "S02",
+        "S08"
+      ],
+      "key_terms": [
+        "액화가스 화물창",
+        "화물창",
+        "방벽",
+        "1차 방벽",
+        "2차 방벽",
+        "단열시스템",
+        "단열 패널",
+        "펌프타워",
+        "설계 및 제조",
+        "멤브레인",
+        "스테인리스",
+        "강화 폴리우레탄 폼",
+        "R-PUF",
+        "cargo containment system",
+        "primary barrier",
+        "secondary barrier",
+        "insulation panel",
+        "pump tower",
+        "IGC Code",
+        "선급 규칙(액화가스 운반선)",
+        "-163°C",
+        "BOR",
+        "LNG",
+        "증발가스(BOG)",
+        "BOG",
+        "연료가스 공급",
+        "fuel gas supply",
+        "화물 펌프",
+        "cargo pump",
+        "대외비",
+        "선체 내벽"
+      ],
+      "page_count": 4,
+      "sha256": "9676a01c584a4016098855ac79bf893ecf923b48a7ed80e3ff0b371d592610b1",
+      "note": "7장에 증발가스(BOG)·연료가스 공급·화물 펌프 인터페이스 언급 → S08 부가 탐지 기대"
+    },
+    {
+      "filename": "DG-CCS-2602_단열상세도_Rev.A.pdf",
+      "doc_no": "DG-CCS-2602",
+      "rev": "A",
+      "title": "LNG 화물창 단열 시스템 상세도",
+      "doc_type": "도면",
+      "on_approved_list": true,
+      "expected_S_codes": [
+        "S02"
+      ],
+      "key_terms": [
+        "액화가스 화물창",
+        "화물창",
+        "방벽",
+        "1차 방벽",
+        "2차 방벽",
+        "단열시스템",
+        "단열 패널",
+        "펌프타워",
+        "설계 및 제조",
+        "멤브레인",
+        "R-PUF",
+        "cargo containment system",
+        "primary barrier",
+        "secondary barrier",
+        "insulation panel",
+        "-163°C",
+        "BOR",
+        "LNG",
+        "대외비",
+        "선체 내벽"
+      ],
+      "page_count": 1,
+      "sha256": "daa6659a25347286820c9b73a1255af2ea2f964753e986b411067f917eb59cd1"
+    },
+    {
+      "filename": "PR-CCS-2603_단열패널시공절차서_Rev.0.pdf",
+      "doc_no": "PR-CCS-2603",
+      "rev": "0",
+      "title": "단열 패널 시공 절차서",
+      "doc_type": "절차서",
+      "on_approved_list": false,
+      "expected_S_codes": [
+        "S02"
+      ],
+      "key_terms": [
+        "액화가스 화물창",
+        "화물창",
+        "방벽",
+        "1차 방벽",
+        "2차 방벽",
+        "단열시스템",
+        "단열 패널",
+        "펌프타워",
+        "insulation panel",
+        "LNG",
+        "대외비",
+        "선체 내벽"
+      ],
+      "page_count": 2,
+      "sha256": "a18d96515040743ea5b097ec3ae52ad0b63ff879de811e314303168493a658db",
+      "note": "의도적으로 승인 도면 목록에 없음 → '승인 목록 외 파일' 룰 트리거용"
+    },
+    {
+      "filename": "V01_03_036_128_2.png",
+      "doc_type": "도면",
+      "doc_no": null,
+      "title": "P&ID 샘플 (선택 첨부)",
+      "source_path": "C:\\K-Joseon\\data\\P&ID Data\\01.원천데이터\\V01\\036\\V01_03_036_128_2.png",
+      "label_path": "C:\\K-Joseon\\data\\P&ID Data\\02.라벨링데이터\\V01\\036\\V01_03_036_128_2.json",
+      "on_approved_list": true,
+      "selection_rule": "라벨 JSON(COCO)에서 카테고리명에 'Compressor' 또는 'Pump'가 포함된 annotation 수가 가장 많은 이미지",
+      "compressor_pump_counts": {
+        "Compressors@Compressor": 0,
+        "Pumps@Centrifugal Pump": 4,
+        "Pumps@Diaphragm Pump": 0,
+        "Pumps@Pump General": 0,
+        "Pumps@Screw Pump": 0
+      },
+      "compressor_pump_total": 4,
+      "total_annotations": 20,
+      "sha256": "2cd7a22c84db804cba68885f34d80028c0cd3ce0f69afdf4aa96d10a0e3958da",
+      "license_note": "AI-Hub P&ID 심볼 데이터 (라이선스 CC BY-NC). 비상업적 해커톤 시연 목적으로만 사용, 합성 문서 아님(공개 데이터 원본).",
+      "license_in_label": [
+        {
+          "id": 1,
+          "name": "CC BY-NC",
+          "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
+        }
+      ]
+    }
+  ]
+}
