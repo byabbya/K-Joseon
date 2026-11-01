@@ -25,3 +25,7 @@ data/kipris/raw/
 
 # 실행 로그
 *.log
+
+# 실행 중 생성되는 DB·첨부 원본
+data/app.db
+data/storage/
