@@ -12,9 +12,3 @@ export const SYMBOL_GROUPS: Record<string, { ko: string; color: string }> = {
 export const groupKo = (g: string) => SYMBOL_GROUPS[g]?.ko ?? g
 export const groupColor = (g: string) => SYMBOL_GROUPS[g]?.color ?? '#586880'
 
-/** "pid_groups.pt@0a1105127561" → "pid_groups@0a1105127561" */
-export function modelLine(version: Record<string, string | number> | undefined): string {
-  const w = String(version?.yolo_weights ?? '').replace(/\.pt(?=@|$)/, '')
-  const ocr = /PP-OCRv5/.test(String(version?.ocr_rec ?? version?.ocr_det ?? '')) ? 'PaddleOCR PP-OCRv5' : 'PaddleOCR'
-  return `${w ? `YOLO ${w}` : 'YOLO'} · ${ocr}`
-}

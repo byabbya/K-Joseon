@@ -82,6 +82,7 @@ class RuleHit(BaseModel):
     reason: str
     conditions: list[str] = Field(default_factory=list)
     internal_review_options: list[str] = Field(default_factory=list)
+    plain: str = ""                                     # 사원용 쉬운 이유 한 문장 (법 용어 없이)
 
 
 class FileResult(BaseModel):

@@ -119,7 +119,7 @@ def wiki_curator(s: State) -> State:
 def technology(s: State) -> State:
     c = {}
     for aid, ms in s["matches"].items():
-        cands = terms.candidates(ms)
+        cands = terms.candidates(ms, min_distinct=1 if s["extracted"][aid]["kind"] == "description" else terms.CONFIDENT_DISTINCT_TERMS)
         for sc in s["extracted"][aid].get("symbol_candidates", []):        # 도면 심볼 근거를 합친다
             same = next((x for x in cands if x["code"] == sc["code"]), None)
             if same:

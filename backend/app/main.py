@@ -330,7 +330,7 @@ def preview(body: PreviewIn):
             need.append({"field": key, "question": q})
     if foreign and codes:
         need.append({"field": "export_clearance", "question": "이번 반출에 대해 정부 수출 신고(또는 승인)를 받았나요?"})
-    if not body.has_files:
+    if not body.has_files and extracted.get("recipient_type", (None,))[0] in ("선급", "선주", "라이선서"):
         need.append({"field": "described_item.on_approved_list", "question": "보내려는 자료가 선급·선주 승인도면 목록에 있나요?"})
     return {"resolved": resolved, "tech_candidates": cands, "channel_code": reference.purpose_to_channel().get(
         extracted.get("purpose", (None,))[0] or ""), "need": need,

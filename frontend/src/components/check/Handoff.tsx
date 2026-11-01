@@ -4,33 +4,18 @@ import { useState } from 'react'
 import { useMeta } from '../../api/hooks'
 import type { Analysis, DecisionOut, Recommendation, RequestDetail } from '../../api/types'
 import { TONE_CLS, VERDICT_HEADLINE, VERDICT_TONE, fmtDate } from '../../lib/labels'
-import { Button, Collapsible, ErrorBox, IdTag, Pill, VerdictPill, cx } from '../ui'
-import { IconCheck, IconClock, IconGavel, IconNote, IconRefresh, IconSend2 } from '../icons'
-import { CitedText } from './citations'
+import { Button, ErrorBox, Pill, VerdictPill, cx } from '../ui'
+import { IconCheck, IconClock, IconGavel, IconRefresh, IconSend2 } from '../icons'
 
 const NEEDS_LEGAL: Recommendation[] = ['법무팀 검토 필요', '반출 불가']
 
-const HELP: Record<Recommendation, string> = {
-  '반출 불가': '이 방법으로는 보낼 수 없습니다. 다른 방법이 있는지 법무팀에 물어보세요. 질문과 이 답변이 함께 전달됩니다.',
-  '법무팀 검토 필요': '이 건은 법무팀 확인이 필요합니다. 질문·첨부와 이 답변이 인계 메모와 함께 전달되니, 따로 설명하지 않아도 됩니다.',
-  '조건부 진행': '위 조건을 지키면 보낼 수 있습니다. 조건을 지키기 어렵거나 판단이 애매하면 법무팀에 확인을 요청하세요.',
-  '진행 가능': '저촉 근거는 발견되지 않았습니다. 그래도 확신이 서지 않으면 법무팀에 확인을 요청할 수 있습니다.',
+/** 법무팀에 물어봐야 하는 권고일 때 버튼 위 한 줄 */
+const ASK_LINE: Partial<Record<Recommendation, string>> = {
+  '반출 불가': '다른 방법이 있는지 법무팀에 물어보세요. 질문과 이 답변이 함께 전달돼요.',
+  '법무팀 검토 필요': '보내기 전에 법무팀 확인을 받아 주세요. 질문과 이 답변이 함께 전달돼요.',
 }
 
-export function HandoffMemo({ a, defaultOpen }: { a: Analysis; defaultOpen?: boolean }) {
-  const handoff = a.explanation.handoff || a.explanation.handoff_memo
-  if (!handoff) return null
-  return (
-    <div className="rounded-field border border-line bg-surface-2 px-3 py-2">
-      <Collapsible label="인계 메모 미리보기 (법무팀에 함께 전달)" icon={<IconNote size={15} />} defaultOpen={defaultOpen}>
-        <p className="text-[13px] leading-relaxed whitespace-pre-line text-fg-2">
-          <CitedText text={handoff} />
-        </p>
-      </Collapsible>
-    </div>
-  )
-}
-
+/** 다음 동작 — '이렇게 하세요' 카드 아래쪽에 들어간다 (SystemAnswer nextStep) */
 export function NextStep({
   d,
   a,
@@ -57,56 +42,69 @@ export function NextStep({
   const notSent = s.status === '분석 완료' || s.status === '접수'
   const needs = NEEDS_LEGAL.includes(a.recommendation)
   return (
-    <section id="next-step" aria-labelledby="next-step-title" className="scroll-mt-20 rounded-card border border-line bg-surface px-5 py-4 shadow-card print:hidden" aria-live="polite">
-      <h2 id="next-step-title" className="mb-2.5 flex items-center gap-1.5 text-[15px] font-bold tracking-tight text-fg">
-        <IconSend2 size={16} className="text-muted" />
-        다음 단계
-      </h2>
-      {notSent && (
-        <div className="space-y-3">
-          <p className={cx('rounded-field px-3 py-2 text-[13.5px] leading-relaxed ring-1 ring-inset', needs ? 'bg-review-bg text-review-fg ring-review-line' : 'bg-surface-2 text-fg-2 ring-line')}>{HELP[a.recommendation]}</p>
-          <HandoffMemo a={a} />
-          <Button size="lg" variant={needs ? 'primary' : 'secondary'} className="w-full" onClick={onSubmit} disabled={submitting || busy}>
-            <IconSend2 size={16} />
-            {submitting ? '보내는 중…' : '법무팀에 확인 요청'}
-          </Button>
-          <p className="text-center text-[12px] text-muted">이 화면의 질문·첨부·답변이 확인 번호 하나로 묶여 법무팀에 전달됩니다. 답변이 오면 이 화면 맨 위에 표시됩니다.</p>
-          <ErrorBox error={submitError} />
-        </div>
-      )}
+    <div id="next-step" className="scroll-mt-24 print:hidden" aria-live="polite">
+      {notSent &&
+        (needs ? (
+          <div className="space-y-2.5">
+            <p className="max-w-[65ch] text-[14.5px] leading-6 text-fg-2">{ASK_LINE[a.recommendation]}</p>
+            <Button size="lg" className="w-full sm:w-auto" onClick={onSubmit} disabled={submitting || busy}>
+              <IconSend2 size={16} />
+              {submitting ? '보내는 중…' : '법무팀에 확인 요청'}
+            </Button>
+            <ErrorBox error={submitError} />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={submitting || busy}
+              className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-primary-ink underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              <IconSend2 size={14} />
+              {submitting ? '보내는 중…' : '그래도 법무팀에 물어보기'}
+            </button>
+            <ErrorBox error={submitError} />
+          </div>
+        ))}
       {s.status === '법무 검토 중' && (
-        <div className="space-y-3">
-          <p className="flex items-center gap-2 rounded-field bg-info-bg px-3 py-2.5 text-[13.5px] text-info-fg ring-1 ring-info-line ring-inset">
+        <div className="space-y-1.5">
+          <p className="flex items-center gap-2 rounded-field bg-info-bg px-3 py-2.5 text-[14px] text-info-fg ring-1 ring-info-line ring-inset">
             <IconClock size={16} className="shrink-0" />
-            <span className="min-w-0 flex-1">
-              <b>법무팀 답변 대기 중</b> — 답변이 오면 이 화면 맨 위에 자동으로 표시됩니다. 그 전에는 보내지 마세요.
-            </span>
+            <span className="min-w-0 flex-1">법무팀 답변을 기다리고 있어요. 답이 오면 이 화면 맨 위에 보여요.</span>
             <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-info-fg" aria-hidden />
           </p>
-          <p className="text-[12px] text-muted">요청 {fmtDate(s.submitted_at)} · 확인 번호 <span className="font-mono">{s.request_id}</span></p>
-          <HandoffMemo a={a} />
+          <p className="text-[12px] text-muted">요청 {fmtDate(s.submitted_at)}</p>
         </div>
       )}
       {last && (
         <div className="space-y-3">
-          <p className="text-[13.5px] text-fg-2">
-            법무팀 답변을 받았습니다 (<a href="#legal-answer" className="font-semibold text-primary-ink hover:underline">맨 위</a>). 답변의 조건을 지켜 보내세요.
+          <p className="text-[14px] text-fg-2">
+            법무팀 답변을 받았어요. <a href="#legal-answer" className="font-semibold text-primary-ink hover:underline">맨 위 답변</a>의 조건을 지켜 보내세요.
           </p>
           {last.verdict === '미승인' && s.status === '판정 완료' && (
             <div>
-              <Button variant="secondary" className="w-full" onClick={onResubmit} disabled={resubmitting}>
+              <Button variant="secondary" onClick={onResubmit} disabled={resubmitting}>
                 <IconRefresh size={15} />
                 {resubmitting ? '만드는 중…' : '고쳐서 다시 확인하기'}
               </Button>
-              <p className="mt-1.5 text-center text-[12px] text-muted">같은 질문과 첨부를 복사한 새 확인을 만듭니다. 고친 뒤 다시 법무팀에 확인을 요청하세요.</p>
               <ErrorBox error={resubmitError} className="mt-2" />
             </div>
           )}
-          {s.status === '재신청' && <p className="text-[12.5px] text-muted">이 건은 고쳐서 다시 확인한 새 건으로 이어졌습니다.</p>}
+          {s.status === '재신청' && <p className="text-[12.5px] text-muted">고쳐서 다시 확인한 새 건으로 이어졌어요.</p>}
         </div>
       )}
-    </section>
+    </div>
   )
+}
+
+/** 근거 ID → 사람이 읽는 이름 (조항: 법령 조문, 판례: 법원 사건번호). 모르면 ID 그대로 */
+function evidenceName(id: string, d: RequestDetail): string {
+  const c = d.analysis?.clauses.find((x) => x.clause_id === id)
+  if (c) return `${c.layer === 'notice' ? '국가핵심기술 고시' : c.law_name} ${c.article_no}`.replace(/\s+/g, ' ')
+  const p = d.analysis?.precedents.find((x) => x.case_id === id)
+  if (p) return `${p.court} ${p.case_no}`
+  return id
 }
 
 /** 법무팀 답변 — 시스템 답변보다 우선. 답변 화면 맨 위 */
@@ -164,14 +162,10 @@ export function LegalAnswerCard({ d }: { d: RequestDetail }) {
         </p>
       )}
       {last.checked_evidence.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1">
-          <span className="text-[11.5px] text-muted">법무팀이 본 근거</span>
-          {last.checked_evidence.map((e) => (
-            <IdTag key={e} className="!text-[10.5px]">
-              {e}
-            </IdTag>
-          ))}
-        </div>
+        <p className="mt-2 text-[12.5px] text-muted">
+          <span className="font-semibold">법무팀이 본 근거 · </span>
+          {last.checked_evidence.map((e) => evidenceName(e, d)).join(', ')}
+        </p>
       )}
       {d.decisions.length > 1 && (
         <div className="mt-2">

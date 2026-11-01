@@ -115,8 +115,9 @@ export function mockLlmText(a: Analysis): Record<string, string> {
   const s: string[] = []
   if (has('ITP-GUIDE-제17조')) s.push('외국 선급에 인증·승인용 기술자료를 주는 것도 국가핵심기술 수출로 볼 수 있습니다 [ITP-GUIDE-제17조].')
   if (rule('R04')) s.push('정부 수출 신고(또는 승인)를 받았는지 먼저 확인해야 합니다 [ITPA-제11조].')
-  if (rule('R06')) s.push('승인도면 목록에 없는 파일은 이번 제출 범위를 넘을 수 있습니다 [R06].')
-  if (!s.length) s.push('걸린 규칙 기준으로는 큰 문제가 보이지 않지만, 보호등급 표기와 반출 기록은 남겨 주세요.')
+  if (rule('R06')) s.push('승인도면 목록에 있는 파일만 이번 제출 범위에 들어갑니다 [R06].')
+  if (rule('R01')) s.push('외부 생성형 AI에 넣은 내용은 회사 밖 서버에 남아 되돌릴 수 없습니다 [R01].')
+  if (!s.length) s.push('특별히 걸리는 점은 없습니다. 문서의 보안등급 표기와 반출 기록은 그대로 남겨 주세요.')
   const todo: string[] = []
   if (rule('R04')) todo.push('정부 수출 신고(또는 승인)를 받았는지 법무팀과 확인하세요 [ITPA-제11조]')
   if (rule('R06')) todo.push('승인도면 목록 밖 파일은 빼고 보내세요 [R06]')

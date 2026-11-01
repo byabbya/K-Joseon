@@ -10,7 +10,7 @@ import { SystemAnswer } from '../components/check/Answer'
 import { QuestionCard } from '../components/check/QuestionCard'
 import { StatusStepper } from '../components/check/StatusStepper'
 import { checkTitle } from '../components/check/ListBits'
-import { RelatedList, searchModeLabel } from '../components/check/Related'
+import { RelatedList } from '../components/check/Related'
 import { PageHead } from '../components/PageHead'
 import { Button, ChoiceChip, ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconArrowLeft, IconCheck, IconGavel, IconHistory, IconLayers, IconPlus, IconSearch, IconX } from '../components/icons'
@@ -137,7 +137,7 @@ function HeaderStrip({ d }: { d: RequestDetail }) {
           {s.category_choice === '모름' ? '잘 모르겠음' : <IdTag tone="primary">{s.category_choice}</IdTag>}
           {a?.category_mismatch && (
             <Pill tone="review" size="xs">
-              모델 {a.model_categories.join('·')}
+              시스템 후보 {a.model_categories.join('·')}
             </Pill>
           )}
         </span>
@@ -428,16 +428,17 @@ function EvidenceSearch({ a, added, inOutput, onAdd }: { a: Analysis; added: str
           ? s.isFetching && !s.data
             ? '검색 중…'
             : s.data
-              ? `${searchModeLabel(s.data.mode, s.data.embedding)} · ${s.data.results.length}건`
+              ? `검색 결과 ${s.data.results.length}건`
               : ''
           : a.related?.length
-            ? `이 건의 참고 근거 ${a.related.length}건 (질문으로 미리 검색한 결과) — 판단에는 쓰지 않은 자료`
+            ? `이 건과 함께 보면 좋은 자료 ${a.related.length}건`
             : '두 글자 이상 적으면 검색합니다'}
       </p>
       <ErrorBox error={showing ? s.error : null} className="mt-1" />
       {results.length > 0 && (
         <div className={cx('thin-scroll mt-1.5 max-h-80 overflow-y-auto pr-0.5 transition-opacity', s.isPlaceholderData && showing && 'opacity-60')}>
           <RelatedList
+            showId
             dense
             items={results}
             action={(r) =>

@@ -79,6 +79,8 @@ export interface RuleHit {
   reason: string
   conditions: string[]
   internal_review_options: string[]
+  /** 사원용 쉬운 이유 한 문장 (법 용어 없이). 예전 분석에는 없을 수 있다 */
+  plain?: string
 }
 
 export interface FileResult {

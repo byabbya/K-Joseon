@@ -37,6 +37,7 @@ class Hit:
     reason: str
     conditions: list[str] = field(default_factory=list)
     internal_review_options: list[str] = field(default_factory=list)
+    plain: str = ""                       # 사원이 바로 이해할 쉬운 이유 한 문장
 
 
 @dataclass
@@ -102,6 +103,7 @@ def evaluate(req: dict, files: list[FileFacts]) -> EngineResult:
             "recipient_country_in_sanctions": country in sanctions,
             "export_clearance_ok": (not (foreign and f.s_codes)) or req.get("export_clearance") == "받음",
             "s_codes": ", ".join(sorted(f.s_codes)) or "-",
+            "s_labels": ", ".join(reference.category_label(c) for c in sorted(f.s_codes)) or "-",   # 사원용 문장엔 코드 대신 이름
             "channel_name": cfg["channels"].get(req.get("channel"), "-"),
         }
         facts["channel"] = req.get("channel")
@@ -109,35 +111,41 @@ def evaluate(req: dict, files: list[FileFacts]) -> EngineResult:
         for rule in cfg["rules"]:
             if rule["scope"] == "evidence":
                 continue
-            cases = rule.get("cases") or [{k: rule.get(k) for k in ("when", "outcome", "reason_template", "conditions")}]
+            cases = rule.get("cases") or [{k: rule.get(k) for k in ("when", "outcome", "reason_template", "conditions", "plain")}]
             for case in cases:
                 if not _match(case["when"], facts):
                     continue
                 if case.get("question") and rule["scope"] == "request":
                     _add_question(questions, Question(_field_of(case["when"]), case["question"], rule["id"]))
                 if case.get("outcome"):
+                    ctx = {**facts, "channel": facts["channel_name"]}
                     tmpl = case.get("reason_template") or rule.get("reason_template", "")
-                    hits.append(Hit(rule["id"], rule["name"], case["outcome"],
-                                    _render(tmpl, {**facts, "channel": facts["channel_name"]}),
-                                    list(case.get("conditions") or rule.get("conditions") or []),
-                                    list(rule.get("internal_review_options") or [])))
+                    conds = list(case.get("conditions") or rule.get("conditions") or [])
+                    if rule["id"] == "R05" and foreign:
+                        conds.append("받는 외국 기관과 비밀유지 계약이 있는지 확인하기")
+                    hits.append(Hit(rule["id"], rule["name"], case["outcome"], _render(tmpl, ctx), conds,
+                                    list(rule.get("internal_review_options") or []),
+                                    _render(case.get("plain") or rule.get("plain", ""), ctx)))
                 break
         # 규칙 수준 질문 (R04 수출 신고, R08 협력사 자료)
         if needs_export_check and req.get("export_clearance") is None:
             r04 = next(r for r in cfg["rules"] if r["id"] == "R04")
             _add_question(questions, Question("export_clearance", r04["question"], "R04"))
-        if f.on_approved_list == "모름":
+        # 승인도면 목록은 선급·선주·라이선서 제출에만 의미가 있다
+        if f.on_approved_list == "모름" and req.get("recipient_type") in ("선급", "선주", "라이선서"):
             what = f"'{f.label}'" if f.label else "보내려는 자료"
             _add_question(questions, Question("on_approved_list",
                                               f"{what}이(가) 선급·선주 승인도면 목록에 포함된 자료인가요?", "R06", f.asset_id))
         if f.contains_supplier_data == "모름":
             r08 = next(r for r in cfg["rules"] if r["id"] == "R08")
             _add_question(questions, Question("contains_supplier_data", r08["question_if_unknown"], "R08", f.asset_id))
-        # P2: 기술 후보를 정하지 못함 → 판단 보류 + 법무 검토
+        # P2: 기술 후보를 정하지 못함 → 판단 보류. 해외로 가면 법무 검토, 국내면 확인 조건
         if f.tech_status == "미확정":
-            hits.append(Hit("P2", "기술 후보 미확정", "법무팀 검토 필요",
+            hits.append(Hit("P2", "기술 후보 미확정", "법무팀 검토 필요" if foreign else "조건부 진행",
                             "문서에서 기술 항목 단서가 일부만 확인되어 S코드를 확정하지 못했습니다. 판단을 보류하고 확인이 필요합니다.",
-                            [], ["기술보호 담당 확인", "제9조의2 판정 신청 검토"]))
+                            [] if foreign else ["어느 기술과 관련된 자료인지 확인하기"],
+                            ["기술보호 담당 확인", "제9조의2 판정 신청 검토"],
+                            "핵심기술 관련 단서가 일부 보이지만, 어느 기술인지는 확실하지 않아요."))
             _add_question(questions, Question("category_choice", "이 파일이 어느 기술(S01~S08)과 관련되는지 확인해 주세요.", "P2", f.asset_id))
         file_hits[f.asset_id] = hits
 
@@ -151,7 +159,8 @@ def evaluate(req: dict, files: list[FileFacts]) -> EngineResult:
             out = "조건부 진행"
             file_hits[f.asset_id].append(Hit("P1", "필수 항목 미입력", out,
                                              "필수 항목이 모두 입력되어야 '진행 가능'을 판단할 수 있습니다.",
-                                             ["누락 항목을 입력하고 다시 분석"]))
+                                             ["빠진 항목에 답하고 다시 확인하기"], [],
+                                             "몇 가지 정보가 빠져 있어서 확정 답을 드리지 못했어요."))
         file_outcomes[f.asset_id] = out
 
     overall = max(file_outcomes.values(), key=_severity, default="법무팀 검토 필요")

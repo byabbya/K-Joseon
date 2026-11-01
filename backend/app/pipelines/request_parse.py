@@ -14,7 +14,7 @@ COUNTRIES = {
 CLASS_SOCIETIES = {"DNV": "NO", "ABS": "US", "LR": "GB", "로이드": "GB", "BV": "FR", "뷰로베리타스": "FR",
                    "한국선급": "KR", "ClassNK": "JP", "NK": "JP", "CCS": "CN", "RINA": "IT"}
 RECIPIENT_TYPES = [("선급", r"선급|classification"), ("라이선서", r"라이선서|licensor|GTT"),
-                   ("선주", r"선주|owner"), ("기자재 벤더", r"기자재|벤더|vendor|maker|메이커"),
+                   ("선주", r"선주|owner"), ("기자재 벤더", r"기자재|벤더|vendor|maker|메이커|협력사|협력\s*업체|도장\s*업체"),
                    ("설계 외주", r"외주|설계\s*용역|해외\s*설계\s*센터|협력\s*설계"), ("해외법인", r"해외\s*법인|현지\s*법인|자회사")]
 METHODS = [("외부 AI 서비스", r"ChatGPT|챗GPT|GPT|Gemini|제미나이|Claude|클로드|생성형\s*AI|외부\s*AI"),
            ("클라우드 링크", r"클라우드|구글\s*드라이브|드롭박스|원드라이브|링크"),
@@ -69,7 +69,11 @@ def extract(text: str) -> dict[str, tuple[object, str]]:
                    "해외법인": "해외법인 생산", "기자재 벤더": "기자재 인터페이스 협의"}.get(out["recipient_type"][0])
         if default:
             out["purpose"] = (default, f"수신자 유형 '{out['recipient_type'][0]}'에서 추정")
-    m = re.search(r"국가\s*(R&D|연구개발|과제)", text)
+    m = re.search(r"(국가\s*(R&D|연구개발|과제)\s*(산출물\s*)?(아님|아닌|아니|와\s*무관|무관))|자체\s*개발|사내\s*개발", text)
     if m:
-        out["national_rnd_output"] = (True, _span(text, m))
+        out["national_rnd_output"] = (False, _span(text, m))
+    else:
+        m = re.search(r"국가\s*(R&D|연구개발|과제)", text)
+        if m:
+            out["national_rnd_output"] = (True, _span(text, m))
     return out

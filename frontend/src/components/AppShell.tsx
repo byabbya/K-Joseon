@@ -1,6 +1,6 @@
 // 앱 틀 — 상단 내비게이션(제품 마크 · 역할별 메뉴 · 계정 컨트롤) + 본문 + 바닥줄.
 // 역할: 사원(확인하기 · 내 확인 기록 · 용어 위키) / 법무팀(확인 요청 목록 · 용어 위키). 계정 컨트롤에서 역할과 사용자를 고른다.
-// 바닥줄에는 로컬 처리 상태(LLM · 검색 · YOLO · OCR · 외부 호출 없음)를 작게 보인다 — 온프레미스 원칙.
+// 바닥줄: "최종 판단은 법무팀이 합니다" 한 줄. 법무팀 역할에만 '시스템 정보' 팝오버(로컬 처리 상태)를 둔다.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK } from '../api/client'
@@ -116,8 +116,8 @@ export function AppShell() {
 
       <footer className="app-footer border-t border-line bg-surface print:hidden">
         <div className="mx-auto flex max-w-page flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 text-[12px] text-muted sm:px-6">
-          <span className="font-medium text-fg-2">시스템은 근거와 권고까지 — 법적 해당성 확정과 최종 승인은 법무팀. 근거 없는 결론은 표시하지 않습니다</span>
-          <LocalStatus rules={meta.data?.rules_version} />
+          <span className="font-medium text-fg-2">최종 판단은 법무팀이 합니다</span>
+          {role === 'legal' && <SystemInfo rules={meta.data?.rules_version} />}
         </div>
       </footer>
     </div>
@@ -128,6 +128,42 @@ export function AppShell() {
 
 function Dot({ tone }: { tone: 'go' | 'cond' | 'off' }) {
   return <span aria-hidden className={cx('size-1.5 shrink-0 rounded-full', tone === 'go' ? 'bg-go-dot' : tone === 'cond' ? 'bg-cond-dot' : 'bg-line-strong')} />
+}
+
+/** 법무팀 화면 바닥줄 오른쪽 — 누르면 로컬 처리 상태를 작은 팝오버로 보인다 */
+function SystemInfo({ rules }: { rules?: string }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+  return (
+    <div ref={ref} className="relative ml-auto">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="system-info"
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1 rounded-field px-1.5 py-0.5 font-medium text-fg-2 hover:bg-surface-2 hover:text-fg"
+      >
+        시스템 정보
+        <IconChevronDown size={13} className={cx('transition-transform duration-150', !open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div id="system-info" role="dialog" aria-label="시스템 정보" className="absolute right-0 bottom-full z-50 mb-2 w-72 max-w-[calc(100vw-2rem)] animate-pop-in rounded-card border border-line bg-surface p-3 shadow-pop">
+          <LocalStatus rules={rules} />
+        </div>
+      )}
+    </div>
+  )
 }
 
 function LocalStatus({ rules }: { rules?: string }) {
@@ -148,25 +184,25 @@ function LocalStatus({ rules }: { rules?: string }) {
       ]
     : []
   return (
-    <div className="ml-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1" aria-label="로컬 처리 상태">
-      <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-2 px-2 py-0.5 font-semibold text-fg-2 ring-1 ring-line ring-inset">
+    <div className="space-y-1.5 text-[12px] text-fg-2" aria-label="로컬 처리 상태">
+      <p className="flex items-center gap-1.5 font-semibold text-fg">
         <span aria-hidden className="size-1.5 rounded-full bg-teal" />
-        로컬 처리
-      </span>
-      {q.isError && <span>상태 확인 불가 (백엔드 연결 없음)</span>}
-      {items.map((it) => (
-        <span key={it.text} title={it.title} className="inline-flex items-center gap-1">
-          <Dot tone={it.tone} />
-          {it.text}
-          <span className="sr-only"> — {it.title}</span>
-        </span>
-      ))}
-      {st && (
-        <span className="inline-flex items-center gap-1 font-medium text-go-fg" title={st.external_calls}>
-          외부 네트워크 호출 없음
-        </span>
-      )}
-      <span className="font-mono tabular-nums">rules {st?.rules ?? rules ?? '—'}</span>
+        로컬 처리 · 외부 네트워크 호출 없음
+      </p>
+      {q.isError && <p className="text-muted">상태 확인 불가 (백엔드 연결 없음)</p>}
+      <ul className="space-y-1">
+        {items.map((it) => (
+          <li key={it.text} className="flex items-start gap-1.5">
+            <span className="mt-1.5">
+              <Dot tone={it.tone} />
+            </span>
+            <span className="min-w-0">
+              {it.text} <span className="text-muted">— {it.title}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="font-mono text-[11px] text-muted tabular-nums">rules {st?.rules ?? rules ?? '—'}</p>
     </div>
   )
 }

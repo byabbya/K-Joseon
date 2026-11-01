@@ -62,7 +62,8 @@ def match_pages(pages: list[str]) -> list[Match]:
     return out
 
 
-def candidates(matches: list[Match]) -> list[dict]:
+def candidates(matches: list[Match], min_distinct: int = CONFIDENT_DISTINCT_TERMS) -> list[dict]:
+    """min_distinct: 후보 확정에 필요한 서로 다른 용어 수. 질문 문장(짧음)은 1개로도 확정한다."""
     by_code: dict[str, list[Match]] = {}
     for m in matches:
         by_code.setdefault(m.term.code, []).append(m)
@@ -77,6 +78,6 @@ def candidates(matches: list[Match]) -> list[dict]:
             ev.append({"term": m.term.surface, "term_id": m.term.term_id, "page": m.page, "snippet": m.snippet, "source": "text"})
         result.append({"code": code, "label": reference.category_label(code),
                        "score": round(min(1.0, len(distinct) / 5), 2),
-                       "confident": len(distinct) >= CONFIDENT_DISTINCT_TERMS,
+                       "confident": len(distinct) >= min_distinct,
                        "evidence": ev[:MAX_EVIDENCE_PER_CODE]})
     return result

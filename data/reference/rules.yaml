@@ -48,6 +48,7 @@ derived:
 rules:
   - id: R01
     name: 외부 생성형 AI 입력
+    plain: "외부 생성형 AI에 넣은 자료는 회사 밖 서버로 나가서 되돌릴 수 없어요."
     origin: 정의서
     scope: request
     when: {transfer_method: 외부 AI 서비스}
@@ -59,6 +60,7 @@ rules:
 
   - id: R02
     name: 국가 R&D 산출물의 국외 제공
+    plain: "국가 연구비로 만든 핵심기술을 해외로 보내려면 정부 사전 승인이 먼저예요."
     origin: 추가
     scope: file
     when: {national_rnd_output: true, tech_candidate: true, foreign_recipient: true}
@@ -71,6 +73,7 @@ rules:
 
   - id: R03
     name: 외국 수신자에게 외주·해외생산·기술이전
+    plain: "해외 회사에 외주·생산·기술이전으로 핵심기술 자료를 넘기면 '수출'이라 정부 승인·신고가 필요할 수 있어요."
     origin: 정의서
     scope: file
     when: {foreign_recipient: true, tech_candidate: true, channel_in: [CH-05, CH-06, CH-08]}
@@ -83,6 +86,7 @@ rules:
 
   - id: R04
     name: 외국 수신자 제공 — 정부 수출 신고 미확인
+    plain: "{s_labels} 관련 자료예요. 외국 기관에 인증용으로 주는 것도 '수출'로 봐서, 정부 수출 신고를 했는지 확인이 필요해요."
     origin: 추가
     scope: file
     when: {foreign_recipient: true, tech_candidate: true, channel_in: [CH-01, CH-02, CH-03, CH-04, CH-07, CH-09], export_clearance_ok: false}
@@ -97,16 +101,15 @@ rules:
 
   - id: R05
     name: 승인 경로 정상 제출
+    plain: "{recipient_type} 제출 경로이고 계약({contract_basis})이 있어요. 조건을 지키면 보낼 수 있어요."
     origin: 정의서
     scope: file
     when: {recipient_type_in: [선급, 선주, 라이선서], contract_basis_in: [선급 계약, 선주 사양서, 라이선스, NDA], on_approved_list: 포함, export_clearance_ok: true}
     outcome: 조건부 진행
     conditions:
-      - "승인도면 목록에 포함된 파일만 전송"
-      - "문서의 보호등급 표기를 유지 (지침 제13조 제1호)"
-      - "반출 승인 기록을 남김 (지침 제13조 제4호)"
-      - "외국 수신자이면 수신처 취급자와 비밀유지 계약 확인 (지침 제19조의3 제4호)"
-      - "사원이 입력한 수출 신고번호를 법무팀이 확인 (export_clearance = 받음 인 경우)"
+      - "승인도면 목록에 있는 파일만 보내기"
+      - "문서의 보안등급 표기(대외비 등)는 지우지 않기"
+      - "사내 반출 승인 기록 남기기"
     reason_template: "{recipient_type} 제출 경로이고 계약 근거({contract_basis})가 있으며 승인도면 목록에 포함된 파일입니다."
     legal_basis: [ITP-GUIDE-제13조, ITP-GUIDE-제19조의3]
     basis_note: "지침 제13조 제1호·제4호(보호등급 표기, 반출 승인) / 지침 제19조의3 제4호(외국 수신처 비밀유지 계약)"
@@ -117,9 +120,17 @@ rules:
     name: 승인도면 목록 밖 파일
     origin: 정의서
     scope: file
-    when: {on_approved_list_in: [미포함, 모름]}
-    outcome: 법무팀 검토 필요
-    reason_template: "이 파일은 선급·선주 승인도면 목록에 {on_approved_list}으로 표시되어 제출 범위를 넘을 수 있습니다. 파일별로 판단합니다."
+    # 정의서: "미포함·모름이면 범위 초과 가능성으로 표시" — 목록 밖으로 확인된 파일만 법무 검토, 모름은 조건으로
+    cases:
+      - when: {on_approved_list: 미포함, recipient_type_in: [선급, 선주, 라이선서]}
+        outcome: 법무팀 검토 필요
+        reason_template: "이 파일은 선급·선주 승인도면 목록에 없어 제출 범위를 넘습니다. 파일별로 판단합니다."
+        plain: "승인도면 목록에 없는 파일이 섞여 있어요. 제출 범위를 넘는 자료는 법무팀 확인이 필요해요."
+      - when: {on_approved_list: 모름, recipient_type_in: [선급, 선주, 라이선서]}
+        outcome: 조건부 진행
+        reason_template: "승인도면 목록 포함 여부가 확인되지 않았습니다. 목록에 있는 파일만 보내야 합니다."
+        plain: "승인도면 목록에 있는 자료인지 아직 모르는 상태예요."
+        conditions: ["승인도면 목록을 확인해 목록에 있는 파일만 보내기"]
     internal_review_options: [승인도면 목록 재확인, 설계 부서장 확인]
     legal_basis: [ITP-GUIDE-제13조]
     basis_note: "지침 제13조 제4호(반출 시 관리책임자 승인)"
@@ -136,15 +147,18 @@ rules:
       - when: {contract_basis: 없음, tech_candidate: true}
         outcome: 법무팀 검토 필요
         reason_template: "비밀유지 등 계약 근거 없이 {s_codes} 관련 자료를 외부에 제공합니다."
+        plain: "비밀유지 계약 없이 핵심기술 관련 자료를 보내려고 해요."
       - when: {contract_basis: 없음, tech_candidate: false}
         outcome: 조건부 진행
-        conditions: ["전송 전 NDA 체결"]
+        plain: "받는 곳과 비밀유지 계약이 없어요."
+        conditions: ["보내기 전에 비밀유지 계약(NDA) 맺기"]
     legal_basis: [ITPA-제14조, ITP-GUIDE-제19조의3]
     basis_note: "법 제14조 제2호(계약상 비밀유지의무) / 지침 제19조의3 제4호(간소화 조건인 비밀유지 계약)"
     precedent_cards: [PREC-2013나27475, PREC-2007카합3903]
 
   - id: R08
     name: 협력사 기술자료 제3자 제공
+    plain: "협력사에게서 받은 도면을 다른 업체에 주면 하도급법 위반이 될 수 있어요."
     origin: 추가
     scope: file
     when: {contains_supplier_data_in: [예, 모름], recipient_type_in: [기자재 벤더, 설계 외주, 해외법인, 기타]}
@@ -167,6 +181,7 @@ rules:
       - when: {recipient_country_in_sanctions: true}
         outcome: 법무팀 검토 필요
         reason_template: "수신 국가({recipient_country})가 수출통제·제재 확인 대상입니다."
+        plain: "받는 나라가 수출통제 확인 대상이에요."
         internal_review_options: [전략물자 자가판정]
     legal_basis: [FTA-제19조, FTA-제19조의2]
     basis_note: "대외무역법 제19조의2(전략물자 수출허가)"

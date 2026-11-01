@@ -76,11 +76,34 @@ def test_supplier_data_to_vendor_needs_review_and_unknown_asks():
     assert any(q.field == "contains_supplier_data" and q.asset_id == "b" for q in res.questions)
 
 
-def test_uncertain_tech_holds_for_review():
+def test_uncertain_tech_holds_and_escalates_only_abroad():
+    domestic = evaluate({**BASE, "recipient_country": "KR", "contract_basis": "선급 계약"},
+                        [FileFacts("a", "포함", "아니오", set(), "미확정")])
+    assert domestic.on_hold and domestic.file_outcomes["a"] == "조건부 진행"
+    abroad = evaluate({**BASE, "contract_basis": "선급 계약", "export_clearance": "받음"},
+                      [FileFacts("a", "포함", "아니오", set(), "미확정")])
+    assert abroad.file_outcomes["a"] == "법무팀 검토 필요"
+
+
+def test_unknown_approved_list_is_a_condition_not_legal_review():
     req = {**BASE, "recipient_country": "KR", "contract_basis": "선급 계약"}
-    res = evaluate(req, [FileFacts("a", "포함", "아니오", set(), "미확정")])
-    assert res.on_hold
-    assert res.file_outcomes["a"] == "법무팀 검토 필요"
+    res = evaluate(req, [FileFacts("a", "모름", "아니오", set(), "후보 없음")])
+    assert res.file_outcomes["a"] == "조건부 진행"
+    assert any("목록" in c for h in res.file_hits["a"] for c in h.conditions)
+    missing = evaluate(req, [FileFacts("a", "미포함", "아니오", set(), "후보 없음")])
+    assert missing.file_outcomes["a"] == "법무팀 검토 필요"
+
+
+def test_domestic_vendor_with_nda_and_no_core_tech_can_proceed():
+    req = {"purpose": "기자재 인터페이스 협의", "channel": "CH-04", "recipient_type": "기자재 벤더", "recipient_country": "KR",
+           "transfer_method": "이메일", "contract_basis": "NDA", "national_rnd_output": False, "export_clearance": None}
+    res = evaluate(req, [FileFacts("a", "포함", "아니오", set(), "후보 없음")])
+    assert res.recommendation == "진행 가능" and not res.on_hold
+
+
+def test_plain_reasons_are_filled():
+    res = evaluate(BASE, scenario_files())
+    assert all(h.plain for hs in res.file_hits.values() for h in hs)
 
 
 def test_sanctioned_country_needs_review():

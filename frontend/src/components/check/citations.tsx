@@ -16,10 +16,14 @@ export interface Sentence {
   cites: string[]
   /** 출처가 없어 시스템 메모로만 보이는 문장 */
   memo?: boolean
+  /** 법무팀 화면에서 쓰는 원래 문장 (규칙 ID·이름·사유) */
+  formal?: string
 }
 
 export interface Citations {
   prefix: string
+  /** 사원 화면이면 ID·규칙 번호를 숨긴다 */
+  audience: 'employee' | 'legal'
   list: (Source & { n: number })[]
   num: (id: string) => number | undefined
   forRule: (rid: string) => string[]
@@ -37,7 +41,7 @@ export function noticeId(code: string) {
   return `NCT-NOTICE-별표-${code}`
 }
 
-export function buildCitations(a: Analysis, catLabel: (c: string) => string): Citations {
+export function buildCitations(a: Analysis, catLabel: (c: string) => string, audience: 'employee' | 'legal' = 'employee'): Citations {
   const sources = new Map<string, Source>()
   const clauses = [...a.clauses].sort((x, y) => x.order - y.order)
   for (const c of clauses) sources.set(c.clause_id, { kind: 'clause', id: c.clause_id, c })
@@ -66,7 +70,7 @@ export function buildCitations(a: Analysis, catLabel: (c: string) => string): Ci
   abstract.push({ text: `전체 권고는 '${rec}'입니다 — ${REC_ANSWER[rec]}.`, cites: recCites, memo: !recCites.length })
   for (const h of ranked.slice(0, 2)) {
     const cites = forRule(h.rule_id)
-    abstract.push({ text: `${h.rule_id} ${h.name}: ${h.reason || h.name}`, cites, memo: !cites.length })
+    abstract.push({ text: (h.plain || h.reason || h.name).trim(), formal: `${h.rule_id} ${h.name}: ${h.reason || h.name}`, cites, memo: !cites.length })
   }
   const codes = [...new Set<string>([...a.model_categories, ...(a.employee_category_choice !== '모름' ? [a.employee_category_choice] : [])])].sort() as SCode[]
   if (codes.length) {
@@ -91,6 +95,7 @@ export function buildCitations(a: Analysis, catLabel: (c: string) => string): Ci
   const nums = new Map(order.map((id, i) => [id, i + 1]))
   return {
     prefix: `rpt-${a.request_id.replace(/[^A-Za-z0-9-]/g, '')}`,
+    audience,
     list: order.map((id) => ({ ...sources.get(id)!, n: nums.get(id)! })),
     num: (id) => nums.get(id),
     forRule,
@@ -101,8 +106,8 @@ export function buildCitations(a: Analysis, catLabel: (c: string) => string): Ci
 
 const Ctx = createContext<Citations | null>(null)
 
-export function CitationProvider({ a, catLabel, children }: { a: Analysis; catLabel: (c: string) => string; children: (c: Citations) => ReactNode }) {
-  const value = useMemo(() => buildCitations(a, catLabel), [a, catLabel])
+export function CitationProvider({ a, catLabel, audience = 'employee', children }: { a: Analysis; catLabel: (c: string) => string; audience?: 'employee' | 'legal'; children: (c: Citations) => ReactNode }) {
+  const value = useMemo(() => buildCitations(a, catLabel, audience), [a, catLabel, audience])
   return <Ctx.Provider value={value}>{children(value)}</Ctx.Provider>
 }
 
@@ -205,16 +210,18 @@ export function Cite({ ids, className }: { ids: string[]; className?: string }) 
 
 /** 문장 한 줄: 출처가 있으면 '발견' + 인용 칩, 없으면 시스템 메모 */
 export function CitedSentence({ s }: { s: Sentence }) {
+  const ctx = useCitations()
+  const text = ctx?.audience === 'legal' && s.formal ? s.formal : s.text
   if (s.memo)
     return (
       <p className="flex gap-2 rounded-[6px] bg-surface-2 px-2.5 py-1.5 text-[12.5px] leading-relaxed text-muted ring-1 ring-line ring-inset">
         <span className="shrink-0 text-[10.5px] font-bold tracking-[0.05em]">시스템 메모</span>
-        <span className="min-w-0">{s.text}</span>
+        <span className="min-w-0">{text}</span>
       </p>
     )
   return (
     <p className="text-[13.5px] leading-relaxed text-fg">
-      {s.text} <Cite ids={s.cites} />
+      {text} <Cite ids={s.cites} />
     </p>
   )
 }
@@ -329,7 +336,7 @@ export function References() {
                 <span>{s.kind === 'clause' ? s.c.title : s.p.title.slice(0, 60) + (s.p.title.length > 60 ? '…' : '')}</span>
                 <span className="tabular-nums">{s.kind === 'clause' ? `시행 ${s.c.effective_date}` : `선고 ${s.p.decision_date}`}</span>
                 <ExtLink href={s.kind === 'clause' ? s.c.source_url : s.p.source_url}>국가법령정보센터</ExtLink>
-                <span className="font-mono text-[10.5px]">{s.id}</span>
+                {ctx.audience === 'legal' && <span className="font-mono text-[10.5px]">{s.id}</span>}
               </span>
             </span>
           </li>

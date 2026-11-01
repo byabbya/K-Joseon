@@ -277,6 +277,8 @@
     opacity: 1;
   }
   .collapse-grid > * {
+    /* 접힌 안쪽의 absolute 요소(sr-only·툴팁)도 잘리도록 — 아니면 빈 스크롤이 생긴다 */
+    position: relative;
     overflow: hidden;
     min-height: 0;
     min-width: 0;

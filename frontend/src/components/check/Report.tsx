@@ -5,13 +5,13 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useMeta } from '../../api/hooks'
 import type { Analysis, Axis, AxisKey, ClauseRef, DecisionOut, FileResult, PrecedentCard, Recommendation, Verdict } from '../../api/types'
-import { AXIS_ORDER, isLegacyAxes, resolveAxes } from '../../lib/axes'
-import { FIELD_LABEL, SANCTIONED, TONE_CLS, VERDICT_TONE, W5H1, countryName, type Tone } from '../../lib/labels'
+import { AXIS_ORDER, resolveAxes } from '../../lib/axes'
+import { FIELD_LABEL, REC_TONE, SANCTIONED, TONE_CLS, VERDICT_TONE, W5H1, countryName, type Tone } from '../../lib/labels'
 import { Button, Collapsible, ExtLink, IdTag, Pill, RecPill, Tooltip, cx } from '../ui'
-import { IconAlert, IconArrowLeft, IconBook, IconCheckCircle, IconFileText, IconInfo, IconScale } from '../icons'
+import { IconAlert, IconArrowLeft, IconBook, IconCheckCircle, IconFileText, IconInfo, IconRefresh, IconScale } from '../icons'
 import { changedParts, isTextOnly } from './model'
 import { Cite, CitedSentence, References, useCitations } from './citations'
-import { RelatedList, searchModeLabel } from './Related'
+import { RelatedList } from './Related'
 
 export type Audience = 'employee' | 'legal'
 
@@ -29,7 +29,7 @@ export function Report({ a, prev, decisions, audience }: { a: Analysis; prev: An
           ))}
         </div>
       </Block>
-      <Block n={2} title="판단 축 4개" sub="네 축은 따로 정해지며, 어느 하나가 다른 값을 자동으로 정하지 않습니다" className={ch('axis')}>
+      <Block n={2} title="판단 축 4개" sub={audience === 'legal' ? '네 축은 따로 정해지며, 어느 하나가 다른 값을 자동으로 정하지 않습니다' : undefined} className={ch('axis')}>
         <AxesStrip a={a} decisions={decisions} />
         <div className="mt-3">
           <p className="mb-1.5 text-[12px] font-semibold text-fg-2">관련 기술 후보 — {audience === 'legal' ? '사원 선택' : '내 선택'}과 시스템 후보는 따로 저장</p>
@@ -40,7 +40,7 @@ export function Report({ a, prev, decisions, audience }: { a: Analysis; prev: An
         n={3}
         title={textOnly ? '질문에 설명한 자료' : '파일별 판단'}
         count={textOnly ? undefined : a.files.length}
-        sub={textOnly ? '파일이 없어 질문 문장 속 용어로 판단했습니다. 파일을 붙이면 파일마다 따로 판단합니다' : '파일마다 따로 판단합니다 (대법원 2011도1614 취지). 규칙 옆 번호는 그 규칙에 연결된 출처입니다'}
+        sub={textOnly ? '질문 문장 속 용어로 판단했어요' : audience === 'legal' ? '파일마다 따로 판단 (대법원 2011도1614 취지)' : '파일마다 따로 판단해요'}
       >
         <SummaryTable a={a} changed={changed} />
         <FileReasons a={a} />
@@ -53,7 +53,7 @@ export function Report({ a, prev, decisions, audience }: { a: Analysis; prev: An
       </Block>
       <Block n={6} title="확인 사항" icon={<IconAlert size={15} />} className={ch('missing')}>
         <Checks a={a} />
-        {!!a.wiki_drafts?.length && (
+        {audience === 'legal' && !!a.wiki_drafts?.length && (
           <p className="mt-3 flex flex-wrap items-center gap-x-1.5 rounded-[6px] bg-surface-2 px-2.5 py-1.5 text-[12.5px] text-fg-2 ring-1 ring-line ring-inset">
             <IconBook size={13} className="shrink-0 text-muted" />
             이번 문서에서 위키 후보 {a.wiki_drafts.length}개를 제안했습니다
@@ -68,15 +68,10 @@ export function Report({ a, prev, decisions, audience }: { a: Analysis; prev: An
         <References />
       </Block>
       {!!a.related?.length && (
-        <Block
-          title="참고: 검색으로 찾은 관련 근거"
-          count={a.related.length}
-          sub={`판단에는 쓰지 않은 참고 자료 — 질문과 기술 후보로 ${searchModeLabel(a.related[0]?.mode)}한 결과입니다. 위 출처 번호와 별개입니다`}
-        >
-          <RelatedList items={a.related} />
+        <Block title="함께 보면 좋은 자료" count={a.related.length}>
+          <RelatedList items={a.related} showId={audience === 'legal'} />
         </Block>
       )}
-      <VersionsFooter a={a} />
       <div className="flex flex-wrap items-center gap-2 bg-surface-2 px-5 py-2.5 print:hidden">
         <span className="text-[11.5px] text-muted">보관하거나 다른 담당자와 공유할 때</span>
         <Button variant="secondary" size="sm" className="ml-auto" onClick={() => window.print()}>
@@ -160,7 +155,7 @@ function SummaryTable({ a, changed }: { a: Analysis; changed: Set<string> }) {
                 <span className="flex flex-col gap-1">
                   {f.rule_hits.map((h, i) => (
                     <span key={`${h.rule_id}-${i}`} className="inline-flex flex-wrap items-baseline gap-1" title={h.reason || h.name}>
-                      <IdTag className="!text-[10.5px] !leading-4">{h.rule_id}</IdTag>
+                      {cit?.audience === 'legal' ? <IdTag className="!text-[10.5px] !leading-4">{h.rule_id}</IdTag> : <span className="text-fg-2">{h.name}</span>}
                       <Cite ids={cit?.forRule(h.rule_id) ?? []} />
                     </span>
                   ))}
@@ -208,14 +203,19 @@ function CandTag({ c }: { c: FileResult['model_candidates'][number] }) {
   )
 }
 
-/** 파일별 규칙 사유와 파이프라인 메모 — 표에는 ID만 있으므로 문장은 여기서 (출처 칩 포함) */
+const plainOfHit = (h: FileResult['rule_hits'][number]) => (h.plain || h.reason || h.name).trim()
+
+/** 사원 화면: 근거 데이터 문장 속 규칙 번호([R04])·경로 코드(CH-01)를 뺀다 */
+const forEmployee = (t: string) => t.replace(/\[(?:R|P)\d{1,2}[a-z]?\]\s*/g, '').replace(/CH-\d{2}\s*/g, '').trim()
+
+/** 파일별 규칙 사유 — 사원은 쉬운 이유, 법무팀은 규칙 ID + 원래 사유 + 처리 메모 (출처 칩 포함) */
 function FileReasons({ a }: { a: Analysis }) {
   const cit = useCitations()
   const any = a.files.some((f) => f.rule_hits.length || f.notes.length)
   if (!any) return null
   return (
     <div className="mt-2">
-      <Collapsible label="파일별 규칙 사유 보기" variant="inline">
+      <Collapsible label="파일별 이유 보기" variant="inline">
         <ul className="space-y-2.5">
           {a.files.map((f) => (
             <li key={f.asset_id}>
@@ -227,18 +227,20 @@ function FileReasons({ a }: { a: Analysis }) {
               <div className="mt-1 space-y-1 border-l border-line pl-3">
                 {f.rule_hits.map((h, i) => {
                   const ids = cit?.forRule(h.rule_id) ?? []
+                  const legal = cit?.audience === 'legal'
                   return (
                     <p key={`${h.rule_id}-${i}`} className={cx('text-[12.5px] leading-snug', ids.length ? 'text-fg-2' : 'text-muted')}>
-                      <IdTag className="mr-1 !text-[10.5px] !leading-4">{h.rule_id}</IdTag>
-                      {h.reason || h.name} {ids.length ? <Cite ids={ids} /> : <span className="text-[11px]">(시스템 메모 · 연결된 출처 없음)</span>}
+                      {legal && <IdTag className="mr-1 !text-[10.5px] !leading-4">{h.rule_id}</IdTag>}
+                      {legal ? h.reason || h.name : plainOfHit(h)} {ids.length ? <Cite ids={ids} /> : legal && <span className="text-[11px]">(시스템 메모 · 연결된 출처 없음)</span>}
                     </p>
                   )
                 })}
-                {f.notes.map((n, i) => (
-                  <p key={i} className="text-[11.5px] text-muted">
-                    ※ {n}
-                  </p>
-                ))}
+                {cit?.audience === 'legal' &&
+                  f.notes.map((n, i) => (
+                    <p key={i} className="text-[11.5px] text-muted">
+                      ※ {n}
+                    </p>
+                  ))}
               </div>
             </li>
           ))}
@@ -279,7 +281,6 @@ function axisTone(ax: Axis): Tone {
 export function AxesStrip({ a, decisions }: { a: Analysis; decisions: DecisionOut[] }) {
   const axes = resolveAxes(a, decisions)
   const [open, setOpen] = useState<AxisKey | null>(null)
-  const legacy = isLegacyAxes(a)
   return (
     <div>
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="판단 축 4개 (서로 독립)">
@@ -314,12 +315,6 @@ export function AxesStrip({ a, decisions }: { a: Analysis; decisions: DecisionOu
           )
         })}
       </ul>
-      {legacy && (
-        <p className="mt-2 flex items-start gap-1.5 text-[11.5px] text-muted">
-          <IconInfo size={13} className="mt-px shrink-0" />
-          판단 축 도입 전에 만든 답변이라 기존 결과로 채웠습니다. 다시 확인하면 갱신됩니다.
-        </p>
-      )}
     </div>
   )
 }
@@ -392,10 +387,10 @@ function ScopeChecks({ a }: { a: Analysis }) {
   const sanction: { tone: 'go' | 'review' | 'stop'; text: string } = r09
     ? { tone: 'stop', text: r09.reason || '제재·수출통제 확인 대상국 — 법무 검토' }
     : missingCountry || !country
-      ? { tone: 'review', text: '수신 국가 미입력 — 확인 불가 (R09 질문)' }
+      ? { tone: 'review', text: '받는 나라를 몰라 확인하지 못했어요' }
       : SANCTIONED.includes(country)
         ? { tone: 'stop', text: `${countryName(country)} — 확인 대상국` }
-        : { tone: 'go', text: `${countryName(country)} — 시연용 제재·수출통제 확인 대상국 목록에 없음 (R09 미해당)` }
+        : { tone: 'go', text: `${countryName(country)} — 확인 대상국 아님` }
   return (
     <div className="grid gap-3 text-[13px] sm:grid-cols-2">
       <div>
@@ -432,6 +427,7 @@ function ScopeChecks({ a }: { a: Analysis }) {
 /* ---------------- 더 확인이 필요한 것 ---------------- */
 
 function MissingList({ a }: { a: Analysis }) {
+  const legal = useCitations()?.audience === 'legal'
   if (!a.missing.length)
     return (
       <p className="flex items-center gap-1.5 text-[13px] text-go-fg">
@@ -449,7 +445,7 @@ function MissingList({ a }: { a: Analysis }) {
             <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-cond-dot" />
             <span className="min-w-0">
               <span className="font-semibold text-fg">{FIELD_LABEL[m.field] ?? m.field}</span> — {m.question}
-              {m.rule_id && <IdTag className="ml-1.5 !text-[10.5px] !leading-4">{m.rule_id}</IdTag>}
+              {legal && m.rule_id && <IdTag className="ml-1.5 !text-[10.5px] !leading-4">{m.rule_id}</IdTag>}
             </span>
           </li>
         ))}
@@ -458,21 +454,7 @@ function MissingList({ a }: { a: Analysis }) {
   )
 }
 
-function VersionsFooter({ a }: { a: Analysis }) {
-  return (
-    <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-surface-2 px-5 py-2 text-[11px] text-muted">
-      <span className="font-mono break-all">{Object.entries(a.versions).map(([k, v]) => `${k} ${v}`).join(' · ')}</span>
-      <span className="ml-auto inline-flex items-center gap-1.5">
-        답변 문장
-        <Pill tone={a.explanation_source === 'llm' ? 'info' : 'neutral'} size="xs">
-          {a.explanation_source === 'llm' ? '로컬 LLM' : a.explanation_pending ? '템플릿 · LLM 다듬는 중' : '템플릿'}
-        </Pill>
-      </span>
-    </footer>
-  )
-}
-
-/* ---------------- 이전 답변 대비 ---------------- */
+/* ---------------- 답변이 바뀌었어요 ---------------- */
 
 export function deltaSummary(prev: Analysis, next: Analysis) {
   const changes = new Map<string, { from: Recommendation; to: Recommendation; files: string[] }>()
@@ -487,39 +469,31 @@ export function deltaSummary(prev: Analysis, next: Analysis) {
   return { overallChanged: prev.recommendation !== next.recommendation, fileChanges: [...changes.values()] }
 }
 
-function Arrow() {
-  return <IconArrowLeft size={12} className="rotate-180 text-muted" />
+/** 짧은 권고 이름 (바뀐 답 한 줄에 쓴다) */
+const REC_SHORT: Record<Recommendation, string> = {
+  '진행 가능': '진행 가능',
+  '조건부 진행': '조건부 진행',
+  '법무팀 검토 필요': '법무팀 확인 필요',
+  '반출 불가': '반출 불가',
 }
 
+/** 다시 확인한 뒤 한 줄 — "답변이 바뀌었어요: 법무팀 확인 필요 → 조건부 진행" */
 export function DeltaLine({ prev, next }: { prev: Analysis; next: Analysis }) {
-  const d = deltaSummary(prev, next)
-  const missDiff = prev.missing.length - next.missing.length
-  const before = new Set(prev.files.map((f) => f.asset_id))
-  const attached = next.files.filter((f) => f.kind !== 'description' && !before.has(f.asset_id)).length
+  const changed = prev.recommendation !== next.recommendation
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-field bg-surface px-3 py-2 text-[12.5px] text-fg-2 ring-1 ring-line ring-inset">
-      <span className="text-[11.5px] font-bold text-primary-ink">이전 답변 대비</span>
-      {attached > 0 && <span className="font-semibold text-fg">{isTextOnly(prev) ? `질문 문장 대신 파일 ${attached}개로 확인` : `파일 ${attached}개 추가`}</span>}
-      {d.overallChanged ? (
-        <span className="inline-flex flex-wrap items-center gap-1.5">
-          전체 <RecPill rec={prev.recommendation} size="xs" />
-          <Arrow />
-          <RecPill rec={next.recommendation} size="xs" />
-        </span>
+    <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-field bg-surface/85 px-3 py-2 text-[13.5px] text-fg-2 ring-1 ring-line ring-inset">
+      <IconRefresh size={14} className="shrink-0 text-primary-ink" />
+      {changed ? (
+        <>
+          답변이 바뀌었어요:
+          <span className={cx('font-semibold', TONE_CLS[REC_TONE[prev.recommendation]].pill.split(' ')[1])}>{REC_SHORT[prev.recommendation]}</span>
+          <IconArrowLeft size={12} className="rotate-180 text-muted" />
+          <span className={cx('font-semibold', TONE_CLS[REC_TONE[next.recommendation]].pill.split(' ')[1])}>{REC_SHORT[next.recommendation]}</span>
+        </>
       ) : (
-        <span>전체 권고 유지</span>
+        '다시 확인했어요. 답은 그대로예요.'
       )}
-      {d.fileChanges.map((c) => (
-        <span key={`${c.from}-${c.to}`} className="inline-flex flex-wrap items-center gap-1.5" title={c.files.join('\n')}>
-          <RecPill rec={c.from} size="xs" />
-          <Arrow />
-          <RecPill rec={c.to} size="xs" />
-          <span className="text-muted">{c.files.length}개 파일</span>
-        </span>
-      ))}
-      {missDiff !== 0 && <span className="text-muted">남은 질문 {prev.missing.length} → {next.missing.length}</span>}
-      {!d.overallChanged && !d.fileChanges.length && missDiff === 0 && !attached && <span className="text-muted">파일별 권고도 변동 없음</span>}
-    </div>
+    </p>
   )
 }
 
@@ -579,6 +553,7 @@ function ClauseGroups({ clauses }: { clauses: ClauseRef[] }) {
 }
 
 function ClauseItem({ c }: { c: ClauseRef }) {
+  const legal = useCitations()?.audience === 'legal'
   const old = c.status === '구버전'
   return (
     <li className={cx('rounded-field border px-3 py-2.5', old ? 'border-dashed border-line-strong bg-surface-2' : 'border-line bg-surface')}>
@@ -597,13 +572,13 @@ function ClauseItem({ c }: { c: ClauseRef }) {
       <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11.5px] text-muted">
         <span className="tabular-nums">시행 {c.effective_date}</span>
         <ExtLink href={c.source_url}>국가법령정보센터 원문</ExtLink>
-        {c.rule_ids.length > 0 && <span className="font-mono">{c.rule_ids.join(' · ')}</span>}
+        {legal && c.rule_ids.length > 0 && <span className="font-mono">{c.rule_ids.join(' · ')}</span>}
       </p>
       {c.why && (
         <p className="mt-1.5 flex gap-1.5 text-[12.5px] leading-relaxed text-fg">
           <span className="shrink-0 font-semibold text-primary-ink">왜</span>
           <span className="min-w-0">
-            {c.why} <Cite ids={[c.clause_id]} />
+            {legal ? c.why : forEmployee(c.why)} <Cite ids={[c.clause_id]} />
           </span>
         </p>
       )}
@@ -614,7 +589,7 @@ function ClauseItem({ c }: { c: ClauseRef }) {
           </Collapsible>
         </div>
       )}
-      <p className="mt-1 font-mono text-[10.5px] text-muted/90">{c.clause_id}</p>
+      {legal && <p className="mt-1 font-mono text-[10.5px] text-muted/90">{c.clause_id}</p>}
     </li>
   )
 }
@@ -633,6 +608,7 @@ function Precedents({ list }: { list: PrecedentCard[] }) {
 }
 
 function PrecedentItem({ p, defaultOpen }: { p: PrecedentCard; defaultOpen: boolean }) {
+  const legal = useCitations()?.audience === 'legal'
   return (
     <li className="rounded-field border border-line bg-surface px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-1.5">
@@ -645,7 +621,7 @@ function PrecedentItem({ p, defaultOpen }: { p: PrecedentCard; defaultOpen: bool
           </Pill>
         )}
         {p.review_status !== 'approved' && (
-          <Pill tone="cond" size="xs" title={`검수 상태: ${p.review_status} — LLM 생성 요약`}>
+          <Pill tone="cond" size="xs" title="사람이 검수하기 전의 요약">
             초안
           </Pill>
         )}
@@ -657,7 +633,7 @@ function PrecedentItem({ p, defaultOpen }: { p: PrecedentCard; defaultOpen: bool
       {p.similarity && (
         <p className="mt-2 rounded-[6px] bg-primary-soft px-2.5 py-1.5 text-[12.5px] text-primary-ink">
           <span className="font-bold">현재 요청과의 유사점 · </span>
-          {p.similarity}
+          {legal ? p.similarity : forEmployee(p.similarity)}
         </p>
       )}
       <div className="mt-1.5">
@@ -674,7 +650,7 @@ function PrecedentItem({ p, defaultOpen }: { p: PrecedentCard; defaultOpen: bool
       </div>
       <div className="mt-1.5 flex items-center gap-2 text-[11.5px]">
         <ExtLink href={p.source_url}>출처</ExtLink>
-        {p.rule_ids.length > 0 && <span className="ml-auto font-mono text-muted">{p.rule_ids.join(' · ')}</span>}
+        {legal && p.rule_ids.length > 0 && <span className="ml-auto font-mono text-muted">{p.rule_ids.join(' · ')}</span>}
       </div>
     </li>
   )

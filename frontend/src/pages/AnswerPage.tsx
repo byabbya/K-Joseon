@@ -1,5 +1,5 @@
 // ②·③ 답변 화면 (/check/:id) — 맨 위 '내 질문'(알아들은 내용 고치기 · 파일 첨부 · 질문 고치기),
-// 법무팀 답변(있으면, 시스템 답변보다 우선) → 결론 → 해야 할 일 → 더 정확한 답을 위해 → 다음 단계 → 근거 보고서(접힘).
+// 법무팀 답변(있으면, 시스템 답변보다 우선) → 결론·왜 그런가요 → 이렇게 하세요(+ 법무팀에 확인 요청) → 자세한 설명 · 근거(접힘).
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAddFiles, useRequestDetail, useResubmit, useSubmitRequest, useUpdateRequest } from '../api/hooks'
@@ -118,7 +118,7 @@ function Answer({ d }: { d: RequestDetail }) {
           setAttachOpen={setAttachOpen}
         />
         {!editable && d.summary.status === '법무 검토 중' && (
-          <p className="text-[12.5px] text-muted">법무팀이 확인 중이라 질문을 고칠 수 없습니다.</p>
+          <p className="text-[12.5px] text-muted">법무팀이 확인 중이라 질문을 고칠 수 없어요.</p>
         )}
 
         <LegalAnswerCard d={d} />
@@ -177,11 +177,11 @@ function Updated({ n, rec, why }: { n: number; rec: Analysis['recommendation']; 
   return (
     <Toast>
       <IconRefresh size={15} />
-      <span className="max-sm:hidden">{why === 'drawing' ? '도면 분석을 반영해 다시 확인했습니다 ·' : '다시 확인했습니다 ·'}</span>
+      <span className="max-sm:hidden">{why === 'drawing' ? '도면을 읽고 다시 확인했어요 ·' : '다시 확인했어요 ·'}</span>
       <RecPill rec={rec} size="xs" />
       <span className="max-w-[12rem] truncate font-normal text-white/85 max-sm:hidden">{REC_HEADLINE[rec]}</span>
       <a href="#conclusion-title" onClick={() => setShow(false)} className="ml-1 underline underline-offset-2">
-        결론 보기
+        답 보기
       </a>
     </Toast>
   )

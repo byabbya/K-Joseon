@@ -5,7 +5,7 @@ import { useId, useState } from 'react'
 import type { Analysis, CategoryChoice, ContractBasis, ExportClearance, MissingItem, Purpose, RecipientType, RequestInput, TransferMethod } from '../../api/types'
 import { DESCRIBED_ID } from '../../api/types'
 import { FIELD_LABEL } from '../../lib/labels'
-import { Button, ChoiceChip, IdTag, RadioGroup, cx, inputCls } from '../ui'
+import { Button, ChoiceChip, RadioGroup, cx, inputCls } from '../ui'
 import { Combobox, type ComboOption } from '../Combobox'
 import { IconAlert } from '../icons'
 import { fileMetaOf, patchFileMeta, realFiles } from './model'
@@ -24,7 +24,7 @@ function eulReul(w: string) {
 }
 
 /**
- * 답변 화면 결론 카드 안의 한 줄: "계약 근거를 모르는 상태로 판단했습니다 · 답하기".
+ * 답변 화면 결론 카드 안의 한 줄: "계약 근거를 알려 주면 더 정확해요 · 답하기".
  * 답하기 → 작은 팝오버에서 빠른 답 칩 → 바로 다시 확인. 법무팀 화면에서는 줄만 보인다.
  */
 export function MissingLine({ a, input, onAnswer, busy }: { a: Analysis; input: RequestInput; onAnswer?: Apply; busy?: boolean }) {
@@ -33,16 +33,16 @@ export function MissingLine({ a, input, onAnswer, busy }: { a: Analysis; input: 
   const names = [...new Set(list.map((m) => FIELD_LABEL[m.field] ?? m.field))]
   const shown = names.slice(0, 3).join('·') + (names.length > 3 ? ` 외 ${names.length - 3}개` : '')
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-field bg-surface/85 px-3 py-2 text-[13px] text-fg-2 ring-1 ring-info-line ring-inset">
+    <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-field bg-surface/85 px-3 py-2 text-[13.5px] text-fg-2 ring-1 ring-info-line ring-inset">
       <IconAlert size={15} className="shrink-0 text-info-fg" />
       <span className="min-w-0 flex-1">
         <b className="font-semibold text-fg">{shown}</b>
-        {eulReul(shown)} 모르는 상태로 판단했습니다
+        {eulReul(shown)} 알려 주면 더 정확해요
       </span>
       {onAnswer && (
         <Popover
           label="답하고 다시 확인"
-          heading={`답하면 바로 다시 확인합니다 · ${list.length}개`}
+          heading={`답하면 바로 다시 확인해요 · ${list.length}개`}
           width={28}
           trigger={(tp) => (
             <button {...tp} disabled={busy} className="press inline-flex h-7.5 items-center rounded-field bg-primary px-3 text-[13px] font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50">
@@ -150,11 +150,7 @@ function QuestionLine({ m, n, a, input, onAnswer, busy }: { m: MissingItem; n: n
         <p id={lid} className="text-[13.5px] leading-snug font-medium text-fg">
           {m.question}
         </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-muted">
-          <span>{FIELD_LABEL[m.field] ?? m.field}</span>
-          {m.rule_id && <IdTag className="!text-[10.5px] !leading-4">{m.rule_id}</IdTag>}
-          {fileName && <span className="min-w-0 truncate">· {fileName}</span>}
-        </p>
+        {fileName && <p className="mt-0.5 min-w-0 truncate text-[11.5px] text-muted">{fileName}</p>}
         {!readOnly && options.length > 0 && (
           <RadioGroup labelledBy={lid} className="mt-2 flex flex-wrap gap-1.5">
             {options.map((o) => (

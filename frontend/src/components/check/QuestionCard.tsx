@@ -89,7 +89,6 @@ export function QuestionCard(p: QuestionCardProps) {
               <Button variant="ghost" onClick={() => setEditing(false)}>
                 취소
               </Button>
-              <span className="text-[12px] text-muted">고친 문장으로 같은 첨부를 다시 확인합니다 · 직접 고친 값은 그대로 둡니다</span>
             </div>
           </div>
         ) : (
@@ -110,11 +109,11 @@ export function QuestionCard(p: QuestionCardProps) {
               {audience === 'legal' && <ViewLink assetId={f.asset_id} name={f.filename} viewer={p.viewerId ?? ''} />}
             </span>
           ))}
-          {textOnly && <span className="text-[12.5px] text-muted">첨부 없음 — 질문 문장만으로 판단</span>}
+          {textOnly && <span className="text-[12.5px] text-muted">첨부 없음</span>}
           {!a && <span className="text-[12.5px] text-muted">첨부 {d.summary.file_count}건</span>}
         </div>
 
-        {editable && p.onAttach && p.attachOpen && <AttachPanel d={d} onAttach={p.onAttach} busy={p.busy} onClose={() => p.setAttachOpen?.(false)} />}
+        {editable && p.onAttach && p.attachOpen && <AttachPanel onAttach={p.onAttach} busy={p.busy} onClose={() => p.setAttachOpen?.(false)} />}
         <ErrorBox error={p.error} className="mt-3" />
       </div>
 
@@ -159,10 +158,9 @@ function ViewLink({ assetId, name, viewer }: { assetId: string; name: string; vi
 
 /* ---------------- 파일 첨부 ---------------- */
 
-function AttachPanel({ d, onAttach, busy, onClose }: { d: RequestDetail; onAttach: (metas: FileMeta[], files: File[]) => void; busy?: boolean; onClose: () => void }) {
+function AttachPanel({ onAttach, busy, onClose }: { onAttach: (metas: FileMeta[], files: File[]) => void; busy?: boolean; onClose: () => void }) {
   const [picked, setPicked] = useState<{ f: File; list: ListInclusion }[]>([])
   const pick = useFilePick((fs) => setPicked((x) => [...x, ...fs.map((f) => ({ f, list: '모름' as ListInclusion }))]))
-  const textOnly = isTextOnly(d.analysis)
   const attach = () => {
     onAttach(
       picked.map((x) => ({ ...DEFAULT_FILE_META, on_approved_list: x.list })),
@@ -173,7 +171,7 @@ function AttachPanel({ d, onAttach, busy, onClose }: { d: RequestDetail; onAttac
     <div className="mt-4 animate-pop-in rounded-field border border-line bg-surface-2 p-3 sm:p-4" {...pick.dropProps}>
       <div className="flex flex-wrap items-center gap-2">
         <p className="min-w-0 flex-1 text-[13.5px] font-semibold text-fg">
-          파일 첨부 <span className="font-normal text-muted">— {textOnly ? '붙이면 질문 문장 대신 파일마다 따로 확인합니다' : '붙인 파일을 더해 다시 확인합니다'}</span>
+          파일 첨부
         </p>
         <Button size="sm" variant="ghost" onClick={onClose}>
           닫기
@@ -219,7 +217,7 @@ function AttachPanel({ d, onAttach, busy, onClose }: { d: RequestDetail; onAttac
             <Button onClick={attach} disabled={busy}>
               <IconPaperclip size={15} /> {busy ? '붙이는 중…' : `${picked.length}개 붙이고 다시 확인`}
             </Button>
-            <span className="text-[12px] text-muted">목록 포함 여부를 모르면 ‘모름’으로 두세요. 답변에서 다시 묻습니다.</span>
+            <span className="text-[12px] text-muted">모르면 ‘모름’으로 두세요.</span>
           </div>
         </>
       )}
@@ -267,7 +265,7 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
         알아들은 내용
         {open ? (
           <span className="text-[11.5px] font-normal tracking-normal text-muted">
-            {onApply ? '틀린 곳은 눌러서 고치세요 — 고치면 바로 다시 확인합니다' : audience === 'legal' ? '사원 입력 + 문장에서 읽은 값' : ''}
+            {onApply ? '틀린 곳은 눌러서 고치세요' : audience === 'legal' ? '사원 입력 + 문장에서 읽은 값' : ''}
           </span>
         ) : (
           <span className="min-w-0 flex-1 truncate text-[12.5px] font-normal tracking-normal text-fg">{summaryLine || '아직 읽은 값이 없습니다'}</span>
@@ -299,7 +297,7 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
         <Item
           label="목적"
           value={pu.value ? (pu.value as string) : null}
-          badge={channel ?? undefined}
+          badge={audience === 'legal' ? (channel ?? undefined) : undefined}
           extracted={pu.extracted}
           evidence={pu.evidence}
           readOnly={ro}
@@ -355,7 +353,7 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
           extracted={a.model_categories.length > 0 && choice === '모름'}
           markerText={textOnly ? '문장에서 읽음' : '문서에서 읽음'}
           evidence={a.files.flatMap((f) => f.model_candidates.flatMap((c) => c.evidence.map((e) => e.term))).slice(0, 6).join(', ')}
-          note={choice !== '모름' ? (a.category_mismatch ? '내가 고른 값과 시스템 후보가 다름' : '내가 고른 값') : '후보일 뿐 해당 확정 아님'}
+          note={choice !== '모름' ? (a.category_mismatch ? '내가 고른 값과 시스템 후보가 다름' : '내가 고른 값') : '관련 후보'}
           readOnly={ro}
           editor={(close) => (
             <Combobox

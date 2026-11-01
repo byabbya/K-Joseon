@@ -126,6 +126,26 @@ def test_text_only_question_then_attach_files(client):
     assert a["input_mode"] == "files" and [f["filename"] for f in a["files"]] == [pdf.name]
 
 
+DEMO_CASES = [
+    # (질문, 추가 입력, 기대 권고) — 첫 화면 예시와 같은 문장. 법무팀 확인 없이 끝나는 경우 포함
+    ("국내 도장 협력사에 거주구역 계단 난간 도장 사양서를 NDA 체결 후 메일로 보냅니다. 국가과제 아님.", {}, "진행 가능"),
+    ("한국선급 승인용으로 거주구 일반배치도를 선급 포털로 제출합니다. 선급 계약 있고 국가과제 아님.",
+     {"described_item": {"on_approved_list": "포함"}}, "조건부 진행"),
+    ("프랑스 선급에 화물창 방벽 사양서를 메일로 보내도 되나요?", {}, "법무팀 검토 필요"),
+    ("방벽 사양서 내용을 ChatGPT에 넣어서 영어로 번역해도 되나요?", {}, "반출 불가"),
+]
+
+
+@pytest.mark.parametrize("text,extra,expected", DEMO_CASES)
+def test_demo_cases(client, text, extra, expected):
+    q = {"employee_id": "E1003", "free_text": text, **extra}
+    a = client.post("/api/requests", data={"payload": json.dumps(q, ensure_ascii=False)}).json()["analysis"]
+    assert a["recommendation"] == expected, (a["recommendation"], a["rule_ids"], [m["field"] for m in a["missing"]])
+    if expected in ("진행 가능", "조건부 진행"):
+        assert not a["on_hold"]
+    assert all(h["plain"] for f in a["files"] for h in f["rule_hits"])
+
+
 def test_empty_question_rejected(client):
     r = client.post("/api/requests", data={"payload": json.dumps({"employee_id": "E1001", "free_text": "  "})})
     assert r.status_code == 400

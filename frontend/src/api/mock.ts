@@ -285,15 +285,20 @@ const PREC_POOL: Record<string, Omit<PrecedentCard, 'similarity' | 'rule_ids'>> 
 const COUNTRY_WORDS: [string, string][] = [
   ['프랑스', 'FR'], ['노르웨이', 'NO'], ['영국', 'GB'], ['미국', 'US'], ['중국', 'CN'], ['일본', 'JP'],
   ['독일', 'DE'], ['싱가포르', 'SG'], ['그리스', 'GR'], ['네덜란드', 'NL'], ['이탈리아', 'IT'],
+  ['한국선급', 'KR'], ['국내', 'KR'],
 ]
 const COUNTRY_KO: Record<string, string> = Object.fromEntries([...COUNTRY_WORDS.map(([k, v]) => [v, k]), ['KR', '국내']])
 const RECIPIENT_WORDS: [string, string][] = [
-  ['선급', '선급'], ['선주', '선주'], ['라이선서', '라이선서'], ['GTT', '라이선서'], ['기자재', '기자재 벤더'],
+  ['선급', '선급'], ['선주', '선주'], ['라이선서', '라이선서'], ['GTT', '라이선서'], ['기자재', '기자재 벤더'], ['협력사', '기자재 벤더'], ['도장 업체', '기자재 벤더'],
   ['외주', '설계 외주'], ['설계센터', '해외법인'], ['해외법인', '해외법인'],
 ]
 const METHOD_WORDS: [string, string][] = [
   ['선급 포털', '선급 포털'], ['포털', '선급 포털'], ['EDM', '선주 EDM'], ['클라우드', '클라우드 링크'], ['링크', '클라우드 링크'],
   ['ChatGPT', '외부 AI 서비스'], ['메일', '이메일'],
+]
+
+const CONTRACT_WORDS: [string, string][] = [
+  ['NDA', 'NDA'], ['비밀유지', 'NDA'], ['선급 계약', '선급 계약'], ['선주 사양서', '선주 사양서'], ['라이선스', '라이선스'],
 ]
 
 const PURPOSE_BY_RECIPIENT: Record<string, string> = {
@@ -302,7 +307,7 @@ const PURPOSE_BY_RECIPIENT: Record<string, string> = {
 
 function resolveFields(inp: RequestInput): Record<string, ResolvedField> {
   const t = inp.free_text
-  const pick = (val: string | boolean | null | undefined, extract?: () => [string, string] | null): ResolvedField => {
+  const pick = (val: string | boolean | null | undefined, extract?: () => [string | boolean, string] | null): ResolvedField => {
     if (val !== null && val !== undefined && val !== '') return { value: val, source: '입력', evidence: '' }
     const ex = extract?.()
     if (ex) return { value: ex[0], source: '추출', evidence: ex[1] }
@@ -325,8 +330,13 @@ function resolveFields(inp: RequestInput): Record<string, ResolvedField> {
     recipient_name: pick(inp.recipient_name),
     recipient_country: pick(inp.recipient_country, find(COUNTRY_WORDS)),
     transfer_method: pick(inp.transfer_method, find(METHOD_WORDS)),
-    contract_basis: pick(inp.contract_basis),
-    national_rnd_output: pick(inp.national_rnd_output),
+    contract_basis: pick(inp.contract_basis, find(CONTRACT_WORDS)),
+    national_rnd_output: pick(inp.national_rnd_output, () => {
+      const no = t.match(/국가\s*(R&D|과제)\s*(아님|아닌|무관)/)
+      if (no) return [false, no[0]]
+      const yes = t.match(/국가\s*(R&D|과제)/)
+      return yes ? [true, yes[0]] : null
+    }),
     export_clearance: pick(inp.export_clearance),
   }
 }
@@ -395,7 +405,10 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
   const rtype = (resolved.recipient_type.value as string | null) ?? null
   const foreign = (!!country && country !== 'KR') || rtype === '해외법인'
   const exportOk = inp.export_clearance === '받음'
-  const contract = inp.contract_basis
+  const contract = (resolved.contract_basis.value as string | null) ?? null
+  const method = (resolved.transfer_method.value as string | null) ?? null
+  const rnd = resolved.national_rnd_output.value as boolean | null
+  const approvalRoute = !!rtype && ['선급', '선주', '라이선서'].includes(rtype)
   const emp = inp.category_choice
 
   const missing: MissingItem[] = []
@@ -409,11 +422,14 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     const codes = new Set<string>(cands.map((c) => c.code))
     if (emp !== '모름') codes.add(emp)
     const tech = codes.size > 0
-    const sCodes = [...codes].join('·')
+    const sCodes = [...codes].sort().join(', ')
     const hits: RuleHit[] = []
 
-    if (inp.transfer_method === '외부 AI 서비스') {
-      hits.push({ rule_id: 'R01', name: '외부 AI 서비스 업로드', outcome: '반출 불가', reason: '외부 AI 서비스로의 업로드는 반출 승인 대상이며 클라우드 접근권한 부여도 수출 방법에 해당합니다.', conditions: [], internal_review_options: [] })
+    if (method === '외부 AI 서비스') {
+      hits.push({ rule_id: 'R01', name: '외부 생성형 AI 입력', outcome: '반출 불가', reason: '외부 생성형 AI 서비스로의 입력은 사내 반출 승인과 이력 관리를 벗어나므로 반출할 수 없습니다.', plain: '외부 생성형 AI에 넣은 자료는 회사 밖 서버로 나가서 되돌릴 수 없어요.', conditions: [], internal_review_options: [] })
+    }
+    if (rnd === true && tech && foreign) {
+      hits.push({ rule_id: 'R02', name: '국가 R&D 산출물의 국외 제공', outcome: '반출 불가', reason: '국가 연구개발비로 개발한 국가핵심기술의 국외 제공은 산업통상부장관의 사전 승인 대상일 수 있어, 승인 확인 전에는 반출할 수 없습니다.', plain: '국가 연구비로 만든 핵심기술을 해외로 보내려면 정부 사전 승인이 먼저예요.', conditions: [], internal_review_options: [] })
     }
     if (foreign && tech && (!channel || FOREIGN_CHANNELS_R04.includes(channel)) && !exportOk) {
       hits.push({
@@ -421,37 +437,46 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
         name: '외국 수신자 제공 — 정부 수출 신고 미확인',
         outcome: '법무팀 검토 필요',
         reason: `외국 ${rtype ?? '수신자'}에게 ${sCodes} 관련 기술자료를 제공합니다. 해외 인증·인허가를 위한 기술자료 제공도 국가핵심기술 수출 방법에 포함되므로, 정부 수출 신고(또는 간소화 절차)를 받았는지 확인되지 않으면 법무 검토가 필요합니다.`,
+        plain: `${sCodes} 관련 자료예요. 외국 기관에 인증용으로 주는 것도 '수출'로 봐서, 정부 수출 신고를 했는지 확인이 필요해요.`,
         conditions: [],
         internal_review_options: ['기술보호 담당 확인', '제9조의2 판정 신청 검토'],
       })
     }
-    if (meta.on_approved_list !== '포함') {
+    // 승인도면 목록은 선급·선주·라이선서 제출에만 의미가 있다. 목록 밖이면 법무 확인, 모르면 조건
+    if (approvalRoute && meta.on_approved_list === '미포함') {
       hits.push({
         rule_id: 'R06',
         name: '승인도면 목록 밖 파일',
         outcome: '법무팀 검토 필요',
-        reason: `${textOnly ? '보내려는 자료가' : '이 파일은'} 선급·선주 승인도면 목록에 ${meta.on_approved_list}으로 표시되어 제출 범위를 넘을 수 있습니다. 파일별로 판단합니다.`,
+        reason: '이 파일은 선급·선주 승인도면 목록에 없어 제출 범위를 넘습니다. 파일별로 판단합니다.',
+        plain: '승인도면 목록에 없는 파일이 섞여 있어요. 제출 범위를 넘는 자료는 법무팀 확인이 필요해요.',
         conditions: [],
         internal_review_options: ['승인도면 목록 재확인', '설계 부서장 확인'],
       })
     }
-    if (
-      rtype && ['선급', '선주', '라이선서'].includes(rtype) &&
-      contract && contract !== '없음' &&
-      meta.on_approved_list === '포함' &&
-      (!(foreign && tech) || exportOk)
-    ) {
+    if (approvalRoute && meta.on_approved_list === '모름') {
+      hits.push({
+        rule_id: 'R06',
+        name: '승인도면 목록 밖 파일',
+        outcome: '조건부 진행',
+        reason: '승인도면 목록 포함 여부가 확인되지 않았습니다. 목록에 있는 파일만 보내야 합니다.',
+        plain: '승인도면 목록에 있는 자료인지 아직 모르는 상태예요.',
+        conditions: ['승인도면 목록을 확인해 목록에 있는 파일만 보내기'],
+        internal_review_options: ['승인도면 목록 재확인', '설계 부서장 확인'],
+      })
+    }
+    if (approvalRoute && contract && contract !== '없음' && meta.on_approved_list === '포함' && (!(foreign && tech) || exportOk)) {
       hits.push({
         rule_id: 'R05',
         name: '승인 경로 정상 제출',
         outcome: '조건부 진행',
         reason: `${rtype} 제출 경로이고 계약 근거(${contract})가 있으며 승인도면 목록에 포함된 파일입니다.`,
+        plain: `${rtype} 제출 경로이고 계약(${contract})이 있어요. 조건을 지키면 보낼 수 있어요.`,
         conditions: [
-          '승인도면 목록에 포함된 파일만 전송',
-          '문서의 보호등급 표기를 유지 (지침 제13조 제1호)',
-          '반출 승인 기록을 남김 (지침 제13조 제4호)',
-          ...(foreign ? ['외국 수신자이면 수신처 취급자와 비밀유지 계약 확인 (지침 제19조의3 제4호)'] : []),
-          ...(exportOk ? ['사원이 입력한 수출 신고번호를 법무팀이 확인 (export_clearance = 받음 인 경우)'] : []),
+          '승인도면 목록에 있는 파일만 보내기',
+          '문서의 보안등급 표기(대외비 등)는 지우지 않기',
+          '사내 반출 승인 기록 남기기',
+          ...(foreign ? ['받는 외국 기관과 비밀유지 계약이 있는지 확인하기'] : []),
         ],
         internal_review_options: [],
       })
@@ -459,19 +484,17 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     if (contract === '없음') {
       hits.push(
         tech
-          ? { rule_id: 'R07', name: '계약 근거 미입력·없음', outcome: '법무팀 검토 필요', reason: `비밀유지 등 계약 근거 없이 ${sCodes} 관련 자료를 외부에 제공합니다.`, conditions: [], internal_review_options: [] }
-          : { rule_id: 'R07', name: '계약 근거 미입력·없음', outcome: '조건부 진행', reason: '계약 근거가 없어 전송 전 NDA 체결이 필요합니다.', conditions: ['전송 전 NDA 체결'], internal_review_options: [] },
+          ? { rule_id: 'R07', name: '계약 근거 미입력·없음', outcome: '법무팀 검토 필요', reason: `비밀유지 등 계약 근거 없이 ${sCodes} 관련 자료를 외부에 제공합니다.`, plain: '비밀유지 계약 없이 핵심기술 관련 자료를 보내려고 해요.', conditions: [], internal_review_options: [] }
+          : { rule_id: 'R07', name: '계약 근거 미입력·없음', outcome: '조건부 진행', reason: '', plain: '받는 곳과 비밀유지 계약이 없어요.', conditions: ['보내기 전에 비밀유지 계약(NDA) 맺기'], internal_review_options: [] },
       )
     }
     if ((meta.contains_supplier_data === '예' || meta.contains_supplier_data === '모름') && rtype && ['기자재 벤더', '설계 외주', '해외법인', '기타'].includes(rtype)) {
-      hits.push({ rule_id: 'R08', name: '협력사 기술자료 포함', outcome: '법무팀 검토 필요', reason: '수급사업자 기술자료가 포함되어 제3자 제공 시 하도급법 검토가 필요합니다.', conditions: [], internal_review_options: [] })
+      hits.push({ rule_id: 'R08', name: '협력사 기술자료 제3자 제공', outcome: '법무팀 검토 필요', reason: '협력사로부터 취득한 기술자료를 제3자에게 제공하는 것은 하도급법 제12조의3 제4항 위반이 될 수 있습니다.', plain: '협력사에게서 받은 도면을 다른 업체에 주면 하도급법 위반이 될 수 있어요.', conditions: [], internal_review_options: [] })
     }
     hits.forEach((h) => ruleIds.add(h.rule_id))
 
     let rec: Recommendation = '진행 가능'
     for (const h of hits) if (h.outcome) rec = maxRec(rec, h.outcome)
-    // P1: 기술 후보가 있거나 아무 규칙도 결론을 못 내면 자동 '진행 가능' 없음
-    if (rec === '진행 가능' && (tech || contract === null)) rec = '법무팀 검토 필요'
 
     const confident = cands.filter((c) => c.confident)
     const notes: string[] = []
@@ -518,6 +541,11 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     }
   })
 
+  // 필수 항목 (백엔드 REQUIRED_FIELDS)
+  if (!resolved.purpose.value) missing.push({ field: 'purpose', question: '반출 목적을 선택해 주세요.', rule_id: null, asset_id: null })
+  if (!rtype) missing.push({ field: 'recipient_type', question: '수신자 유형(선급 / 선주 / 라이선서 / 기자재 벤더 / 설계 외주 / 해외법인 / 기타)을 선택해 주세요.', rule_id: null, asset_id: null })
+  if (!method) missing.push({ field: 'transfer_method', question: '전송 방식(이메일 / 선급 포털 / 선주 EDM / 클라우드 링크 / 외부 AI 서비스)을 선택해 주세요.', rule_id: null, asset_id: null })
+  if (rnd === null || rnd === undefined) missing.push({ field: 'national_rnd_output', question: '국가 연구개발(R&D) 과제의 산출물인가요?', rule_id: null, asset_id: null })
   if (contract === null) {
     missing.push({ field: 'contract_basis', question: '수신자와의 계약 근거(선급 계약 / 선주 사양서 / 라이선스 / NDA / 없음)를 선택해 주세요.', rule_id: 'R07', asset_id: null })
     ruleIds.add('R07')
@@ -530,15 +558,20 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     missing.push({ field: 'recipient_country', question: '수신 국가를 선택해 주세요.', rule_id: 'R09', asset_id: null })
     ruleIds.add('R09')
   }
-  if (!resolved.purpose.value) missing.push({ field: 'purpose', question: '반출 목적을 선택해 주세요.', rule_id: null, asset_id: null })
   for (const f of files) {
-    if (f.on_approved_list === '모름')
+    if (approvalRoute && f.on_approved_list === '모름')
       missing.push({ field: 'on_approved_list', question: `${textOnly ? '보내려는 자료' : `'${f.filename}'`}이(가) 선급·선주 승인도면 목록에 포함된 자료인가요?`, rule_id: 'R06', asset_id: f.asset_id })
   }
 
-  let rec: Recommendation = files.reduce<Recommendation>((a, f) => maxRec(a, f.recommendation), '진행 가능')
-  const onHold = emp === '모름' && files.every((f) => f.tech_status !== '후보 있음')
-  if (onHold) rec = maxRec(rec, '법무팀 검토 필요')
+  // P1: 답하지 않은 질문이 있으면 '진행 가능'을 내지 않는다 (조건부 진행)
+  const onHold = missing.length > 0
+  if (onHold)
+    for (const f of files)
+      if (f.recommendation === '진행 가능') {
+        f.recommendation = '조건부 진행'
+        f.rule_hits.push({ rule_id: 'P1', name: '필수 항목 미입력', outcome: '조건부 진행', reason: "필수 항목이 모두 입력되어야 '진행 가능'을 판단할 수 있습니다.", plain: '몇 가지 정보가 빠져 있어서 확정 답을 드리지 못했어요.', conditions: ['빠진 항목에 답하고 다시 확인하기'], internal_review_options: [] })
+      }
+  const rec: Recommendation = files.reduce<Recommendation>((a, f) => maxRec(a, f.recommendation), '진행 가능')
 
   const modelCats = [...allCodes].sort() as SCode[]
   const confidentCats = new Set(files.flatMap((f) => f.model_candidates.filter((c) => c.confident).map((c) => c.code)))
@@ -560,7 +593,7 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
   if (ruleIds.has('R05')) addClause('ITP-GUIDE-제19조의3', '제17조 제8호 수출은 간소화 절차가 가능하나 비밀유지 계약이 필요합니다.', ['R05'])
   if (ruleIds.has('R06') || ruleIds.has('R05')) addClause('ITP-GUIDE-제13조', '반출 시 관리책임자 승인과 보호등급 표기 유지가 필요합니다 (파일별 판단).', ['R06', 'R05'])
   if (foreign) addClause('FTA-제19조', '외국 수신이므로 전략물자 해당 여부를 함께 확인합니다.', ['R09'])
-  addClause('ITP-GUIDE-제13조(구)', '요청 시점에 시행 중이 아닌 조항이라 근거에서 제외되었습니다 (R10).', ['R10'])
+  addClause('ITP-GUIDE-제13조(구)', '요청 시점에 시행 중이 아닌 조항이라 근거에서 제외되었습니다.', ['R10'])
   clauses.sort((a, b) => a.order - b.order)
 
   // 판례
@@ -574,8 +607,7 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
   if (ruleIds.has('R06')) addPrec('PREC-2024노5872', '자료(파일)마다 국가핵심기술 해당성을 따로 판단 — 승인도면 목록 밖 파일을 따로 보는 근거입니다.', ['R06'])
   if (ruleIds.has('R04')) addPrec('PREC-2025도15967', '고시 문언을 넓게 해석해 기술 범위 해당성을 인정한 법리 — S코드 해당 여부 판단에 참고합니다.', ['R04'])
 
-  const method = inp.transfer_method ?? (resolved.transfer_method.value as string | null) ?? '미상'
-  const summary = `${COUNTRY_KO[country ?? ''] ?? country ?? '국가 미상'} ${rtype ?? '수신자'}에게 ${modelCats.join('·') || '기술 후보 없음'} 관련 자료 ${files.length}건을 보내는 요청입니다 (전송 방식: ${method}). 전체 권고는 '${rec}'입니다.`
+  const summary = `${COUNTRY_KO[country ?? ''] ?? country ?? '국가 미상'} ${rtype ?? '수신자'}에게 ${modelCats.join('·') || '기술 후보 없음'} 관련 자료 ${files.length}건을 ${method ?? '미상'}(으)로 보내는 경우입니다. 권고는 '${rec}'입니다.`
 
   const out: Analysis = {
     request_id: id,
@@ -606,7 +638,7 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     enrichment_pending: false,
     related: mockRelated(new Set([...clauses.map((c) => c.clause_id), ...precedents.map((p) => p.case_id)])),
     wiki_drafts: filenames.some(isPng) ? ['MIXING HEADER'] : [],
-    versions: { rules: 'rules-0.1', model: 'terms-dict-0.1 / yolo pid_groups@0a1105127561 / llm kship-qwen3-4b (모의)', data: 'mock' },
+    versions: { rules: 'rules-0.1', data: 'mock' },
   }
   // 판단 축 4개 (백엔드 graph._axes 와 같은 규칙). 반출 허가 여부는 판정 뒤 getRequest 에서 법무팀 값으로 바뀐다
   const axes = resolveAxes(out)
@@ -846,9 +878,10 @@ export const mockApi = {
       ['purpose', '어떤 목적으로 보내나요?'], ['recipient_type', '누구에게 보내나요?'], ['recipient_country', '받는 곳은 어느 나라인가요?'],
       ['transfer_method', '어떻게 보내나요?'], ['contract_basis', '받는 곳과 어떤 계약이 있나요?'], ['national_rnd_output', '국가 R&D 과제 결과물인가요?'],
     ]
-    for (const [k, q] of Q) if (!resolved[k]) need.push({ field: k, question: q })
+    for (const [k, q] of Q) if (!(k in resolved)) need.push({ field: k, question: q })
     if (foreign && cands.some((c) => c.confident)) need.push({ field: 'export_clearance', question: '이번 반출에 대해 정부 수출 신고(또는 승인)를 받았나요?' })
-    if (!has_files) need.push({ field: 'described_item.on_approved_list', question: '보내려는 자료가 선급·선주 승인도면 목록에 있나요?' })
+    const rtype = r.recipient_type.value as string | null
+    if (!has_files && rtype && ['선급', '선주', '라이선서'].includes(rtype)) need.push({ field: 'described_item.on_approved_list', question: '보내려는 자료가 선급·선주 승인도면 목록에 있나요?' })
     const purpose = resolved.purpose?.value as string | undefined
     return delay(
       {

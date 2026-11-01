@@ -5,7 +5,7 @@ import { useId } from 'react'
 import { useMeta } from '../../api/hooks'
 import type { CategoryChoice, ContractBasis, ExportClearance, ListInclusion, PreviewOut, Purpose, RecipientType, RequestInput, TransferMethod } from '../../api/types'
 import { COUNTRIES } from '../../lib/labels'
-import { ChoiceChip, IdTag, RadioGroup, Segmented, cx, inputCls } from '../ui'
+import { ChoiceChip, RadioGroup, Segmented, cx, inputCls } from '../ui'
 import { Combobox } from '../Combobox'
 import { IconCheck, IconPencil } from '../icons'
 import { COUNTRY_OPTIONS, useCategoryOptions, useEnums, usePurposeOptions } from './options'
@@ -49,7 +49,7 @@ export function PreviewPanel({
           <p className="flex flex-wrap items-baseline gap-x-2 text-[13px] font-bold text-fg">
             답하기 전에 확인할 것 {p.need.length}개
             <span className="text-[12px] font-normal text-muted">
-              {answered ? `${answered}개 답함 · ` : ''}몰라도 확인하기를 누를 수 있습니다 — 모르는 것은 모르는 대로 판단합니다
+              {answered ? `${answered}개 답함 · ` : ''}몰라도 괜찮아요
             </span>
           </p>
           <ol className="mt-1 divide-y divide-line">
@@ -89,7 +89,6 @@ function Understood({ p, fields, setFields, disabled }: { p: PreviewOut; fields:
     return <ReadMark text={m.some((x) => x.evidence.includes('추정')) ? '추정' : '문장에서 읽음'} evidence={m.map((x) => x.evidence).join(' / ')} />
   }
   const countryName = country ? `${COUNTRIES.find(([c]) => c === country)?.[1] ?? country}(${country})` : null
-  const channel = purposeOpts.find((o) => o.value === purpose)?.badge
   const codes = choice !== '모름' ? [choice] : confident.map((c) => c.code)
 
   return (
@@ -114,7 +113,7 @@ function Understood({ p, fields, setFields, disabled }: { p: PreviewOut; fields:
           </Chip>
         )}
         {purpose && (
-          <Chip label="목적" mark={markOf('purpose')} disabled={disabled} text={purpose} badge={channel}>
+          <Chip label="목적" mark={markOf('purpose')} disabled={disabled} text={purpose}>
             {(close) => (
               <Combobox
                 label="목적"
@@ -159,7 +158,7 @@ function Understood({ p, fields, setFields, disabled }: { p: PreviewOut; fields:
         >
           {(close) => (
             <>
-              <p className="mb-2 text-[12px] leading-relaxed text-muted">국가핵심기술 고시의 조선 8개 기술 중 관련 후보입니다. 해당 여부 확정은 법무팀이 합니다.</p>
+              <p className="mb-2 text-[12px] leading-relaxed text-muted">조선 핵심기술 8개 중 관련 있어 보이는 기술이에요.</p>
               <Combobox
                 label="관련 기술"
                 value={choice}
@@ -179,7 +178,7 @@ function Understood({ p, fields, setFields, disabled }: { p: PreviewOut; fields:
   )
 }
 
-function Chip({ label, text, badge, mark, warn, muted, disabled, children }: { label: string; text: string; badge?: string; mark?: React.ReactNode; warn?: boolean; muted?: boolean; disabled?: boolean; children: (close: () => void) => React.ReactNode }) {
+function Chip({ label, text, mark, warn, muted, disabled, children }: { label: string; text: string; mark?: React.ReactNode; warn?: boolean; muted?: boolean; disabled?: boolean; children: (close: () => void) => React.ReactNode }) {
   return (
     <Popover
       label={`${label} 고치기`}
@@ -195,7 +194,6 @@ function Chip({ label, text, badge, mark, warn, muted, disabled, children }: { l
           )}
         >
           <span className="shrink-0 text-[11.5px] text-muted">{label}</span>
-          {badge && <IdTag className="!text-[10px] !leading-4">{badge}</IdTag>}
           <span className={cx('min-w-0 truncate font-semibold', warn ? 'text-review-fg' : muted ? 'text-muted' : 'text-fg')}>{text}</span>
           {mark && <span className="shrink-0 text-[10.5px]">{mark}</span>}
           <IconPencil size={12} className="shrink-0 text-muted opacity-60 group-hover:opacity-100" />

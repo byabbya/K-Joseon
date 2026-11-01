@@ -1,14 +1,13 @@
-// 도면 분석 카드 (PNG 도면) — 미리보기 + 심볼 박스 오버레이 + 그룹 토글 + OCR 태그 + 모델 버전.
+// 도면 분석 카드 (PNG 도면) — 미리보기 + 심볼 박스 오버레이 + 그룹 토글 + 읽은 글자 태그.
 // 누르면 대화상자에서 확대·이동해 볼 수 있다. 이 파일은 React.lazy 로 따로 불러온다 (Answer.tsx).
 // 심볼 좌표는 원본 이미지 좌표라서, SVG viewBox 를 원본 크기로 두면 축소 미리보기에 그대로 맞는다.
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useDrawing } from '../../api/hooks'
 import type { DrawingSymbol, FileResult } from '../../api/types'
-import { SYMBOL_GROUPS, groupColor, groupKo, modelLine } from '../../lib/symbols'
+import { SYMBOL_GROUPS, groupColor, groupKo } from '../../lib/symbols'
 import { Button, cx } from '../ui'
-import { IconFileDrawing, IconInfo, IconPlus, IconX } from '../icons'
+import { IconFileDrawing, IconPlus, IconX } from '../icons'
 
 interface View {
   hidden: string[]
@@ -57,7 +56,7 @@ export default function DrawingCard({ f, viewer }: { f: FileResult; viewer: stri
           </span>
         )}
         <span className="ml-auto text-[12px] text-muted tabular-nums">
-          심볼 {confirmed}개 확정{d.uncertain ? ` · 미확정 ${d.uncertain}` : ''} · 태그 {d.tags?.length ?? 0}
+          기호 {confirmed + (d.uncertain ?? 0)}개 · 태그 {d.tags?.length ?? 0}
         </span>
       </header>
 
@@ -85,39 +84,23 @@ export default function DrawingCard({ f, viewer }: { f: FileResult; viewer: stri
           )}
           <p className="mt-1.5 text-center text-[11.5px] text-muted">
             {d.yolo !== 'ok'
-              ? `심볼 탐지 결과 없음 — ${d.yolo}`
+              ? '도면 기호를 찾지 못했어요'
               : q.isLoading
-                ? '심볼 위치를 불러오는 중…'
+                ? '기호 위치를 불러오는 중…'
                 : q.isError
-                  ? `심볼 위치를 불러오지 못했습니다 — ${(q.error as Error).message}`
-                  : '실선 = 확정(신뢰도 0.5 이상) · 점선 = 미확정'}
+                  ? '기호 위치를 불러오지 못했어요'
+                  : '실선 = 확실 · 점선 = 불확실'}
           </p>
         </div>
 
-        {/* 토글 · OCR */}
+        {/* 토글 · 읽은 글자 */}
         <div className="min-w-0 space-y-3.5">
           <GroupToggles groups={groups} view={view} setView={setView} disabled={!symbols} />
           <div>
-            <p className="mb-1 text-[12px] font-semibold text-fg-2">글자 읽기 (OCR)</p>
-            <p className="text-[12.5px] text-muted tabular-nums">
-              {d.ocr_lines ?? 0}줄 읽음{d.elapsed?.total ? ` · 분석 ${Math.round(d.elapsed.total)}초` : ''}
-            </p>
+            <p className="mb-1 text-[12px] font-semibold text-fg-2">읽은 글자</p>
             <Tags tags={d.tags ?? []} />
           </div>
         </div>
-      </div>
-
-      <div className="mt-3.5 space-y-1 border-t border-dashed border-line-strong pt-2.5 text-[11.5px] text-muted">
-        <p className="font-mono break-all">{modelLine(d.version)}</p>
-        <p className="flex items-start gap-1.5">
-          <IconInfo size={13} className="mt-px shrink-0" />
-          <span>
-            샘플 169장으로 학습한 시연 모델 — 일부 심볼은 놓칠 수 있습니다. 심볼만으로 기술을 정하지 않고, 같은 도면의 글자 단서와 함께 볼 때만 후보에 보탭니다.{' '}
-            <Link to="/wiki?view=symbols" className="font-semibold text-primary-ink hover:underline">
-              도면 기호 표준화
-            </Link>
-          </span>
-        </p>
       </div>
 
       {open && viewer && (
@@ -155,7 +138,7 @@ function Overlay({ symbols, w, h }: { symbols: DrawingSymbol[]; w: number; h: nu
             strokeDasharray={unsure ? '5 4' : undefined}
             vectorEffect="non-scaling-stroke"
           >
-            <title>{`${groupKo(s.group)} · ${s.status} · 신뢰도 ${s.conf.toFixed(2)}`}</title>
+            <title>{`${groupKo(s.group)} · ${s.status === '확정' ? '확실' : '불확실'}`}</title>
           </rect>
         )
       })}
@@ -180,7 +163,7 @@ function GroupToggles({
 }) {
   return (
     <div>
-      {!compact && <p className="mb-1.5 text-[12px] font-semibold text-fg-2">심볼 그룹 (눌러서 켜고 끄기)</p>}
+      {!compact && <p className="mb-1.5 text-[12px] font-semibold text-fg-2">찾은 기호</p>}
       <div className={cx('flex flex-wrap gap-1.5', compact && 'items-center')} role="group" aria-label="심볼 그룹 표시">
         {groups.map(([g, n]) => {
           const on = !view.hidden.includes(g)
@@ -201,7 +184,7 @@ function GroupToggles({
               {groupKo(g)}
               <span className="font-mono text-[11.5px] text-muted tabular-nums">
                 {n.sure}
-                {n.unsure ? <span title="미확정"> +{n.unsure}</span> : null}
+                {n.unsure ? <span title="불확실"> +{n.unsure}</span> : null}
               </span>
             </button>
           )
@@ -218,7 +201,7 @@ function GroupToggles({
           )}
         >
           <span aria-hidden className="h-0 w-3.5 border-t-2 border-dashed border-current" />
-          미확정 {view.showUncertain ? '보임' : '숨김'}
+          불확실 {view.showUncertain ? '보임' : '숨김'}
         </button>
       </div>
     </div>
@@ -227,12 +210,11 @@ function GroupToggles({
 
 function Tags({ tags }: { tags: string[] }) {
   const [all, setAll] = useState(false)
-  if (!tags.length) return <p className="mt-1 text-[12.5px] text-muted">읽은 계기·라인 태그 없음</p>
+  if (!tags.length) return <p className="mt-1 text-[12.5px] text-muted">읽은 태그 없음</p>
   const shown = all ? tags : tags.slice(0, 12)
   return (
     <div className="mt-1.5">
-      <p className="mb-1 text-[11.5px] text-muted">계기·라인 태그</p>
-      <ul className="flex flex-wrap gap-1" aria-label="OCR 로 읽은 태그">
+      <ul className="flex flex-wrap gap-1" aria-label="도면에서 읽은 태그">
         {shown.map((t) => (
           <li key={t} className="rounded-[4px] bg-teal-soft px-1.5 font-mono text-[11px] leading-5 text-teal-ink ring-1 ring-teal-line ring-inset">
             {t}
