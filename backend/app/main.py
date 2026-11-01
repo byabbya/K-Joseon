@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from . import graph, reference, seed
 from .db import Adjustment, Asset, AuditLog, Decision, Employee, Request, Session, audit, engine, init, now, select
 from .pipelines import ingest
-from .schemas import (AdjustmentInput, AdjustmentOut, Analysis, DecisionInput, DecisionOut, EmployeeOut, Meta,
+from .schemas import (AdjustmentInput, AdjustmentOut, Analysis, Axis, DecisionInput, DecisionOut, EmployeeOut, Meta,
                       RequestDetail, RequestInput, RequestSummary, SimilarPast)
 
 INTERNAL_REVIEW_OPTIONS = ["기술보호 담당 확인", "설계 부서장 확인", "승인도면 목록 재확인", "제9조의2 판정 신청 검토",
@@ -89,9 +89,15 @@ def _detail(s: Session, r: Request) -> RequestDetail:
     decisions = s.exec(select(Decision).where(Decision.request_id == r.request_id).order_by(Decision.version)).all()
     adjustments = s.exec(select(Adjustment).where(Adjustment.request_id == r.request_id).order_by(Adjustment.adjustment_id)).all()
     inp = json.loads(r.input_json)
+    analysis = Analysis.model_validate(json.loads(r.analysis_json)) if r.analysis_json else None
+    if analysis and decisions:
+        # 반출 허가 여부 축은 법무팀 판정으로만 채운다 (시스템 분석 값으로 정하지 않음)
+        last = decisions[-1]
+        analysis.axes["export_permission"] = Axis(
+            value=last.verdict + (f" — 조건: {last.conditions}" if last.conditions else ""), status="판정됨",
+            note=f"v{last.version} · {last.decided_at}", decided_by="법무팀")
     return RequestDetail(
-        summary=_summary(s, r), input=RequestInput.model_validate(inp),
-        analysis=Analysis.model_validate(json.loads(r.analysis_json)) if r.analysis_json else None,
+        summary=_summary(s, r), input=RequestInput.model_validate(inp), analysis=analysis,
         decisions=[DecisionOut(decision_id=d.decision_id, version=d.version, reviewer_id=d.reviewer_id, verdict=d.verdict,
                                sub_options=json.loads(d.sub_options_json), conditions=d.conditions, reason=d.reason,
                                checked_evidence=json.loads(d.checked_json), decided_at=d.decided_at,

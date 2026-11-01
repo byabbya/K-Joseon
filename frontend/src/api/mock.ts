@@ -24,6 +24,7 @@ import type {
   SCode,
   TechCandidate,
 } from './types'
+import { resolveAxes } from '../lib/axes'
 
 const SEVERITY: Record<Recommendation, number> = { '진행 가능': 0, '조건부 진행': 1, '법무팀 검토 필요': 2, '반출 불가': 3 }
 const maxRec = (a: Recommendation, b: Recommendation) => (SEVERITY[a] >= SEVERITY[b] ? a : b)
@@ -90,8 +91,8 @@ const catLabel = (c: string) => META.categories.find((x) => x.code === c)?.label
 
 // ---------------- 법 조항 (data/legal/laws.jsonl 발췌) ----------------
 const CLAUSE_POOL: Record<string, Omit<ClauseRef, 'why' | 'rule_ids'>> = {
-  'NCT-NOTICE-별표-조선-2': {
-    clause_id: 'NCT-NOTICE-별표-조선-2',
+  'NCT-NOTICE-별표-S02': {
+    clause_id: 'NCT-NOTICE-별표-S02',
     layer: 'notice',
     order: 1,
     law_name: '국가핵심기술 지정 등에 관한 고시',
@@ -102,8 +103,8 @@ const CLAUSE_POOL: Record<string, Omit<ClauseRef, 'why' | 'rule_ids'>> = {
     excerpt: '액화가스 화물창, 연료탱크의 설계 및 제조 기술(방벽, 단열시스템 그리고 펌프타워의 설계, 제조 및 유지ㆍ보수ㆍ수리 기술)',
     status: 'current',
   },
-  'NCT-NOTICE-별표-조선-8': {
-    clause_id: 'NCT-NOTICE-별표-조선-8',
+  'NCT-NOTICE-별표-S08': {
+    clause_id: 'NCT-NOTICE-별표-S08',
     layer: 'notice',
     order: 1,
     law_name: '국가핵심기술 지정 등에 관한 고시',
@@ -429,6 +430,9 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
       contains_supplier_data: meta.contains_supplier_data,
       model_candidates: cands,
       tech_status: confident.length ? '후보 있음' : cands.length ? '미확정' : '후보 없음',
+      // 문서 정보등급 — 시연 PDF 머리말의 [대외비] 표기를 읽은 것처럼 흉내 낸다
+      info_grade: /CCS.*\.pdf$/i.test(fn) ? '대외비' : /\.pdf$/i.test(fn) ? '표기 없음' : '확인 불가',
+      info_grade_evidence: /CCS.*\.pdf$/i.test(fn) ? '[대외비]' : '',
       rule_hits: hits,
       recommendation: rec,
       notes,
@@ -469,8 +473,8 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     if (c && !clauses.some((x) => x.clause_id === cid)) clauses.push({ ...c, why, rule_ids: rids })
   }
   const codesForNotice = new Set<string>([...modelCats, ...(emp !== '모름' ? [emp] : [])])
-  if (codesForNotice.has('S02')) addClause('NCT-NOTICE-별표-조선-2', '첨부 문서에서 방벽·단열시스템 용어가 확인되어 S02 고시 항목에 해당할 수 있습니다.', [])
-  if (confidentCats.has('S08')) addClause('NCT-NOTICE-별표-조선-8', '사양서 7장의 BOG·연료가스 공급 언급으로 S08 후보(미확정)가 붙었습니다.', [])
+  if (codesForNotice.has('S02')) addClause('NCT-NOTICE-별표-S02', '첨부 문서에서 방벽·단열시스템 용어가 확인되어 S02 고시 항목에 해당할 수 있습니다.', [])
+  if (confidentCats.has('S08')) addClause('NCT-NOTICE-별표-S08', '사양서 7장의 BOG·연료가스 공급 언급으로 S08 후보(미확정)가 붙었습니다.', [])
   if (ruleIds.has('R04') || ruleIds.has('R05')) {
     addClause('ITPA-제11조', '외국 수신자에게 국가핵심기술 후보 자료를 제공하면 수출 승인·신고 대상인지 확인해야 합니다.', ['R04'])
     addClause('ITP-GUIDE-제17조', '제8호(해외 인증·인허가용 기술자료 제공)가 선급 제출에 해당합니다.', ['R04'])
@@ -496,7 +500,7 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
   const method = inp.transfer_method ?? (resolved.transfer_method.value as string | null) ?? '미상'
   const summary = `${COUNTRY_KO[country ?? ''] ?? country ?? '국가 미상'} ${rtype ?? '수신자'}에게 ${modelCats.join('·') || '기술 후보 없음'} 관련 자료 ${files.length}건을 보내는 요청입니다 (전송 방식: ${method}). 전체 권고는 '${rec}'입니다.`
 
-  return {
+  const out: Analysis = {
     request_id: id,
     analyzed_at: now(),
     summary,
@@ -522,6 +526,14 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     explanation_source: 'template',
     versions: { rules: 'rules-0.1', model: 'terms-dict-0.1 / yolo:미연결 / llm:미연결', data: 'mock' },
   }
+  // 판단 축 4개 (백엔드 graph._axes 와 같은 규칙). 반출 허가 여부는 판정 뒤 getRequest 에서 법무팀 값으로 바뀐다
+  const axes = resolveAxes(out)
+  const codes = [...new Set([...modelCats, ...(emp !== '모름' ? [emp] : [])])].sort()
+  if (codes.length) axes.tech_relevance = { ...axes.tech_relevance, value: codes.map((c) => `${c} ${catLabel(c)}`).join(', ') }
+  const laws = clauses.filter((c) => c.layer !== 'notice' && c.status !== '구버전')
+  if (laws.length) axes.legal_applicability = { ...axes.legal_applicability, value: `검토 대상 조항 ${laws.length}개 — ${laws.slice(0, 3).map((c) => `${c.law_name.startsWith('산업기술의') ? '산업기술보호법' : c.law_name} ${c.article_no}`).join(', ')}${laws.length > 3 ? ' 외' : ''}` }
+  out.axes = axes
+  return out
 }
 
 // ---------------- 메모리 저장소 ----------------
@@ -690,6 +702,8 @@ export const mockApi = {
   getRequest: (id: string) => {
     const s = get(id)
     s.detail.similar_past = similarFor(id)
+    // 백엔드 main._detail 처럼: 판정이 있으면 반출 허가 여부 축만 법무팀 판정으로 채운다
+    if (s.detail.analysis) s.detail.analysis.axes = resolveAxes({ ...s.detail.analysis }, s.detail.decisions)
     return delay(s.detail)
   },
 

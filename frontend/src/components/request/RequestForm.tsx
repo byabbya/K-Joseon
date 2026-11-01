@@ -1,4 +1,4 @@
-// 신청서 (정의서 2-1 1) 입력 부분) — ① 기술 카테고리 ② 첨부 파일 ③ 추가 설명 ④ 필수 구조화 항목 ⑤ 목적.
+// 확인할 자료와 반출 상황 (정의서 2-1 1) 입력 부분 — 사원의 '질문') — ① 기술 카테고리 ② 첨부 파일 ③ 추가 설명 ④ 필수 구조화 항목 ⑤ 목적.
 // 법무팀 화면에서는 같은 컴포넌트를 readOnly 로 그린다 (정의서: 1) 화면이 그대로 보이되 수정 불가).
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { USE_MOCK, fileUrl } from '../../api/client'
@@ -24,7 +24,7 @@ export interface RequestFormProps {
   files: FileRow[]
   analysis: Analysis | null
   readOnly: boolean
-  /** 신청 뒤에는 첨부를 바꿀 수 없다 (같은 첨부로 재분석) */
+  /** 첫 확인 뒤에는 첨부를 바꿀 수 없다 (같은 첨부로 다시 확인) */
   filesLocked: boolean
   onAddFiles?: (fs: File[]) => void
   onRemoveFile?: (i: number) => void
@@ -39,7 +39,7 @@ export function RequestForm(p: RequestFormProps) {
   const { input, analysis: a } = p
   const purposeDone = !!fieldView(input, a, 'purpose').value
   return (
-    <section aria-label="신청서" className="min-w-0">
+    <section aria-label="확인할 자료와 반출 상황" className="min-w-0">
       <div className="rounded-card border border-line bg-surface shadow-card">
         {p.head}
         {p.lockedNote && (
@@ -285,7 +285,7 @@ function FilesSection({ input, setInput, files, readOnly, filesLocked, onAddFile
         </p>
       )}
       {filesLocked && !readOnly && (
-        <p className="mb-2 text-[12.5px] text-muted">첨부는 신청할 때 고정됩니다. 파일을 바꾸려면 새로 신청하세요. 목록 포함 여부·협력사 자료는 고쳐서 다시 분석할 수 있습니다.</p>
+        <p className="mb-2 text-[12.5px] text-muted">첨부는 첫 확인 때 고정됩니다. 파일을 바꾸려면 새로 확인하세요. 목록 포함 여부·협력사 자료는 고쳐서 다시 확인할 수 있습니다.</p>
       )}
       {!files.length && !canAdd && <p className="text-[13px] text-muted">첨부 없음</p>}
 
@@ -428,7 +428,7 @@ function FreeTextSection(p: RequestFormProps) {
         <div className="mt-3 overflow-hidden rounded-field border border-cond-line" aria-live="polite">
           <p className="flex items-center gap-2 bg-cond-bg px-3 py-2 text-[12.5px] font-semibold text-cond-fg">
             <IconAlert size={14} />
-            빠진 항목 {missing.length}개 — 답하면 아래 항목에 채워지고, 다시 분석에 반영됩니다
+            시스템이 더 묻는 것 {missing.length}개 — 답하면 아래 항목에 채워지고, 다시 확인할 때 반영됩니다
           </p>
           <ol className="divide-y divide-line bg-surface">
             {missing.map((m, i) => (
@@ -529,7 +529,7 @@ function QuestionLine({ m, n, input, setInput, analysis: a, readOnly, files }: R
           <span>{FIELD_LABEL[m.field] ?? m.field}</span>
           {m.rule_id && <IdTag className="!text-[10.5px] !leading-4">{m.rule_id}</IdTag>}
           {fname && <span className="truncate">· {fname}</span>}
-          {answered && !readOnly && <span className="font-semibold text-primary-ink">· 답변함 — 다시 분석하면 반영</span>}
+          {answered && !readOnly && <span className="font-semibold text-primary-ink">· 답변함 — 다시 확인하면 반영</span>}
         </p>
         {!readOnly && options.length > 0 && (
           <RadioGroup labelledBy={lid} className="mt-2 flex flex-wrap gap-1.5">

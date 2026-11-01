@@ -89,6 +89,9 @@ export interface FileResult {
   contains_supplier_data: YesNoUnknown
   model_candidates: TechCandidate[]
   tech_status: '후보 있음' | '후보 없음' | '미확정'
+  /** 문서에 표기된 보안등급 (대외비 등) — 판단 축 '문서 정보등급'. 예전 분석에는 없을 수 있다 */
+  info_grade?: string
+  info_grade_evidence?: string
   rule_hits: RuleHit[]
   recommendation: Recommendation
   notes: string[]
@@ -134,6 +137,17 @@ export interface MissingItem {
   asset_id: string | null
 }
 
+// ---- 판단 축 4개 (정의서 1장: 서로 다른 값, 어느 하나로 다른 값을 자동 확정하지 않음) ----
+export type AxisKey = 'tech_relevance' | 'info_grade' | 'legal_applicability' | 'export_permission'
+export type AxisStatus = '후보' | '확인됨' | '검토 필요' | '법무팀 확정 전' | '판정됨' | '정보 없음'
+
+export interface Axis {
+  value: string
+  status: AxisStatus
+  note: string
+  decided_by: '시스템' | '사원' | '법무팀'
+}
+
 export interface Analysis {
   request_id: string
   analyzed_at: string
@@ -143,6 +157,8 @@ export interface Analysis {
   employee_category_choice: CategoryChoice
   model_categories: SCode[]
   category_mismatch: boolean
+  /** 백엔드 재시작 전에 분석된 요청에는 없다 → lib/axes.ts 가 기존 필드로 대신 채운다 */
+  axes?: Partial<Record<AxisKey, Axis>>
   files: FileResult[]
   recommendation: Recommendation
   on_hold: boolean

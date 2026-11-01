@@ -1,4 +1,4 @@
-import type { ClauseLayer, Recommendation, Verdict } from '../api/types'
+import type { ClauseLayer, Recommendation, Status, Verdict } from '../api/types'
 
 export const COUNTRIES: [string, string][] = [
   ['KR', '대한민국'],
@@ -121,6 +121,25 @@ export const REC_DEF: Record<Recommendation, string> = {
 export const SANCTIONED = ['KP', 'IR', 'SY', 'RU', 'BY']
 
 export const STATUS_FLOW = ['접수', '분석 완료', '법무 검토 중', '판정 완료'] as const
+
+/** 사원 화면의 진행 단계 — 신청서가 아니라 '질문 → 답변' 흐름으로 보여 준다 (백엔드 상태값은 그대로) */
+export const EMP_STEPS = ['질의', '시스템 답변', '법무팀 확인 중', '법무팀 답변'] as const
+export const EMP_STEP_INDEX: Record<Status, number> = { 접수: 0, '분석 완료': 1, '법무 검토 중': 2, '판정 완료': 3, 재신청: 3 }
+export const EMP_STATUS_LABEL: Record<Status, string> = {
+  접수: '질의',
+  '분석 완료': '시스템 답변',
+  '법무 검토 중': '법무팀 확인 중',
+  '판정 완료': '법무팀 답변',
+  재신청: '법무팀 답변 · 다시 확인함',
+}
+
+/** 검토 답변의 결론 한 줄 (권고 분류 → 쉬운 말) */
+export const REC_ANSWER: Record<Recommendation, string> = {
+  '진행 가능': '저촉 근거가 발견되지 않았습니다',
+  '조건부 진행': '조건을 지키면 보낼 수 있습니다',
+  '법무팀 검토 필요': '법무팀 확인이 필요합니다',
+  '반출 불가': '보낼 수 없습니다',
+}
 
 export function fmtSize(n?: number): string {
   if (n === undefined) return ''

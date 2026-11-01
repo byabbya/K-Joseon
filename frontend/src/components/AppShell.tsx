@@ -1,5 +1,5 @@
 // 앱 틀 — 상단 내비게이션(제품 마크 · 역할별 메뉴 · 계정 컨트롤) + 본문 + 바닥줄.
-// 역할: 사원(반출 검토 신청 · 내 요청) / 법무팀(검토 요청 목록). 계정 컨트롤에서 역할과 사용자를 고른다.
+// 역할: 사원(저촉 여부 확인 · 내 확인 기록) / 법무팀(확인 요청 목록). 계정 컨트롤에서 역할과 사용자를 고른다.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK } from '../api/client'
@@ -10,13 +10,13 @@ import { IconCheck, IconChevronDown, LogoMark } from './icons'
 
 const NAV: Record<Role, { to: string; label: string; match: (p: string) => boolean }[]> = {
   employee: [
-    { to: '/request', label: '반출 검토 신청', match: (p) => p.startsWith('/request') },
-    { to: '/my', label: '내 요청', match: (p) => p.startsWith('/my') },
+    { to: '/check', label: '저촉 여부 확인', match: (p) => p.startsWith('/check') },
+    { to: '/history', label: '내 확인 기록', match: (p) => p.startsWith('/history') },
   ],
-  legal: [{ to: '/legal', label: '검토 요청 목록', match: (p) => p.startsWith('/legal') }],
+  legal: [{ to: '/legal', label: '확인 요청 목록', match: (p) => p.startsWith('/legal') }],
 }
 
-export const ROLE_HOME: Record<Role, string> = { employee: '/request', legal: '/legal' }
+export const ROLE_HOME: Record<Role, string> = { employee: '/check', legal: '/legal' }
 
 export function AppShell() {
   const { role, userId, setUser } = useUser()
@@ -35,7 +35,7 @@ export function AppShell() {
   useEffect(() => {
     const onLegal = loc.pathname.startsWith('/legal')
     if (role === 'legal' && !onLegal) nav('/legal', { replace: true })
-    if (role === 'employee' && onLegal) nav('/request', { replace: true })
+    if (role === 'employee' && onLegal) nav('/check', { replace: true })
   }, [role, loc.pathname, nav])
 
   // 법무팀 미처리 개수 (메뉴 배지)
@@ -53,7 +53,7 @@ export function AppShell() {
             <LogoMark size={26} />
             <span className="leading-tight max-sm:hidden">
               <span className="block text-[15px] font-bold tracking-tight">K-Ship Guard AX</span>
-              <span className="block text-[10.5px] tracking-[0.08em] text-nav-muted">반출 사전 검토</span>
+              <span className="block text-[10.5px] tracking-[0.08em] text-nav-muted">반출 전 저촉 여부 확인</span>
             </span>
             {USE_MOCK && (
               <span className="rounded-[4px] bg-cond-dot px-1.5 font-mono text-[10px] leading-4 font-bold text-[#1d1300]" title="모의 데이터로 실행 중">
@@ -102,7 +102,7 @@ export function AppShell() {
 
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto flex max-w-page flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-[12px] text-muted sm:px-6">
-          <span className="font-medium text-fg-2">판단은 규칙 엔진, 최종 승인은 법무팀 — 근거 없는 결론은 표시하지 않습니다</span>
+          <span className="font-medium text-fg-2">시스템은 근거와 권고까지 — 법적 해당성 확정과 최종 승인은 법무팀. 근거 없는 결론은 표시하지 않습니다</span>
           <span className="ml-auto font-mono tabular-nums">rules {meta.data?.rules_version ?? '—'}</span>
         </div>
       </footer>

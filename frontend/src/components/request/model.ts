@@ -1,4 +1,4 @@
-// 신청서 상태 도우미 — 입력값(RequestInput) · 추출값(analysis.resolved) · 파일 행을 화면용으로 맞춘다.
+// 확인할 자료와 반출 상황 도우미 — 입력값(RequestInput) · 추출값(analysis.resolved) · 파일 행을 화면용으로 맞춘다.
 import type { Analysis, FileMeta, RequestInput } from '../../api/types'
 
 /** 화면의 파일 행. 신청 전에는 로컬 File, 신청 뒤에는 analysis.files 와 짝을 이룬다 (같은 순서 가정). */

@@ -1,4 +1,4 @@
-// 법무팀 — 검토 요청 목록 (/legal): 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터.
+// 법무팀 — 확인 요청 목록 (/legal): 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터.
 // 탭·필터·정렬은 URL 검색어(?tab=&rec=&dept=&sort=)에 둔다.
 import { useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -10,9 +10,9 @@ import { IconInbox, IconSort } from '../components/icons'
 import { SEVERITY, countryName, fmtDate } from '../lib/labels'
 
 type Tab = 'pending' | 'done'
-type Sort = '요청일' | '권고 분류' | '부서'
-const SORTS: Sort[] = ['요청일', '권고 분류', '부서']
-const SORT_KEY: Record<Sort, string> = { 요청일: 'date', '권고 분류': 'recommendation', 부서: 'department' }
+type Sort = '요청일' | '시스템 권고' | '부서'
+const SORTS: Sort[] = ['요청일', '시스템 권고', '부서']
+const SORT_KEY: Record<Sort, string> = { 요청일: 'date', '시스템 권고': 'recommendation', 부서: 'department' }
 const RECS: Recommendation[] = ['진행 가능', '조건부 진행', '법무팀 검토 필요', '반출 불가']
 
 const when = (r: RequestSummary) => r.submitted_at ?? r.created_at
@@ -53,7 +53,7 @@ export function LegalListPage() {
     if (dept) r = r.filter((x) => x.employee.department === dept)
     const sev = (x: RequestSummary) => (x.recommendation ? SEVERITY[x.recommendation] : -1)
     r.sort((a, b) =>
-      sort === '권고 분류'
+      sort === '시스템 권고'
         ? sev(b) - sev(a) || when(b).localeCompare(when(a))
         : sort === '부서'
           ? a.employee.department.localeCompare(b.employee.department, 'ko') || when(b).localeCompare(when(a))
@@ -69,7 +69,7 @@ export function LegalListPage() {
 
   return (
     <div className="mx-auto w-full max-w-page px-4 py-6 sm:px-6">
-      <PageHead eyebrow="법무팀" title="검토 요청 목록" sub="요청을 열면 사원 화면이 읽기 전용으로 보이고, 아래에서 근거 보정과 판정을 입력합니다." />
+      <PageHead eyebrow="법무팀" title="확인 요청 목록" sub="사원이 시스템 답변을 받은 뒤 법무팀 확인을 요청한 건입니다. 열면 질문과 시스템 답변이 읽기 전용으로 보이고, 아래에서 근거 보정과 답변(승인 여부)을 입력합니다." />
 
       <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* 탭 */}
@@ -96,7 +96,7 @@ export function LegalListPage() {
         {/* 필터·정렬 */}
         <div className="flex flex-wrap items-end gap-x-4 gap-y-3 border-b border-line bg-surface-2 px-4 py-3 sm:px-5">
           <label className="block">
-            <span className="mb-1 block text-[11.5px] font-semibold text-muted">권고 분류</span>
+            <span className="mb-1 block text-[11.5px] font-semibold text-muted">시스템 권고</span>
             <select className={cx(inputCls, 'h-8.5 w-44 py-1')} value={rec} onChange={(e) => set('rec', e.target.value)}>
               <option value="">전체</option>
               {RECS.map((r) => (
@@ -127,24 +127,24 @@ export function LegalListPage() {
         {q.data && !rows.length && (
           <div className="drafting-grid flex flex-col items-center gap-2 py-14 text-center text-sm text-muted">
             <IconInbox size={28} />
-            {tab === 'pending' ? '검토를 기다리는 요청이 없습니다.' : '처리 완료된 요청이 없습니다.'}
+            {tab === 'pending' ? '답변을 기다리는 확인 요청이 없습니다.' : '답변을 마친 확인 요청이 없습니다.'}
           </div>
         )}
         {rows.length > 0 && (
           <>
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-[13.5px]">
-                <caption className="sr-only">{tab === 'pending' ? '미처리' : '처리 완료'} 요청 목록</caption>
+                <caption className="sr-only">{tab === 'pending' ? '미처리' : '처리 완료'} 확인 요청 목록</caption>
                 <thead>
                   <tr className="border-b border-line text-[11.5px] font-bold tracking-[0.05em] text-muted">
-                    <th scope="col" className="py-2.5 pr-3 pl-5">요청 ID</th>
-                    <th scope="col" className="px-3 py-2.5">요청 시각</th>
-                    <th scope="col" className="px-3 py-2.5">사원 · 부서</th>
-                    <th scope="col" className="px-3 py-2.5">기술 · 경로</th>
-                    <th scope="col" className="px-3 py-2.5">수신 · 방식</th>
-                    <th scope="col" className="px-3 py-2.5 text-right">첨부</th>
-                    <th scope="col" className="px-3 py-2.5">권고 분류</th>
-                    <th scope="col" className="py-2.5 pr-5 pl-3">판정</th>
+                    <th scope="col" className="py-2.5 pr-3 pl-5">확인 ID</th>
+                    <th scope="col" className="px-3 py-2.5">요청일</th>
+                    <th scope="col" className="px-3 py-2.5">질의자 · 부서</th>
+                    <th scope="col" className="px-3 py-2.5">S코드 후보</th>
+                    <th scope="col" className="px-3 py-2.5">목적 (CH)</th>
+                    <th scope="col" className="px-3 py-2.5">수신자 · 국가</th>
+                    <th scope="col" className="px-3 py-2.5">시스템 권고</th>
+                    <th scope="col" className="py-2.5 pr-5 pl-3">법무 답변</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -162,22 +162,24 @@ export function LegalListPage() {
                       </td>
                       <td className="px-3 py-3">
                         <span className="flex flex-wrap items-center gap-1">
-                          {r.category_choice === '모름' ? <span className="text-[12px] text-muted">모름</span> : <IdTag tone="primary">{r.category_choice}</IdTag>}
-                          {r.channel_code && <IdTag>{r.channel_code}</IdTag>}
+                          {r.category_choice === '모름' ? <span className="text-[12px] text-muted">사원 선택 모름</span> : <IdTag tone="primary">{r.category_choice}</IdTag>}
                         </span>
-                        <p className="mt-0.5 text-[11.5px] text-muted">{r.purpose ?? '목적 미입력'}</p>
+                        <p className="mt-0.5 text-[11.5px] text-muted">첨부 {r.file_count}건</p>
                       </td>
                       <td className="px-3 py-3">
-                        <p className="text-fg">
-                          {r.recipient} · {r.recipient_country ?? '—'}
-                        </p>
-                        <p className="text-[11.5px] text-muted">{r.transfer_method ?? '—'}</p>
+                        {r.channel_code && <IdTag>{r.channel_code}</IdTag>}
+                        <p className="mt-0.5 text-[12px] text-fg-2">{r.purpose ?? '목적 미입력'}</p>
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-fg-2 tabular-nums">{r.file_count}</td>
+                      <td className="px-3 py-3">
+                        <p className="text-fg">{r.recipient}</p>
+                        <p className="text-[11.5px] text-muted">
+                          {countryName(r.recipient_country)} · {r.transfer_method ?? '—'}
+                        </p>
+                      </td>
                       <td className="px-3 py-3">
                         <RecPill rec={r.recommendation} size="xs" />
                       </td>
-                      <td className="py-3 pr-5 pl-3">{r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">검토 대기</Pill>}</td>
+                      <td className="py-3 pr-5 pl-3">{r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">답변 대기</Pill>}</td>
                     </tr>
                   ))}
                 </tbody>

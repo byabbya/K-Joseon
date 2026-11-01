@@ -328,3 +328,34 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------- 인쇄 (검토 답변 보고서) ----------------
+   내비·바닥줄·입력 칸·버튼은 숨기고, 접힌 내용(조문 발췌·5W1H)은 펼쳐서 찍는다. */
+@media print {
+  @page { margin: 14mm 12mm; }
+  html, body { background: #fff !important; }
+  body > #root header.sticky,
+  body > #root footer,
+  .print-hide,
+  .report button[aria-expanded] > svg,
+  [role="tooltip"] {
+    display: none !important;
+  }
+  .collapse-grid {
+    grid-template-rows: 1fr !important;
+    opacity: 1 !important;
+  }
+  .report .cite-chip {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .report .cite-chip::before { content: "["; }
+  .report .cite-chip::after { content: "]"; }
+  .report a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9px;
+    color: #555;
+    word-break: break-all;
+  }
+  .animate-fade-in, .animate-changed, .animate-pop-in, .animate-rise-in { animation: none !important; }
+}

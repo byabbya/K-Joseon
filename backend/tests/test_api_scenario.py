@@ -56,6 +56,12 @@ def test_full_flow(client):
     assert a["clauses"][0]["layer"] == "notice"
     assert any(c["clause_id"] == "ITP-GUIDE-제17조" and c["excerpt"].startswith("8.") for c in a["clauses"])
     assert a["precedents"] and all(c["review_status"] != "approved" for c in a["precedents"])
+    # 판단 축 4개가 따로 채워지고, 법적 해당성·반출 허가는 시스템이 확정하지 않는다
+    ax = a["axes"]
+    assert set(ax) == {"tech_relevance", "info_grade", "legal_applicability", "export_permission"}
+    assert ax["info_grade"]["value"] == "대외비" and all(f["info_grade"] == "대외비" for f in a["files"])
+    assert ax["legal_applicability"]["status"] == "법무팀 확정 전"
+    assert ax["export_permission"]["value"] == "법무팀 판정 전"
 
     # 질문에 답하고 재분석: 계약 근거 + 수출 신고 받음 → 목록 내 2건 조건부, 절차서만 법무 검토
     answered = {**payload, "contract_basis": "선급 계약", "national_rnd_output": False,
@@ -81,6 +87,8 @@ def test_full_flow(client):
                                                             "reason": "시공 절차서 제외 후 재신청", "checked_evidence": ["ITP-GUIDE-제13조"]})
     dec = r.json()["decisions"][-1]
     assert dec["version"] == 1 and not dec["differs_from_recommendation"]   # 법무 검토 권고 → 어떤 판정이든 '다름' 아님
+    permit = r.json()["analysis"]["axes"]["export_permission"]
+    assert permit["decided_by"] == "법무팀" and permit["value"].startswith("미승인")
 
     new = client.post(f"/api/requests/{rid}/resubmit").json()
     assert new["parent_request_id"] == rid and new["analysis"] is not None

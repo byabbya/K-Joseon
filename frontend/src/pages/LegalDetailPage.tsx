@@ -1,15 +1,15 @@
-// 법무팀 — 요청 상세 (/legal/:id)
-// 상단 헤더(요청 ID·사원·부서·사번·요청 시각·S코드·경로 코드·수신자·국가·전송 방식·첨부 수)
-// → 사원 화면(신청서 + 검토 결과)을 같은 컴포넌트로 읽기 전용 표시
+// 법무팀 — 확인 요청 상세 (/legal/:id)
+// 상단 헤더(확인 ID·질의자·부서·사번·요청 시각·S코드·경로 코드·수신자·국가·전송 방식·첨부 수) → 판단 축 4개
+// → 사원의 질문(확인할 자료와 반출 상황) + 시스템 검토 답변 보고서를 같은 컴포넌트로 읽기 전용 표시
 // → 법무팀 입력: 유사 과거 요청 · 근거 보정(원본과 분리 저장) · 승인 여부 입력 · 판정 이력(이전 버전 보존)
 import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAddAdjustment, useDecide, useMeta, useRequestDetail } from '../api/hooks'
 import type { Analysis, RequestDetail, Verdict } from '../api/types'
 import { RequestForm } from '../components/request/RequestForm'
-import { ResultPanel } from '../components/request/ResultPanel'
+import { AxesStrip, ResultPanel } from '../components/request/ResultPanel'
 import { StatusStepper } from '../components/request/StatusStepper'
-import { PageHead, TwoPane } from '../components/request/Workspace'
+import { PageHead, PaneTitle, TwoPane } from '../components/request/Workspace'
 import { rowsFromAnalysis } from '../components/request/model'
 import { Button, ChoiceChip, ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconArrowLeft, IconCheck, IconGavel, IconHistory, IconLayers } from '../components/icons'
@@ -38,26 +38,33 @@ function LegalDetail({ d }: { d: RequestDetail }) {
   return (
     <div className="mx-auto w-full max-w-page px-4 py-6 sm:px-6">
       <Link to="/legal" className="mb-2 inline-flex items-center gap-1 text-[13px] font-medium text-muted hover:text-fg">
-        <IconArrowLeft size={14} /> 검토 요청 목록
+        <IconArrowLeft size={14} /> 확인 요청 목록
       </Link>
       <PageHead
-        eyebrow="법무팀 · 요청 상세"
+        eyebrow="법무팀 · 확인 요청"
         title={<span className="font-mono tracking-normal">{s.request_id}</span>}
         right={
           <div className="flex flex-wrap items-center gap-2">
-            <StatusStepper status={s.status} verdict={latest?.verdict} compact />
+            <StatusStepper status={s.status} verdict={latest?.verdict} compact audience="legal" />
             <a
               href="#decision"
-              className="press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-sm font-semibold text-on-primary shadow-card hover:bg-primary-hover"
+              className="print:hidden press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-sm font-semibold text-on-primary shadow-card hover:bg-primary-hover"
             >
-              <IconGavel size={15} /> 판정 입력
+              <IconGavel size={15} /> 답변 입력
             </a>
           </div>
         }
       />
       <HeaderStrip d={d} />
+      {a && (
+        <section aria-label="판단 축 4개" className="mt-4 rounded-card border border-line bg-surface px-5 py-4 shadow-card">
+          <h2 className="mb-1 text-[13px] font-bold text-fg">판단 축 4개</h2>
+          <p className="mb-3 text-[11.5px] text-muted">서로 다른 값입니다. 기술 관련성·정보등급이 법적 해당성이나 반출 허가를 정하지 않습니다 — 반출 허가 여부는 아래 법무팀 답변으로만 정해집니다.</p>
+          <AxesStrip a={a} decisions={d.decisions} />
+        </section>
+      )}
 
-      <Divider>사원 화면 · 읽기 전용 (출력은 수정 불가)</Divider>
+      <Divider>사원의 질문 · 시스템 답변 (읽기 전용, 수정 불가)</Divider>
       <TwoPane
         left={
           <RequestForm
@@ -69,11 +76,13 @@ function LegalDetail({ d }: { d: RequestDetail }) {
             filesLocked
             audience="legal"
             viewerId={userId}
+            head={<PaneTitle title="사원의 질문 — 확인할 자료와 반출 상황" sub="사원이 입력한 그대로입니다. 첨부는 열람하면 감사 로그에 남습니다." />}
           />
         }
         right={<ResultPanel analysis={a} prev={null} detail={d} audience="legal" />}
       />
 
+      <div className="print:hidden">
       <Divider>법무팀 입력</Divider>
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div className="space-y-5">
@@ -81,9 +90,10 @@ function LegalDetail({ d }: { d: RequestDetail }) {
           {a && <AdjustmentPanel d={d} a={a} reviewerId={userId} />}
         </div>
         <div className="space-y-5">
-          {a ? <DecisionPanel d={d} a={a} reviewerId={userId} /> : <Panel title="승인 여부 입력">분석 결과가 없어 판정할 수 없습니다.</Panel>}
+          {a ? <DecisionPanel d={d} a={a} reviewerId={userId} /> : <Panel title="법무팀 답변 (승인 여부)">시스템 답변이 없어 판정할 수 없습니다.</Panel>}
           <HistoryPanel d={d} />
         </div>
+      </div>
       </div>
     </div>
   )
@@ -127,8 +137,8 @@ function HeaderStrip({ d }: { d: RequestDetail }) {
   const recipientName = d.input.recipient_name || ((rv('recipient_name') as string | null) ?? '')
   const country = s.recipient_country ?? d.input.recipient_country ?? (rv('recipient_country') as string | null)
   const cells: { k: string; v: ReactNode; mono?: boolean; wide?: boolean }[] = [
-    { k: '요청 ID', v: s.request_id, mono: true },
-    { k: '사원명', v: s.employee.name },
+    { k: '확인 ID', v: s.request_id, mono: true },
+    { k: '질의자', v: s.employee.name },
     { k: '부서', v: s.employee.department },
     { k: '사번', v: s.employee.employee_id, mono: true },
     { k: '요청 시각', v: fmtDate(s.submitted_at ?? s.created_at), mono: true },
@@ -160,7 +170,7 @@ function HeaderStrip({ d }: { d: RequestDetail }) {
   ]
   const rec = s.recommendation
   return (
-    <section aria-label="요청 헤더" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+    <section aria-label="확인 요청 헤더" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-nav px-5 py-3 text-nav-fg">
         <span className="grid size-9 place-items-center rounded-field bg-white/90 text-[13px] font-bold text-primary" aria-hidden>
           {s.employee.name.slice(-2)}
@@ -169,10 +179,10 @@ function HeaderStrip({ d }: { d: RequestDetail }) {
           <p className="text-[15px] font-bold text-white">
             {s.employee.name} <span className="font-normal text-nav-muted">· {s.employee.department}</span>
           </p>
-          <p className="text-[11.5px] text-nav-muted">이 요청을 입력한 사원</p>
+          <p className="text-[11.5px] text-nav-muted">질의자 — “이거 보내도 법에 저촉되지 않나요?”</p>
         </div>
         <span className="ml-auto flex items-center gap-2">
-          <span className="text-[12px] text-nav-muted">규칙 권고</span>
+          <span className="text-[12px] text-nav-muted">시스템 권고</span>
           {rec ? <span className={cx('rounded-pill px-2.5 py-0.5 text-[13px] font-bold ring-1 ring-inset', TONE_CLS[REC_TONE[rec]].pill)}>{rec}</span> : '—'}
         </span>
       </div>
@@ -406,16 +416,17 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
   return (
     <Panel
       id="decision"
-      title="승인 여부 입력"
+      title="법무팀 답변 (승인 여부)"
+      sub="저장하면 사원 화면의 '법무팀 답변'과 판단 축 '반출 허가 여부'에 반영됩니다"
       icon={<IconGavel size={16} />}
       right={
         <span className="flex items-center gap-1.5 text-[12px] text-muted">
-          규칙 권고 <RecPill rec={a.recommendation} size="xs" />
+          시스템 권고 <RecPill rec={a.recommendation} size="xs" />
         </span>
       }
     >
       {notSubmitted && (
-        <p className="mb-3 rounded-field bg-info-bg px-3 py-2 text-[12.5px] text-info-fg ring-1 ring-info-line ring-inset">사원이 아직 법무팀 검토를 요청하지 않은 건입니다.</p>
+        <p className="mb-3 rounded-field bg-info-bg px-3 py-2 text-[12.5px] text-info-fg ring-1 ring-info-line ring-inset">사원이 아직 법무팀 확인을 요청하지 않은 건입니다 (시스템 답변만 받은 상태).</p>
       )}
       <div role="radiogroup" aria-label="승인 여부" className="grid gap-2 sm:grid-cols-3" onKeyDown={(e) => {
         const keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']
@@ -455,7 +466,7 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
           <Pill tone="info" size="xs">
             권고와 다름
           </Pill>
-          규칙 권고({a.recommendation})와 다른 판정은 규칙 개선용으로 자동 기록됩니다.
+          시스템 권고({a.recommendation})와 다른 판정은 규칙 개선용으로 자동 기록됩니다.
         </p>
       )}
 
@@ -507,7 +518,7 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
         <label className="mb-1.5 block text-[12.5px] font-semibold text-fg-2" htmlFor="reason">
           사유
         </label>
-        <textarea id="reason" rows={4} className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="판단 근거를 자유롭게 적어 주세요. 사원 화면에 그대로 반환됩니다." />
+        <textarea id="reason" rows={4} className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="판단 근거를 자유롭게 적어 주세요. 사원 화면의 법무팀 답변에 그대로 표시됩니다." />
       </div>
 
       <div className="mt-4">

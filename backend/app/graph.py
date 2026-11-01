@@ -12,7 +12,7 @@ from langgraph.graph import END, StateGraph
 
 from . import evidence, explain, reference, rules_engine
 from .config import MODEL_VERSION
-from .pipelines import document, request_parse, terms
+from .pipelines import document, grade, request_parse, terms
 
 
 class State(TypedDict, total=False):
@@ -44,11 +44,14 @@ def drawing(s: State) -> State:
                 notes.append("벡터 도면 PDF — 표제란·주기 텍스트로 분석")
             if d.ocr_needed_pages:
                 notes.append(f"텍스트 없는 쪽 {d.ocr_needed_pages} — OCR 대상 (2단계 연결 예정)")
+            g, g_ev = grade.detect(d.pages)
             ex[f["asset_id"]] = {"pages": d.pages, "page_count": d.page_count,
-                                 "kind": "drawing" if d.is_vector_drawing else "document", "notes": notes}
+                                 "kind": "drawing" if d.is_vector_drawing else "document", "notes": notes,
+                                 "info_grade": g, "info_grade_evidence": g_ev}
         else:
             ex[f["asset_id"]] = {"pages": [], "page_count": None, "kind": f["kind"],
-                                 "notes": ["도면 이미지 — 심볼 탐지(YOLO)·태그 OCR은 2단계에서 연결. 지금은 사원 선택 S코드로만 판단"]}
+                                 "notes": ["도면 이미지 — 심볼 탐지(YOLO)·태그 OCR은 2단계에서 연결. 지금은 사원 선택 S코드로만 판단"],
+                                 "info_grade": "확인 불가", "info_grade_evidence": ""}
     return {"extracted": ex, "log": s["log"] + ["drawing: 텍스트 추출 완료"]}
 
 
@@ -130,15 +133,17 @@ def compliance(s: State) -> State:
             "pages": ex["page_count"], "on_approved_list": f["on_approved_list"],
             "contains_supplier_data": f["contains_supplier_data"], "model_candidates": cands, "tech_status": status,
             "rule_hits": [h.__dict__ for h in res.file_hits[f["asset_id"]]],
-            "recommendation": res.file_outcomes[f["asset_id"]], "notes": ex["notes"]})
+            "recommendation": res.file_outcomes[f["asset_id"]], "notes": ex["notes"],
+            "info_grade": ex["info_grade"], "info_grade_evidence": ex["info_grade_evidence"]})
 
     model_codes = sorted({c["code"] for _, cands, _ in file_rows for c in cands if c["confident"]})
+    axes = _axes(choice, model_codes, file_rows, files_out, clauses)
     analysis = {
         "request_id": s["request_id"], "analyzed_at": datetime.now().isoformat(timespec="seconds"),
         "summary": "", "resolved": resolved, "channel_code": channel, "employee_category_choice": choice,
         "model_categories": model_codes,
         "category_mismatch": choice != "모름" and bool(model_codes) and choice not in model_codes,
-        "files": files_out, "recommendation": res.recommendation, "on_hold": res.on_hold, "rule_ids": res.rule_ids,
+        "axes": axes, "files": files_out, "recommendation": res.recommendation, "on_hold": res.on_hold, "rule_ids": res.rule_ids,
         "clauses": clauses, "precedents": cards,
         "missing": [q.__dict__ for q in res.questions],
         "versions": {"rules": cfg["version"], "model": MODEL_VERSION,
@@ -146,6 +151,40 @@ def compliance(s: State) -> State:
     }
     analysis["_frozen"] = explain.freeze({k: analysis[k] for k in ("recommendation", "rule_ids", "files", "clauses", "precedents")})
     return {"analysis": analysis, "log": s["log"] + ["compliance: 판단 확정"] + removed}
+
+
+SHORT_LAW = {"산업기술의 유출방지 및 보호에 관한 법률": "산업기술보호법", "산업기술보호법 시행령": "산업기술보호법 시행령",
+             "하도급거래 공정화에 관한 법률": "하도급법", "부정경쟁방지 및 영업비밀보호에 관한 법률": "부정경쟁방지법"}
+
+
+def _short_law(name: str) -> str:
+    return SHORT_LAW.get(name, name)
+
+
+def _axes(choice: str, model_codes: list[str], file_rows, files_out: list[dict], clauses: list[dict]) -> dict:
+    """판단 축 4개를 각각 따로 채운다. 어느 축의 값으로 다른 축을 정하지 않는다 (정의서 1. 판단 축 분리)."""
+    uncertain = any(st == "미확정" for _, _, st in file_rows)
+    codes = sorted(set(model_codes) | ({choice} if choice != "모름" else set()))
+    if codes:
+        tech = {"value": ", ".join(f"{c} {reference.category_label(c)}" for c in codes), "status": "후보",
+                "note": f"문서 분석 {', '.join(model_codes) or '없음'} · 사원 선택 {choice}. 관련 '후보'이며 해당 여부 확정이 아님"}
+    elif uncertain:
+        tech = {"value": "단서 일부만 확인", "status": "검토 필요", "note": "S코드를 정하지 못해 기술보호 담당 확인이 필요"}
+    else:
+        tech = {"value": "관련 기술 단서 없음", "status": "후보", "note": "사전에 등록된 용어가 문서에서 발견되지 않음"}
+    grades = [f["info_grade"] for f in files_out]
+    top = grade.highest(grades)
+    marked = sum(1 for g in grades if g not in ("표기 없음", "확인 불가"))
+    info = {"value": top, "status": "확인됨" if marked else "정보 없음",
+            "note": f"보안등급 표기가 있는 파일 {marked}/{len(grades)}건 (문서 표기를 읽은 값)"}
+    laws = [c for c in clauses if c["layer"] != "notice"]
+    legal = {"value": (f"검토 대상 조항 {len(laws)}개 — " + ", ".join(f"{_short_law(c['law_name'])} {c['article_no']}" for c in laws[:3])
+                       + (" 외" if len(laws) > 3 else "")) if laws else "연결된 조항 없음",
+             "status": "법무팀 확정 전", "decided_by": "법무팀",
+             "note": "저촉 '가능성'과 근거 조항까지만 제시하며, 법적 해당성 확정은 법무팀이 합니다"}
+    permit = {"value": "법무팀 판정 전", "status": "법무팀 확정 전", "decided_by": "법무팀",
+              "note": "반출 허가 여부는 법무팀 판정으로만 정해집니다"}
+    return {"tech_relevance": tech, "info_grade": info, "legal_applicability": legal, "export_permission": permit}
 
 
 def evidence_qa(s: State) -> State:

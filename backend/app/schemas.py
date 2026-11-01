@@ -92,6 +92,8 @@ class FileResult(BaseModel):
     contains_supplier_data: YesNoUnknown
     model_candidates: list[TechCandidate] = Field(default_factory=list)   # 모델 후보
     tech_status: Literal["후보 있음", "후보 없음", "미확정"]
+    info_grade: str = "확인 불가"                      # 문서에 표기된 보안등급 (대외비 등) — 판단 축 '문서 정보등급'
+    info_grade_evidence: str = ""
     rule_hits: list[RuleHit] = Field(default_factory=list)
     recommendation: Recommendation
     notes: list[str] = Field(default_factory=list)                         # 파이프라인 메모 (예: 도면 분석 미구현)
@@ -135,6 +137,14 @@ class MissingItem(BaseModel):
     asset_id: Optional[str] = None
 
 
+class Axis(BaseModel):
+    """판단 축 하나. 정의서: 네 축을 서로 다른 값으로 두고 어느 하나로 다른 값을 자동 확정하지 않는다."""
+    value: str                                          # 화면에 보일 한 줄 값
+    status: Literal["후보", "확인됨", "검토 필요", "법무팀 확정 전", "판정됨", "정보 없음"]
+    note: str = ""
+    decided_by: Literal["시스템", "사원", "법무팀"] = "시스템"
+
+
 class Analysis(BaseModel):
     request_id: str
     analyzed_at: str
@@ -144,6 +154,9 @@ class Analysis(BaseModel):
     employee_category_choice: CategoryChoice
     model_categories: list[SCode]                       # 모델이 낸 후보 S코드(요청 전체 합집합)
     category_mismatch: bool                             # 사원 선택 ≠ 모델 후보 → 법무팀에 둘 다 표시
+    # 판단 축 4개: tech_relevance(기술 관련성) / info_grade(문서 정보등급) /
+    # legal_applicability(법적 해당성) / export_permission(반출 허가 여부)
+    axes: dict[str, Axis] = Field(default_factory=dict)
     files: list[FileResult]
     recommendation: Recommendation
     on_hold: bool                                       # 정보 부족 → '판단 보류 + 추가 확인 항목'

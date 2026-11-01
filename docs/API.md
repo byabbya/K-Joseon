@@ -17,6 +17,17 @@
 | GET | `/api/files/{asset_id}?viewer=` | 첨부 열람 (열람 이력 기록) |
 | GET | `/api/requests/{id}/audit` | 감사 로그 |
 
+## 판단 축 4개 (`analysis.axes`)
+
+정의서 1장: 기술 관련성 / 문서 정보등급 / 법적 해당성 / 반출 허가 여부를 서로 다른 값으로 두고, 어느 하나로 다른 값을 자동 확정하지 않는다.
+
+| 키 | 의미 | 누가 정하나 |
+|---|---|---|
+| `tech_relevance` | S01~S08 관련 **후보** (문서 분석 ∪ 사원 선택) | 시스템 (후보만) |
+| `info_grade` | 문서에 표기된 보안등급 (대외비 등). 파일별 값은 `files[].info_grade` | 문서 표기를 읽음 |
+| `legal_applicability` | 검토 대상 조항 요약. 항상 `법무팀 확정 전` | 법무팀 |
+| `export_permission` | 판정 전에는 `법무팀 판정 전`, 판정 후 최신 판정(`decided_by: 법무팀`) | 법무팀 |
+
 ## 화면에서 지킬 것 (정의서)
 
 - 판단 축 분리: `employee_category_choice`와 `model_categories`를 따로 보여주고, `category_mismatch`면 둘 다 법무팀에 강조
