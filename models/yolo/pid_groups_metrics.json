@@ -1,0 +1,191 @@
+{
+  "_note": "검증 설계사(V02) 도면 40장의 타일(1280px→640px)에서 직접 잰 값. 제공기관 공식 성능(EfficientDet mAP@0.5 89.85%)은 우리 성능이 아니므로 쓰지 않음",
+  "created": "2026-11-02T01:13:05",
+  "weights": {
+    "file": "pid_groups.pt",
+    "sha256": "0a11051275611f95edaf1620f7265b685ca875dbee5f745406715969a5924915",
+    "from": "yolo11s.pt (COCO 사전학습) → 2단계 미세조정",
+    "checkpoint": "best.pt"
+  },
+  "dataset": {
+    "tile": 1280,
+    "overlap": 160,
+    "net": 640,
+    "neg_frac": 0.1,
+    "val_designer": "V02",
+    "seed": 0,
+    "splits": {
+      "train": {
+        "images": 129,
+        "designers": {
+          "V01": 72,
+          "V03": 24,
+          "V04": 33
+        },
+        "pos_tiles": 1922,
+        "neg_tiles": 169,
+        "boxes": {
+          "Valves": 1473,
+          "Piping Accessories": 1156,
+          "Instruments": 903,
+          "Equipments": 74,
+          "Pumps": 28,
+          "Motors": 9
+        }
+      },
+      "val": {
+        "images": 40,
+        "designers": {
+          "V02": 40
+        },
+        "pos_tiles": 795,
+        "neg_tiles": 74,
+        "boxes": {
+          "Valves": 613,
+          "Piping Accessories": 466,
+          "Instruments": 308,
+          "Equipments": 16,
+          "Pumps": 7,
+          "Motors": 16
+        }
+      }
+    }
+  },
+  "train_config": {
+    "data": "data/yolo_ds/data.yaml",
+    "epochs": 1,
+    "imgsz": 640,
+    "batch": 8,
+    "workers": 2,
+    "device": "cpu",
+    "fraction": 1.0,
+    "exist_ok": true,
+    "seed": 0,
+    "deterministic": false,
+    "optimizer": "AdamW",
+    "lr0": 0.0003,
+    "cos_lr": false,
+    "warmup_epochs": 0,
+    "warmup_bias_lr": 0.0,
+    "close_mosaic": 0,
+    "patience": 100,
+    "cache": false,
+    "amp": false,
+    "plots": false,
+    "val": false,
+    "fliplr": 0.5,
+    "flipud": 0.5,
+    "hsv_h": 0.0,
+    "hsv_s": 0.0,
+    "hsv_v": 0.2,
+    "degrees": 0.0,
+    "scale": 0.3,
+    "mosaic": 0.0,
+    "subsample": 0.4,
+    "time": 0.17,
+    "model": "stage1_epoch1.pt"
+  },
+  "epochs_completed": "1 (전체) + 1 (40% 부분집합)",
+  "stopped_early": false,
+  "train_seconds": 765,
+  "val_seconds": null,
+  "machine": {
+    "cpu": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+    "torch": "2.15.0+cpu",
+    "threads": 7
+  },
+  "val": {
+    "mAP50": 0.3277,
+    "mAP50-95": 0.2401,
+    "precision": 0.7216,
+    "recall": 0.3503,
+    "per_group": {
+      "Valves": {
+        "mAP50": 0.7322,
+        "mAP50-95": 0.5967,
+        "precision": 0.5553,
+        "recall": 0.7863
+      },
+      "Piping Accessories": {
+        "mAP50": 0.2862,
+        "mAP50-95": 0.1401,
+        "precision": 0.418,
+        "recall": 0.3348
+      },
+      "Instruments": {
+        "mAP50": 0.5987,
+        "mAP50-95": 0.5643,
+        "precision": 0.3563,
+        "recall": 0.9805
+      },
+      "Equipments": {
+        "mAP50": 0.0023,
+        "mAP50-95": 0.0004,
+        "precision": 1.0,
+        "recall": 0.0
+      },
+      "Pumps": {
+        "mAP50": 0.3469,
+        "mAP50-95": 0.1388,
+        "precision": 1.0,
+        "recall": 0.0
+      },
+      "Motors": {
+        "mAP50": 0.0,
+        "mAP50-95": 0.0,
+        "precision": 1.0,
+        "recall": 0.0
+      }
+    }
+  },
+  "val_scope": "타일 단위 지표 (도면 전체 병합 추론과는 다름). Motors·Pumps·Equipments 는 검증 상자가 적어(16·7·16개) 편차가 큼. AI-Hub 샘플은 도면마다 일부 클래스만 주석돼 있어(도면당 주석 중앙값 14개, 클래스 5종) 주석 없는 실제 기호를 맞혀도 오탐으로 계산됨 → precision·mAP 는 실제보다 낮게 나옴",
+  "stages": [
+    {
+      "stage": 1,
+      "init": "models/yolo/yolo11s.pt",
+      "tiles": "학습 타일 전체 2,091장 (모자이크)",
+      "epochs": 1,
+      "lr0": 0.001,
+      "optimizer": "AdamW",
+      "seconds": 1275,
+      "note": "time=1.2h 로 시작했으나 총 학습 시간 30~40분 상한에 맞추려 1 epoch 끝(last.pt)에서 중단"
+    },
+    {
+      "stage": 2,
+      "init": "stage1 epoch1 last.pt",
+      "tiles": "학습 타일 무작위 40% (836장, seed 0), 모자이크 없음",
+      "epochs": 1,
+      "lr0": 0.0003,
+      "optimizer": "AdamW",
+      "seconds": 765,
+      "note": "seconds 는 학습 641초 + ultralytics 마지막 검증 2회 포함"
+    }
+  ],
+  "train_seconds_total": 2040,
+  "timing_probe": {
+    "seconds": 687,
+    "note": "학습 전 속도 측정용 1 epoch (학습 타일 25%, 결과 미사용) — yolo11s 640px CPU 약 0.56초/타일"
+  },
+  "model_choice": "yolo11n 가중치가 로컬에 없어(내려받기 미승인) 있는 yolo11s.pt 로 학습하고 epoch·타일 수를 줄여 시간 상한을 맞춤",
+  "discarded_stage": {
+    "stage": 3,
+    "init": "stage 2 가중치",
+    "tiles": "Equipments·Pumps·Motors 포함 타일 101장 x4 + 나머지 15% (298장), 모자이크 없음",
+    "lr0": 0.0005,
+    "seconds": 430,
+    "val": {
+      "mAP50": 0.2648,
+      "mAP50-95": 0.2014,
+      "Pumps_mAP50": 0.0037,
+      "Valves_mAP50": 0.6457,
+      "Instruments_mAP50": 0.6416
+    },
+    "result": "검증 지표가 나빠져(전체 mAP50 0.328→0.265, Pumps 0.347→0.004) 버리고 stage 2 가중치를 유지"
+  },
+  "train_seconds_total_incl_discarded": 2470,
+  "known_limits": [
+    "AI-Hub 샘플은 도면마다 일부 클래스만 주석됨 (도면당 주석 중앙값 14개·5종). 주석 없는 기호가 배경으로 학습되어 드문 그룹(Pumps·Motors·Equipments)은 사실상 탐지 못 함",
+    "시연 도면(V01_03_036_128_2, 학습 설계사 V01)의 원심펌프 4개도 신뢰도 0.01 수준 — 탐지 결과에 나오지 않음",
+    "압축기는 샘플 주석 0개라 학습 제외"
+  ]
+}

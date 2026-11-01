@@ -1,13 +1,12 @@
 """용어 매칭 → 표준 용어 ID → S01~S08 후보.
 
-1단계 사전: data/reference/tech_categories.json 의 키워드(고시 별표 문구 기반 초안).
-2단계에서 KIPRIS 후보 중 승인된 용어와 P&ID 심볼 매핑표를 더한다.
+사전: 용어 통일 위키(app/wiki.py)에서 승인(approved)된 표준 용어와 별칭·관련어.
+승인 전(draft) 후보는 쓰지 않는다 (정의서 '지식 오염 방지'). 위키가 바뀌면 사전을 다시 만든다.
 """
 import re
 from dataclasses import dataclass
-from functools import lru_cache
 
-from .. import reference
+from .. import reference, wiki
 
 CONFIDENT_DISTINCT_TERMS = 2       # 서로 다른 용어 2개 이상이면 후보 확정, 1개면 '미확정'
 MAX_EVIDENCE_PER_CODE = 6
@@ -37,13 +36,19 @@ def _pattern(word: str) -> re.Pattern:
     return re.compile(body, re.IGNORECASE)
 
 
-@lru_cache
+_cache: tuple[int, list[Term]] | None = None
+
+
 def dictionary() -> list[Term]:
-    terms = []
-    for cat in reference.tech_categories():
-        for i, kw in enumerate(cat["keywords"], 1):
-            terms.append(Term(f"T-{cat['code']}-{i:02d}", cat["code"], kw, _pattern(kw)))
-    return terms
+    global _cache
+    if _cache is None or _cache[0] != wiki.version():
+        seen, terms = set(), []
+        for term_id, code, surface in wiki.approved_surfaces():
+            if (term_id, surface) not in seen:
+                seen.add((term_id, surface))
+                terms.append(Term(term_id, code, surface, _pattern(surface)))
+        _cache = (wiki.version(), terms)
+    return _cache[1]
 
 
 def match_pages(pages: list[str]) -> list[Match]:

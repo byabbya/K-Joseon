@@ -10,7 +10,8 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from . import evidence, explain, reference, rules_engine
+from . import evidence, explain, llm, reference, rules_engine, search, wiki
+from .pipelines import drawing as dwg
 from .config import MODEL_VERSION
 from .pipelines import document, grade, request_parse, terms
 
@@ -27,32 +28,77 @@ class State(TypedDict, total=False):
     log: list[str]
 
 
+DESCRIBED_ID = "DESC"
+
+
 def ingestion(s: State) -> State:
-    log = [f"ingestion: 파일 {len(s['files'])}건 (해시 기록됨)"]
-    return {"log": log}
+    if s["files"]:
+        return {"log": [f"ingestion: 파일 {len(s['files'])}건 (해시 기록됨)"]}
+    # 파일 없이 가볍게 묻는 경우: 질문에 설명된 자료를 판단 대상 하나로 둔다
+    meta = s["input"].get("described_item") or {}
+    item = {"asset_id": DESCRIBED_ID, "filename": "질문에 설명한 자료", "path": "", "sha256": "", "kind": "description",
+            "on_approved_list": meta.get("on_approved_list", "모름"),
+            "contains_supplier_data": meta.get("contains_supplier_data", "아니오")}
+    return {"files": [item], "log": ["ingestion: 첨부 없음 — 질문 문장으로 판단"]}
 
 
 def drawing(s: State) -> State:
-    """문서 파이프라인 + 도면 파이프라인. 1단계는 문서 텍스트만, 도면 심볼 탐지는 2단계."""
+    """문서 파이프라인(텍스트·스캔 OCR) + 도면 파이프라인(YOLO 심볼·OCR 태그).
+
+    무거운 계산(도면 YOLO+OCR 약 1~2분, 스캔 PDF OCR 쪽당 약 35초)은 여기서 하지 않는다.
+    캐시가 있으면 바로 쓰고, 없으면 'pending' 으로 표시 → main 이 백그라운드에서 계산한 뒤 다시 분석한다.
+    """
     ex = {}
     for f in s["files"]:
         path = Path(f["path"])
-        if path.suffix.lower() in (".pdf", ".docx"):
+        if f["kind"] == "description":
+            text = s["input"].get("free_text", "")
+            g, g_ev = grade.detect([text])
+            ex[f["asset_id"]] = {"pages": [text], "page_count": None, "kind": "description",
+                                 "notes": ["파일 없이 질문 문장만으로 판단했습니다. 파일을 붙이면 파일별로 더 정확히 확인할 수 있습니다"],
+                                 "info_grade": g if g != "표기 없음" else "확인 불가", "info_grade_evidence": g_ev}
+        elif path.suffix.lower() in (".pdf", ".docx"):
             d = document.extract(path)
-            notes = []
+            pages, notes, status = list(d.pages), [], None
             if d.is_vector_drawing:
                 notes.append("벡터 도면 PDF — 표제란·주기 텍스트로 분석")
             if d.ocr_needed_pages:
-                notes.append(f"텍스트 없는 쪽 {d.ocr_needed_pages} — OCR 대상 (2단계 연결 예정)")
-            g, g_ev = grade.detect(d.pages)
-            ex[f["asset_id"]] = {"pages": d.pages, "page_count": d.page_count,
+                got = dwg.cached_pdf_ocr(f["sha256"], d.ocr_needed_pages)
+                if got is None:
+                    status = "pending"
+                    notes.append(f"텍스트 없는 쪽 {d.ocr_needed_pages} — OCR로 읽는 중 (끝나면 답변이 갱신됩니다)")
+                else:
+                    for n, t in got.items():
+                        pages[n - 1] = t
+                    status = "done"
+                    notes.append(f"텍스트 없는 쪽 {d.ocr_needed_pages}은 OCR로 읽었습니다")
+            g, g_ev = grade.detect(pages)
+            ex[f["asset_id"]] = {"pages": pages, "page_count": d.page_count,
                                  "kind": "drawing" if d.is_vector_drawing else "document", "notes": notes,
-                                 "info_grade": g, "info_grade_evidence": g_ev}
+                                 "info_grade": g, "info_grade_evidence": g_ev, "enrich": status,
+                                 "ocr_pages": d.ocr_needed_pages}
         else:
-            ex[f["asset_id"]] = {"pages": [], "page_count": None, "kind": f["kind"],
-                                 "notes": ["도면 이미지 — 심볼 탐지(YOLO)·태그 OCR은 2단계에서 연결. 지금은 사원 선택 S코드로만 판단"],
-                                 "info_grade": "확인 불가", "info_grade_evidence": ""}
-    return {"extracted": ex, "log": s["log"] + ["drawing: 텍스트 추출 완료"]}
+            r = dwg.cached_result(f["sha256"])
+            if r is None:
+                ex[f["asset_id"]] = {"pages": [], "page_count": None, "kind": "drawing", "enrich": "pending",
+                                     "notes": ["도면 분석 중 — 심볼 탐지(YOLO)와 도면 글자 읽기(OCR)가 끝나면 답변이 갱신됩니다"],
+                                     "info_grade": "확인 불가", "info_grade_evidence": ""}
+                continue
+            text = dwg.text_of(r)
+            g, g_ev = grade.detect([text])
+            ex[f["asset_id"]] = {"pages": [text], "page_count": None, "kind": "drawing", "enrich": "done",
+                                 "drawing": _drawing_summary(r), "symbol_candidates": dwg.symbol_candidates(r),
+                                 "notes": [f"도면 분석: 심볼 {sum(r['counts_by_group'].values())}개 확정·{len(r['uncertain'])}개 미확정,"
+                                           f" 글자 {len(r.get('ocr_lines', []))}줄, 태그 {len(r.get('tags', []))}개"],
+                                 "info_grade": g if g != "표기 없음" else "확인 불가", "info_grade_evidence": g_ev}
+    return {"extracted": ex, "log": s["log"] + ["drawing: 추출 완료"]}
+
+
+def _drawing_summary(r: dict) -> dict:
+    """화면 표시용 요약. 전체 좌표는 /api/files/{asset_id}/drawing 으로 따로 받는다."""
+    return {"yolo": r.get("yolo"), "counts_by_group": r.get("counts_by_group", {}), "uncertain": len(r.get("uncertain", [])),
+            "tags": r.get("tags", [])[:20], "title": r.get("title", ""), "ocr_lines": len(r.get("ocr_lines", [])),
+            "image": r.get("image", {}), "version": r.get("version", {}), "elapsed": r.get("elapsed", {})}
 
 
 def terminology(s: State) -> State:
@@ -61,12 +107,27 @@ def terminology(s: State) -> State:
 
 
 def wiki_curator(s: State) -> State:
-    # 사전에 없는 반복 용어를 Draft 로 모으는 자리 — 판단 경로와 분리. 1단계는 기록만 남긴다.
-    return {"wiki_drafts": []}
+    """사전에 없는데 문서에 반복해서 나오는 기술 용어를 위키 Draft 로 제안한다 (판단 경로와 분리, 승인 전엔 안 씀)."""
+    text = "\n".join(p for e in s["extracted"].values() if e["kind"] != "description" for p in e["pages"])
+    try:
+        drafts = wiki.propose_from_text(text, s["request_id"])
+    except Exception:
+        drafts = []
+    return {"wiki_drafts": drafts}
 
 
 def technology(s: State) -> State:
-    c = {aid: terms.candidates(ms) for aid, ms in s["matches"].items()}
+    c = {}
+    for aid, ms in s["matches"].items():
+        cands = terms.candidates(ms)
+        for sc in s["extracted"][aid].get("symbol_candidates", []):        # 도면 심볼 근거를 합친다
+            same = next((x for x in cands if x["code"] == sc["code"]), None)
+            if same:
+                same["evidence"] += sc["evidence"]
+                same["confident"] = same["confident"] or sc["confident"]
+            else:
+                cands.append(sc)
+        c[aid] = cands
     return {"candidates": c, "log": s["log"] + ["technology: S코드 후보 산출"]}
 
 
@@ -99,7 +160,8 @@ def compliance(s: State) -> State:
         confident = {c["code"] for c in cands if c["confident"]}
         codes = confident | ({choice} if choice != "모름" else set())
         status = "후보 있음" if codes else ("미확정" if cands else "후보 없음")
-        file_facts.append(rules_engine.FileFacts(f["asset_id"], f["on_approved_list"], f["contains_supplier_data"], codes, status))
+        file_facts.append(rules_engine.FileFacts(f["asset_id"], f["on_approved_list"], f["contains_supplier_data"], codes, status,
+                                                 label="" if f["kind"] == "description" else f["filename"]))
         file_rows.append((f, cands, status))
 
     req = {**rv, "channel": channel}
@@ -134,23 +196,40 @@ def compliance(s: State) -> State:
             "contains_supplier_data": f["contains_supplier_data"], "model_candidates": cands, "tech_status": status,
             "rule_hits": [h.__dict__ for h in res.file_hits[f["asset_id"]]],
             "recommendation": res.file_outcomes[f["asset_id"]], "notes": ex["notes"],
-            "info_grade": ex["info_grade"], "info_grade_evidence": ex["info_grade_evidence"]})
+            "info_grade": ex["info_grade"], "info_grade_evidence": ex["info_grade_evidence"],
+            "drawing": ex.get("drawing"), "enrich_status": ex.get("enrich")})
 
     model_codes = sorted({c["code"] for _, cands, _ in file_rows for c in cands if c["confident"]})
     axes = _axes(choice, model_codes, file_rows, files_out, clauses)
     analysis = {
         "request_id": s["request_id"], "analyzed_at": datetime.now().isoformat(timespec="seconds"),
+        "input_mode": "text_only" if any(f["kind"] == "description" for f in s["files"]) else "files",
+        "enrichment_pending": any(e.get("enrich") == "pending" for e in s["extracted"].values()),
+        "wiki_drafts": s.get("wiki_drafts", []),
         "summary": "", "resolved": resolved, "channel_code": channel, "employee_category_choice": choice,
         "model_categories": model_codes,
         "category_mismatch": choice != "모름" and bool(model_codes) and choice not in model_codes,
         "axes": axes, "files": files_out, "recommendation": res.recommendation, "on_hold": res.on_hold, "rule_ids": res.rule_ids,
         "clauses": clauses, "precedents": cards,
+        "related": _related(inp.get("free_text", ""), all_codes, {c["clause_id"] for c in clauses} | {p["case_id"] for p in cards}),
         "missing": [q.__dict__ for q in res.questions],
         "versions": {"rules": cfg["version"], "model": MODEL_VERSION,
                      "data": reference.legal_manifest().get("fetched_at", "")},
     }
     analysis["_frozen"] = explain.freeze({k: analysis[k] for k in ("recommendation", "rule_ids", "files", "clauses", "precedents")})
     return {"analysis": analysis, "log": s["log"] + ["compliance: 판단 확정"] + removed}
+
+
+def _related(question: str, codes: set[str], linked: set[str]) -> list[dict]:
+    """검색으로 찾은 참고 근거 (판단에는 쓰지 않음). 질의 = 질문 + 관련 기술 항목명."""
+    q = " ".join([question] + [reference.category_label(c) for c in sorted(codes)]).strip()
+    if not q:
+        return []
+    try:
+        r = search.search(q, k=4, exclude=linked)
+    except Exception:
+        return []
+    return [{**x, "mode": r["mode"]} for x in r["results"]]
 
 
 SHORT_LAW = {"산업기술의 유출방지 및 보호에 관한 법률": "산업기술보호법", "산업기술보호법 시행령": "산업기술보호법 시행령",
@@ -188,16 +267,36 @@ def _axes(choice: str, model_codes: list[str], file_rows, files_out: list[dict],
 
 
 def evidence_qa(s: State) -> State:
+    """답변 문장: 템플릿을 바로 넣고, LLM 이 켜져 있으면 다듬기를 대기 상태로 표시한다 (polish 가 백그라운드에서 교체)."""
     a = s["analysis"]
-    texts, source = explain.template(a), "template"
-    # (4단계) 여기서 LLM 초안을 받고, 아래 검증을 통과하지 못하면 템플릿을 쓴다
-    problems = explain.validate(texts, set(a["rule_ids"]))
-    unchanged = explain.freeze({k: a[k] for k in ("recommendation", "rule_ids", "files", "clauses", "precedents")}) == a["_frozen"]
-    if problems or not unchanged:
-        texts, source = explain.template(a), "template"
-    a = {**a, "summary": texts["summary"], "explanation": texts, "explanation_source": source}
-    a.pop("_frozen", None)
-    return {"analysis": a, "log": s["log"] + ["evidence_qa: 설명 작성·검증"]}
+    texts = explain.template(a)
+    unchanged = explain.freeze({k: a[k] for k in FROZEN_KEYS}) == a.pop("_frozen")
+    assert unchanged, "판단 값이 설명 단계 전에 바뀌었습니다"
+    a = {**a, "summary": texts["summary"], "explanation": texts, "explanation_source": "template",
+         "explanation_pending": llm.available()}
+    return {"analysis": a, "log": s["log"] + ["evidence_qa: 템플릿 답변" + (" · LLM 다듬기 대기" if a["explanation_pending"] else "")]}
+
+
+FROZEN_KEYS = ("recommendation", "rule_ids", "files", "clauses", "precedents")
+
+
+def polish(a: dict) -> tuple[dict | None, str]:
+    """로컬 LLM 으로 답변 문장을 다시 쓰고 검증한다. (설명 dict 또는 None, 메모)."""
+    before = explain.freeze({k: a[k] for k in FROZEN_KEYS})
+    allowed = set(a["rule_ids"]) | {c["clause_id"] for c in a["clauses"]} | {p["case_id"] for p in a["precedents"]}
+    feedback, notes = "", []
+    for attempt in (1, 2):                          # 검증 실패 시 이유를 알려주고 한 번만 다시 쓰게 한다
+        out = llm.write(a, feedback)
+        if out is None:
+            return None, "LLM 응답 없음"
+        problems = explain.validate(out, allowed, a["recommendation"])
+        if explain.freeze({k: a[k] for k in FROZEN_KEYS}) != before:
+            return None, "판단 값 변경 감지"
+        if not problems:
+            return {**out, "headline": explain.HEADLINE[a["recommendation"]]}, "ok" if attempt == 1 else "ok (재작성 후 통과)"
+        feedback = "; ".join(problems[:3])
+        notes.append(f"{attempt}차 검증 실패: {feedback}")
+    return None, " / ".join(notes)
 
 
 def build():

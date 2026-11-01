@@ -80,21 +80,6 @@ export function IdTag({ children, className, title, tone = 'plain' }: { children
   )
 }
 
-/** 도면 지시선 번호처럼 쓰는 원형 번호 (섹션 머리) */
-export function Callout({ n, done, className }: { n: number | string; done?: boolean; className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={cx(
-        'grid size-6 shrink-0 place-items-center rounded-full font-mono text-[12px] font-semibold tabular-nums ring-1 ring-inset transition-colors duration-200',
-        done ? 'bg-primary text-on-primary ring-primary' : 'bg-surface text-primary-ink ring-primary-line',
-        className,
-      )}
-    >
-      {n}
-    </span>
-  )
-}
 
 /* ---------------- 버튼 ---------------- */
 
@@ -429,19 +414,6 @@ export function FieldLabel({ children, htmlFor, id, extra }: { children: ReactNo
       </label>
       {extra}
     </div>
-  )
-}
-
-/** 문장에서 추출된 값 표시 */
-export function ExtractedMark({ evidence }: { evidence?: string }) {
-  return (
-    <span
-      title={evidence ? `추가 설명에서 추출: "${evidence}"` : '추가 설명에서 추출'}
-      className="inline-flex items-center gap-1 rounded-[4px] bg-teal-soft px-1.5 text-[10.5px] leading-[18px] font-semibold text-teal-ink ring-1 ring-teal-line ring-inset"
-    >
-      <span aria-hidden className="size-1 rounded-full bg-teal" />
-      추출
-    </span>
   )
 }
 

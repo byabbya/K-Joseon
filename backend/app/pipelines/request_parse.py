@@ -63,6 +63,12 @@ def extract(text: str) -> dict[str, tuple[object, str]]:
             v, ev = _first(table, text)
             if v:
                 out[key] = (v, ev)
+    # 목적을 따로 말하지 않으면 수신자 유형의 일반적인 목적으로 본다 (근거 표시 → 사원이 고칠 수 있음)
+    if "purpose" not in out and "recipient_type" in out:
+        default = {"선급": "선급 도면승인", "선주": "선주 승인", "라이선서": "라이선서 기술승인", "설계 외주": "설계 외주",
+                   "해외법인": "해외법인 생산", "기자재 벤더": "기자재 인터페이스 협의"}.get(out["recipient_type"][0])
+        if default:
+            out["purpose"] = (default, f"수신자 유형 '{out['recipient_type'][0]}'에서 추정")
     m = re.search(r"국가\s*(R&D|연구개발|과제)", text)
     if m:
         out["national_rnd_output"] = (True, _span(text, m))

@@ -76,6 +76,22 @@ class Adjustment(SQLModel, table=True):
     created_at: str
 
 
+class Term(SQLModel, table=True):
+    """용어 통일 위키 (정의서 2-2): 표준 용어 레코드. 승인(approved)된 것만 문서 분석·검색에 쓴다."""
+    term_id: str = Field(primary_key=True)
+    ko: str                                        # 표준명(한)
+    en: str = ""                                   # 표준명(영)
+    aliases_json: str = "[]"                       # 승인된 별칭 (설계사별 변형·영문·약어)
+    s_code: Optional[str] = None                   # 관련 기술 (S01~S08)
+    relation: str = "표준어"                        # 표준어 / 동의어 / 관련어 / 영문 대응어 / 심볼 …
+    parent_id: Optional[str] = None                # 후보(관련어)가 붙을 표준 용어
+    context: str = ""
+    source: str = ""
+    status: str = "draft"                          # draft / approved / rejected
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[str] = None
+
+
 class AuditLog(SQLModel, table=True):
     log_id: Optional[int] = Field(default=None, primary_key=True)
     request_id: Optional[str] = Field(default=None, index=True)
@@ -96,4 +112,4 @@ def audit(session: Session, request_id: Optional[str], actor: str, action: str, 
 
 
 __all__ = ["engine", "Session", "select", "now", "init", "audit",
-           "Employee", "Request", "Asset", "Decision", "Adjustment", "AuditLog"]
+           "Employee", "Request", "Asset", "Decision", "Adjustment", "AuditLog", "Term"]

@@ -48,6 +48,8 @@ class RequestInput(BaseModel):
     export_clearance: Optional[ExportClearance] = None  # 외국 수신 + 기술 후보일 때만 묻는다 (R04·R05)
     export_clearance_ref: str = ""
     files: list[FileMeta] = Field(default_factory=list)
+    # 파일 없이 질문만 할 때, 질문에 설명한 자료 자체에 대한 답 (승인도면 목록 포함 여부 등)
+    described_item: FileMeta = Field(default_factory=FileMeta)
 
 
 # ---- 분석 출력 (정의서 2-2 output JSON) ----
@@ -85,7 +87,7 @@ class RuleHit(BaseModel):
 class FileResult(BaseModel):
     asset_id: str
     filename: str
-    kind: Literal["document", "drawing", "other"]
+    kind: Literal["document", "drawing", "description", "other"]   # description = 파일 없이 질문에 설명된 자료
     sha256: str
     pages: Optional[int] = None
     on_approved_list: ListInclusion
@@ -94,6 +96,8 @@ class FileResult(BaseModel):
     tech_status: Literal["후보 있음", "후보 없음", "미확정"]
     info_grade: str = "확인 불가"                      # 문서에 표기된 보안등급 (대외비 등) — 판단 축 '문서 정보등급'
     info_grade_evidence: str = ""
+    drawing: Optional[dict] = None                     # 도면 분석 요약: counts_by_group, uncertain, tags, title, image, version
+    enrich_status: Optional[Literal["pending", "done"]] = None   # 도면 YOLO·OCR / 스캔 OCR 진행 상태
     rule_hits: list[RuleHit] = Field(default_factory=list)
     recommendation: Recommendation
     notes: list[str] = Field(default_factory=list)                         # 파이프라인 메모 (예: 도면 분석 미구현)
@@ -148,6 +152,9 @@ class Axis(BaseModel):
 class Analysis(BaseModel):
     request_id: str
     analyzed_at: str
+    input_mode: Literal["files", "text_only"] = "files"   # text_only: 첨부 없이 질문 문장만으로 판단
+    enrichment_pending: bool = False                    # 도면·스캔 문서 분석이 끝나면 다시 분석되어 갱신됨
+    wiki_drafts: list[str] = Field(default_factory=list)  # 이번 문서에서 위키 Draft 로 제안된 용어
     summary: str
     resolved: dict[str, ResolvedField]                  # 구조화 항목 최종값 + 출처
     channel_code: Optional[str] = None
@@ -163,9 +170,12 @@ class Analysis(BaseModel):
     rule_ids: list[str]
     clauses: list[ClauseRef]
     precedents: list[PrecedentCard]
+    # 검색(BM25+임베딩)으로 찾은 참고 근거 — 규칙이 연결한 근거 외 추가 후보. 권고 판단에는 쓰지 않음
+    related: list[dict] = Field(default_factory=list)
     missing: list[MissingItem]
     explanation: dict[str, str] = Field(default_factory=dict)   # 요약·인계 메모 (LLM 또는 템플릿)
     explanation_source: Literal["llm", "template"] = "template"
+    explanation_pending: bool = False                   # 로컬 LLM 이 답변 문장을 다듬는 중 (끝나면 llm 으로 교체)
     versions: dict[str, str]                            # rules / model / data 버전
 
 
@@ -208,6 +218,7 @@ class AdjustmentOut(AdjustmentInput):
 class RequestSummary(BaseModel):
     request_id: str
     status: Status
+    title: str = ""                                    # 질문 첫머리 (목록 표시용)
     employee: EmployeeOut
     created_at: str
     submitted_at: Optional[str] = None

@@ -4,7 +4,8 @@ import { useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMeta, useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
-import { PageHead } from '../components/request/Workspace'
+import { PageHead } from '../components/PageHead'
+import { checkTitle } from '../components/check/ListBits'
 import { ErrorBox, IdTag, Pill, RecPill, Segmented, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconInbox, IconSort } from '../components/icons'
 import { SEVERITY, countryName, fmtDate } from '../lib/labels'
@@ -69,7 +70,7 @@ export function LegalListPage() {
 
   return (
     <div className="mx-auto w-full max-w-page px-4 py-6 sm:px-6">
-      <PageHead eyebrow="법무팀" title="확인 요청 목록" sub="사원이 시스템 답변을 받은 뒤 법무팀 확인을 요청한 건입니다. 열면 질문과 시스템 답변이 읽기 전용으로 보이고, 아래에서 근거 보정과 답변(승인 여부)을 입력합니다." />
+      <PageHead eyebrow="법무팀" title="확인 요청 목록" sub="사원이 시스템 답변을 받은 뒤 법무팀 확인을 요청한 건입니다. 열면 ① 질문 → ② 시스템 답변(근거 보고서 펼침) → ③ 법무팀 답변 순서로 보입니다." />
 
       <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* 탭 */}
@@ -137,7 +138,7 @@ export function LegalListPage() {
                 <caption className="sr-only">{tab === 'pending' ? '미처리' : '처리 완료'} 확인 요청 목록</caption>
                 <thead>
                   <tr className="border-b border-line text-[11.5px] font-bold tracking-[0.05em] text-muted">
-                    <th scope="col" className="py-2.5 pr-3 pl-5">확인 ID</th>
+                    <th scope="col" className="py-2.5 pr-3 pl-5">질문 · 확인 ID</th>
                     <th scope="col" className="px-3 py-2.5">요청일</th>
                     <th scope="col" className="px-3 py-2.5">질의자 · 부서</th>
                     <th scope="col" className="px-3 py-2.5">S코드 후보</th>
@@ -150,10 +151,16 @@ export function LegalListPage() {
                 <tbody className="divide-y divide-line">
                   {rows.map((r) => (
                     <tr key={r.request_id} onClick={() => nav(`/legal/${encodeURIComponent(r.request_id)}`)} className="cursor-pointer align-top transition-colors duration-150 hover:bg-surface-2">
-                      <td className="py-3 pr-3 pl-5">
-                        <Link to={`/legal/${encodeURIComponent(r.request_id)}`} onClick={(e) => e.stopPropagation()} className="font-mono text-[13px] font-semibold text-primary-ink hover:underline">
-                          {r.request_id}
+                      <td className="max-w-[20rem] py-3 pr-3 pl-5">
+                        <Link
+                          to={`/legal/${encodeURIComponent(r.request_id)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="line-clamp-2 text-[13.5px] leading-snug font-semibold text-fg hover:text-primary-ink hover:underline"
+                          title={r.title}
+                        >
+                          “{checkTitle(r)}”
                         </Link>
+                        <p className="mt-0.5 font-mono text-[11.5px] text-muted">{r.request_id}</p>
                       </td>
                       <td className="px-3 py-3 font-mono text-[12.5px] whitespace-nowrap text-fg-2 tabular-nums">{fmtDate(when(r))}</td>
                       <td className="px-3 py-3">
@@ -164,7 +171,7 @@ export function LegalListPage() {
                         <span className="flex flex-wrap items-center gap-1">
                           {r.category_choice === '모름' ? <span className="text-[12px] text-muted">사원 선택 모름</span> : <IdTag tone="primary">{r.category_choice}</IdTag>}
                         </span>
-                        <p className="mt-0.5 text-[11.5px] text-muted">첨부 {r.file_count}건</p>
+                        <p className="mt-0.5 text-[11.5px] text-muted">{r.file_count ? `첨부 ${r.file_count}건` : '첨부 없음 (문장만)'}</p>
                       </td>
                       <td className="px-3 py-3">
                         {r.channel_code && <IdTag>{r.channel_code}</IdTag>}
@@ -189,14 +196,13 @@ export function LegalListPage() {
               {rows.map((r) => (
                 <li key={r.request_id}>
                   <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="block px-4 py-3.5 hover:bg-surface-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[13px] font-semibold text-primary-ink">{r.request_id}</span>
-                      <span className="ml-auto flex gap-1">
-                        <RecPill rec={r.recommendation} size="xs" />
-                        {r.verdict && <VerdictPill verdict={r.verdict} size="xs" />}
-                      </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <RecPill rec={r.recommendation} size="xs" />
+                      {r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">답변 대기</Pill>}
+                      <span className="ml-auto font-mono text-[11.5px] text-muted">{r.request_id}</span>
                     </div>
-                    <p className="mt-1 text-[13.5px] text-fg">
+                    <p className="mt-1.5 line-clamp-2 text-[14px] leading-snug font-semibold text-fg">“{checkTitle(r)}”</p>
+                    <p className="text-[12px] text-fg-2">
                       {r.employee.name} · {r.employee.department}
                     </p>
                     <p className="text-[12px] text-muted">

@@ -8,6 +8,8 @@ from pathlib import Path
 import pytest
 
 os.environ["KSG_RUNTIME_DIR"] = tempfile.mkdtemp(prefix="ksg-test-")
+os.environ.setdefault("KSG_LLM", "off")   # 테스트는 템플릿·BM25 로 (모델 로딩 없이 빠르게)
+os.environ.setdefault("KSG_EMBED", "off")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -96,6 +98,37 @@ def test_full_flow(client):
 
     actions = [x["action"] for x in client.get(f"/api/requests/{rid}/audit").json()]
     assert actions[:2] == ["create", "upload"] and "decide" in actions
+
+
+def test_text_only_question_then_attach_files(client):
+    """파일 없이 가볍게 묻고, 나중에 파일을 붙여 파일별로 다시 판단한다."""
+    q = {"employee_id": "E1002", "free_text": "프랑스 선급에 화물창 방벽 사양서를 메일로 보내도 되나요?"}
+    r = client.post("/api/requests", data={"payload": json.dumps(q, ensure_ascii=False)})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    a, rid = d["analysis"], d["summary"]["request_id"]
+    assert a["input_mode"] == "text_only" and len(a["files"]) == 1 and a["files"][0]["kind"] == "description"
+    assert "S02" in a["model_categories"]                                  # 문장 속 '화물창·방벽'으로 후보
+    assert a["recommendation"] == "법무팀 검토 필요"                        # 외국 선급 + S02 + 수출 신고 미확인
+    assert any(m["field"] == "on_approved_list" for m in a["missing"])    # 파일이 없으니 목록 포함 여부를 묻는다
+    assert d["summary"]["title"].startswith("프랑스 선급에")
+
+    # 질문에 답하면 '설명된 자료'에 반영된다
+    r = client.put(f"/api/requests/{rid}", json={**q, "described_item": {"on_approved_list": "포함"}})
+    assert not any(m["field"] == "on_approved_list" for m in r.json()["analysis"]["missing"])
+
+    # 파일을 붙이면 설명된 자료 대신 파일별로 판단
+    pdf = next(SCENARIO.glob("DS-CCS-2601*.pdf"))
+    payload = {**q, "files": [{"on_approved_list": "포함"}]}
+    r = client.post(f"/api/requests/{rid}/files", data={"payload": json.dumps(payload, ensure_ascii=False)},
+                    files=[("files", (pdf.name, pdf.read_bytes(), "application/pdf"))])
+    a = r.json()["analysis"]
+    assert a["input_mode"] == "files" and [f["filename"] for f in a["files"]] == [pdf.name]
+
+
+def test_empty_question_rejected(client):
+    r = client.post("/api/requests", data={"payload": json.dumps({"employee_id": "E1001", "free_text": "  "})})
+    assert r.status_code == 400
 
 
 def test_rejects_wrong_signature(client):

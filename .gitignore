@@ -14,11 +14,18 @@ dist/
 models/*
 !models/MANIFEST.json
 !models/ollama/
+# P&ID 탐지 학습 설정·검증 지표는 남긴다 (가중치는 제외)
+!models/yolo/
+models/yolo/*
+!models/yolo/pid_groups_metrics.json
 tools/
 
 # AI-Hub P&ID 샘플 (비상업 라이선스, 약 800MB) — 원본은 AI-Hub에서 받음
 data/P&ID Data/
 data/demo/**/*.png
+# P&ID YOLO 타일 데이터셋 (scripts/prepare_yolo.py 로 다시 만듦)
+data/yolo_ds/
+data/yolo_runs/
 
 # API 원본 응답 캐시 (다시 받을 수 있음)
 data/kipris/raw/
@@ -29,3 +36,5 @@ data/kipris/raw/
 # 실행 중 생성되는 DB·첨부 원본
 data/app.db
 data/storage/
+# 도면 분석 결과 캐시 (sha256 기준)
+data/runtime_cache/

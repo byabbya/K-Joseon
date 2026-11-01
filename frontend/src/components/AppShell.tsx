@@ -1,22 +1,30 @@
 // 앱 틀 — 상단 내비게이션(제품 마크 · 역할별 메뉴 · 계정 컨트롤) + 본문 + 바닥줄.
-// 역할: 사원(저촉 여부 확인 · 내 확인 기록) / 법무팀(확인 요청 목록). 계정 컨트롤에서 역할과 사용자를 고른다.
+// 역할: 사원(확인하기 · 내 확인 기록 · 용어 위키) / 법무팀(확인 요청 목록 · 용어 위키). 계정 컨트롤에서 역할과 사용자를 고른다.
+// 바닥줄에는 로컬 처리 상태(LLM · 검색 · YOLO · OCR · 외부 호출 없음)를 작게 보인다 — 온프레미스 원칙.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK } from '../api/client'
-import { useMeta, useRequestList } from '../api/hooks'
+import { useMeta, useRequestList, useSystemStatus } from '../api/hooks'
 import { useUser, type Role } from '../lib/user'
 import { RadioGroup, Segmented, cx } from './ui'
 import { IconCheck, IconChevronDown, LogoMark } from './icons'
 
 const NAV: Record<Role, { to: string; label: string; match: (p: string) => boolean }[]> = {
   employee: [
-    { to: '/check', label: '저촉 여부 확인', match: (p) => p.startsWith('/check') },
+    { to: '/', label: '확인하기', match: (p) => p === '/' || p.startsWith('/check') },
     { to: '/history', label: '내 확인 기록', match: (p) => p.startsWith('/history') },
+    { to: '/wiki', label: '용어 위키', match: (p) => p.startsWith('/wiki') },
   ],
-  legal: [{ to: '/legal', label: '확인 요청 목록', match: (p) => p.startsWith('/legal') }],
+  legal: [
+    { to: '/legal', label: '확인 요청 목록', match: (p) => p.startsWith('/legal') },
+    { to: '/wiki', label: '용어 위키', match: (p) => p.startsWith('/wiki') },
+  ],
 }
 
-export const ROLE_HOME: Record<Role, string> = { employee: '/check', legal: '/legal' }
+/** 두 역할이 함께 쓰는 화면 */
+const SHARED = (p: string) => p.startsWith('/wiki')
+
+export const ROLE_HOME: Record<Role, string> = { employee: '/', legal: '/legal' }
 
 export function AppShell() {
   const { role, userId, setUser } = useUser()
@@ -34,9 +42,15 @@ export function AppShell() {
   // 역할과 화면이 맞지 않으면 그 역할의 첫 화면으로
   useEffect(() => {
     const onLegal = loc.pathname.startsWith('/legal')
+    if (SHARED(loc.pathname)) return
     if (role === 'legal' && !onLegal) nav('/legal', { replace: true })
-    if (role === 'employee' && onLegal) nav('/check', { replace: true })
+    if (role === 'employee' && onLegal) nav('/', { replace: true })
   }, [role, loc.pathname, nav])
+
+  // 화면이 바뀌면 맨 위에서 시작 (첫 화면에서 아래로 내려 확인하기를 눌러도 답변 화면은 위부터)
+  useEffect(() => {
+    if (!loc.hash) window.scrollTo(0, 0)
+  }, [loc.pathname, loc.hash])
 
   // 법무팀 미처리 개수 (메뉴 배지)
   const pending = useRequestList({ status: 'pending' })
@@ -53,7 +67,7 @@ export function AppShell() {
             <LogoMark size={26} />
             <span className="leading-tight max-sm:hidden">
               <span className="block text-[15px] font-bold tracking-tight">K-Ship Guard AX</span>
-              <span className="block text-[10.5px] tracking-[0.08em] text-nav-muted">반출 전 저촉 여부 확인</span>
+              <span className="block text-[10.5px] tracking-[0.08em] text-nav-muted">보내기 전에 확인</span>
             </span>
             {USE_MOCK && (
               <span className="rounded-[4px] bg-cond-dot px-1.5 font-mono text-[10px] leading-4 font-bold text-[#1d1300]" title="모의 데이터로 실행 중">
@@ -100,12 +114,59 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-line bg-surface">
-        <div className="mx-auto flex max-w-page flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-[12px] text-muted sm:px-6">
+      <footer className="app-footer border-t border-line bg-surface print:hidden">
+        <div className="mx-auto flex max-w-page flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 text-[12px] text-muted sm:px-6">
           <span className="font-medium text-fg-2">시스템은 근거와 권고까지 — 법적 해당성 확정과 최종 승인은 법무팀. 근거 없는 결론은 표시하지 않습니다</span>
-          <span className="ml-auto font-mono tabular-nums">rules {meta.data?.rules_version ?? '—'}</span>
+          <LocalStatus rules={meta.data?.rules_version} />
         </div>
       </footer>
+    </div>
+  )
+}
+
+/* ---------------- 로컬 처리 상태 ---------------- */
+
+function Dot({ tone }: { tone: 'go' | 'cond' | 'off' }) {
+  return <span aria-hidden className={cx('size-1.5 shrink-0 rounded-full', tone === 'go' ? 'bg-go-dot' : tone === 'cond' ? 'bg-cond-dot' : 'bg-line-strong')} />
+}
+
+function LocalStatus({ rules }: { rules?: string }) {
+  const q = useSystemStatus()
+  const st = q.data
+  const items: { tone: 'go' | 'cond' | 'off'; text: string; title: string }[] = st
+    ? [
+        st.llm.available
+          ? { tone: 'go', text: 'LLM 연결', title: `로컬 LLM ${st.llm.model} (Ollama) — 답변 문장만 다듬음` }
+          : { tone: 'off', text: 'LLM 꺼짐', title: '로컬 LLM 미연결 — 템플릿 답변만 사용' },
+        st.embedding === 'ready'
+          ? { tone: 'go', text: '검색 hybrid', title: 'BM25 + bge-m3 임베딩 하이브리드 검색' }
+          : { tone: st.embedding === 'loading' ? 'cond' : 'off', text: 'BM25 only', title: `임베딩 ${st.embedding === 'loading' ? '준비 중' : st.embedding} — BM25 검색만 사용` },
+        /가중치 없음/.test(st.yolo)
+          ? { tone: 'off', text: 'YOLO 없음', title: 'YOLO 가중치 없음 — 도면 심볼 탐지 안 함' }
+          : { tone: 'go', text: 'YOLO', title: `YOLO pid_groups@${st.yolo}` },
+        { tone: 'go', text: 'OCR', title: st.ocr },
+      ]
+    : []
+  return (
+    <div className="ml-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1" aria-label="로컬 처리 상태">
+      <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-2 px-2 py-0.5 font-semibold text-fg-2 ring-1 ring-line ring-inset">
+        <span aria-hidden className="size-1.5 rounded-full bg-teal" />
+        로컬 처리
+      </span>
+      {q.isError && <span>상태 확인 불가 (백엔드 연결 없음)</span>}
+      {items.map((it) => (
+        <span key={it.text} title={it.title} className="inline-flex items-center gap-1">
+          <Dot tone={it.tone} />
+          {it.text}
+          <span className="sr-only"> — {it.title}</span>
+        </span>
+      ))}
+      {st && (
+        <span className="inline-flex items-center gap-1 font-medium text-go-fg" title={st.external_calls}>
+          외부 네트워크 호출 없음
+        </span>
+      )}
+      <span className="font-mono tabular-nums">rules {st?.rules ?? rules ?? '—'}</span>
     </div>
   )
 }

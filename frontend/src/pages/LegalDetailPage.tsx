@@ -1,18 +1,19 @@
 // 법무팀 — 확인 요청 상세 (/legal/:id)
-// 상단 헤더(확인 ID·질의자·부서·사번·요청 시각·S코드·경로 코드·수신자·국가·전송 방식·첨부 수) → 판단 축 4개
-// → 사원의 질문(확인할 자료와 반출 상황) + 시스템 검토 답변 보고서를 같은 컴포넌트로 읽기 전용 표시
-// → 법무팀 입력: 유사 과거 요청 · 근거 보정(원본과 분리 저장) · 승인 여부 입력 · 판정 이력(이전 버전 보존)
-import { useState, type ReactNode } from 'react'
+// 상단 헤더(확인 ID·질의자·부서·사번·요청 시각·S코드·경로 코드·수신자·국가·전송 방식·첨부 수)
+// → 사원의 질문 카드(읽기 전용, 알아들은 내용 포함) → 시스템 답변(결론 · 해야 할 일 · 근거 보고서 펼침, 사원 화면과 같은 컴포넌트)
+// → 법무팀 입력: 유사 과거 요청 · 근거 보정(원본과 분리 저장) · 법무팀 답변(승인 여부) · 판정 이력(이전 버전 보존)
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useAddAdjustment, useDecide, useMeta, useRequestDetail } from '../api/hooks'
+import { useAddAdjustment, useDecide, useMeta, useRequestDetail, useSearch } from '../api/hooks'
 import type { Analysis, RequestDetail, Verdict } from '../api/types'
-import { RequestForm } from '../components/request/RequestForm'
-import { AxesStrip, ResultPanel } from '../components/request/ResultPanel'
-import { StatusStepper } from '../components/request/StatusStepper'
-import { PageHead, PaneTitle, TwoPane } from '../components/request/Workspace'
-import { rowsFromAnalysis } from '../components/request/model'
+import { SystemAnswer } from '../components/check/Answer'
+import { QuestionCard } from '../components/check/QuestionCard'
+import { StatusStepper } from '../components/check/StatusStepper'
+import { checkTitle } from '../components/check/ListBits'
+import { RelatedList, searchModeLabel } from '../components/check/Related'
+import { PageHead } from '../components/PageHead'
 import { Button, ChoiceChip, ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
-import { IconArrowLeft, IconCheck, IconGavel, IconHistory, IconLayers } from '../components/icons'
+import { IconArrowLeft, IconCheck, IconGavel, IconHistory, IconLayers, IconPlus, IconSearch, IconX } from '../components/icons'
 import { REC_TONE, TONE_CLS, VERDICT_DEF, VERDICT_TONE, countryName, fmtDate } from '../lib/labels'
 import { useUser } from '../lib/user'
 
@@ -43,6 +44,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
       <PageHead
         eyebrow="법무팀 · 확인 요청"
         title={<span className="font-mono tracking-normal">{s.request_id}</span>}
+        sub={checkTitle(s)}
         right={
           <div className="flex flex-wrap items-center gap-2">
             <StatusStepper status={s.status} verdict={latest?.verdict} compact audience="legal" />
@@ -56,42 +58,25 @@ function LegalDetail({ d }: { d: RequestDetail }) {
         }
       />
       <HeaderStrip d={d} />
-      {a && (
-        <section aria-label="판단 축 4개" className="mt-4 rounded-card border border-line bg-surface px-5 py-4 shadow-card">
-          <h2 className="mb-1 text-[13px] font-bold text-fg">판단 축 4개</h2>
-          <p className="mb-3 text-[11.5px] text-muted">서로 다른 값입니다. 기술 관련성·정보등급이 법적 해당성이나 반출 허가를 정하지 않습니다 — 반출 허가 여부는 아래 법무팀 답변으로만 정해집니다.</p>
-          <AxesStrip a={a} decisions={d.decisions} />
-        </section>
-      )}
 
-      <Divider>사원의 질문 · 시스템 답변 (읽기 전용, 수정 불가)</Divider>
-      <TwoPane
-        left={
-          <RequestForm
-            input={d.input}
-            setInput={() => {}}
-            files={rowsFromAnalysis(d.input, a)}
-            analysis={a}
-            readOnly
-            filesLocked
-            audience="legal"
-            viewerId={userId}
-            head={<PaneTitle title="사원의 질문 — 확인할 자료와 반출 상황" sub="사원이 입력한 그대로입니다. 첨부는 열람하면 감사 로그에 남습니다." />}
-          />
-        }
-        right={<ResultPanel analysis={a} prev={null} detail={d} audience="legal" />}
-      />
+      <div className="mx-auto max-w-[60rem]">
+        <Divider n={1}>사원의 질문 (읽기 전용 · 첨부 열람은 감사 로그에 남음)</Divider>
+        <QuestionCard d={d} audience="legal" viewerId={userId} />
+        <Divider n={2}>시스템 답변 (수정 불가 · 확정은 아래 법무팀 답변)</Divider>
+        {a ? <SystemAnswer d={d} a={a} prev={null} audience="legal" reportDefaultOpen /> : <p className="text-[13.5px] text-muted">시스템 답변이 없습니다.</p>}
+      </div>
 
       <div className="print:hidden">
-      <Divider>법무팀 입력</Divider>
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-        <div className="space-y-5">
-          <SimilarPanel d={d} />
-          {a && <AdjustmentPanel d={d} a={a} reviewerId={userId} />}
-        </div>
+      <Divider n={3}>법무팀 답변 · 근거 보정</Divider>
+      {/* 법무팀 답변이 주 작업이라 먼저(좁은 화면에서도 위에) — 참고·보정은 옆/아래 */}
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="space-y-5">
           {a ? <DecisionPanel d={d} a={a} reviewerId={userId} /> : <Panel title="법무팀 답변 (승인 여부)">시스템 답변이 없어 판정할 수 없습니다.</Panel>}
           <HistoryPanel d={d} />
+        </div>
+        <div className="space-y-5">
+          <SimilarPanel d={d} />
+          {a && <AdjustmentPanel d={d} a={a} reviewerId={userId} />}
         </div>
       </div>
       </div>
@@ -101,12 +86,15 @@ function LegalDetail({ d }: { d: RequestDetail }) {
 
 /* ---------------- 공통 ---------------- */
 
-function Divider({ children }: { children: ReactNode }) {
+function Divider({ children, n }: { children: ReactNode; n?: number }) {
   return (
     <p className="my-6 flex items-center gap-3 text-[12px] font-bold tracking-[0.06em] text-muted">
-      <span className="h-px flex-1 bg-line-strong" />
-      {children}
-      <span className="h-px flex-1 bg-line-strong" />
+      <span className="h-px min-w-6 flex-1 bg-line-strong" />
+      <span className="text-center">
+        {n !== undefined && <span className="mr-1.5 font-mono text-primary-ink">{n}</span>}
+        {children}
+      </span>
+      <span className="h-px min-w-6 flex-1 bg-line-strong" />
     </p>
   )
 }
@@ -179,7 +167,7 @@ function HeaderStrip({ d }: { d: RequestDetail }) {
           <p className="text-[15px] font-bold text-white">
             {s.employee.name} <span className="font-normal text-nav-muted">· {s.employee.department}</span>
           </p>
-          <p className="text-[11.5px] text-nav-muted">질의자 — “이거 보내도 법에 저촉되지 않나요?”</p>
+          <p className="text-[11.5px] text-nav-muted">질의자 — “이거 보내도 되나요?”</p>
         </div>
         <span className="ml-auto flex items-center gap-2">
           <span className="text-[12px] text-nav-muted">시스템 권고</span>
@@ -268,28 +256,41 @@ function CheckRow({ checked, onChange, children, sub, strike }: { checked: boole
 
 function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; reviewerId: string | null }) {
   const [remove, setRemove] = useState<string[]>([])
-  const [addText, setAddText] = useState('')
+  const [add, setAdd] = useState<string[]>([])
+  const [manual, setManual] = useState('')
   const [note, setNote] = useState('')
   const [err, setErr] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
   const m = useAddAdjustment(d.summary.request_id)
   const items = outputEvidence(a).flatMap((g) => g.items)
+  const inOutput = new Set(items.map((x) => x.id))
   const people = useMeta().data?.employees ?? []
 
-  const save = () => {
-    setErr(null)
-    const add = addText
+  const addId = (id: string) => setAdd((l) => (l.includes(id) ? l : [...l, id]))
+  const addManual = () => {
+    manual
       .split(/[\s,]+/)
       .map((x) => x.trim())
       .filter(Boolean)
+      .forEach(addId)
+    setManual('')
+  }
+
+  const save = () => {
+    setErr(null)
+    setSaved(false)
+    const all = [...add, ...manual.split(/[\s,]+/).map((x) => x.trim()).filter(Boolean)]
     if (!reviewerId) return setErr('오른쪽 위 계정에서 법무팀 사용자를 선택해 주세요.')
-    if (!add.length && !remove.length) return setErr('추가하거나 제외할 근거를 하나 이상 지정해 주세요.')
+    if (!all.length && !remove.length) return setErr('추가하거나 제외할 근거를 하나 이상 지정해 주세요.')
     m.mutate(
-      { reviewer_id: reviewerId, add, remove, note },
+      { reviewer_id: reviewerId, add: [...new Set(all)], remove, note },
       {
         onSuccess: () => {
           setRemove([])
-          setAddText('')
+          setAdd([])
+          setManual('')
           setNote('')
+          setSaved(true)
         },
       },
     )
@@ -311,10 +312,49 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
           </CheckRow>
         ))}
       </div>
-      <label className="mt-3 block">
-        <span className="mb-1 block text-[12.5px] font-semibold text-fg-2">근거 추가 (조항 ID / 판례 ID, 쉼표·공백 구분)</span>
-        <input className={cx(inputCls, 'font-mono')} value={addText} onChange={(e) => setAddText(e.target.value)} placeholder="예: ITPA-제14조, PREC-2022도7718" />
-      </label>
+
+      <EvidenceSearch a={a} added={add} inOutput={inOutput} onAdd={addId} />
+
+      <div className="mt-3">
+        <p className="mb-1 text-[12.5px] font-semibold text-fg-2">
+          추가할 근거 <span className="font-mono font-normal text-muted">{add.length}</span>
+        </p>
+        {add.length > 0 ? (
+          <ul className="mb-2 flex flex-wrap gap-1.5" aria-label="추가할 근거">
+            {add.map((id) => (
+              <li key={id} className="inline-flex items-center gap-1 rounded-pill bg-go-bg py-0.5 pr-1 pl-2.5 font-mono text-[11.5px] text-go-fg ring-1 ring-go-line ring-inset">
+                + {id}
+                <button type="button" onClick={() => setAdd((l) => l.filter((x) => x !== id))} aria-label={`${id} 빼기`} className="grid size-5 place-items-center rounded-full hover:bg-surface/60">
+                  <IconX size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mb-2 text-[12px] text-muted">검색 결과의 ‘근거에 추가’를 누르거나 ID를 직접 적으세요.</p>
+        )}
+        <div className="flex gap-2">
+          <label className="sr-only" htmlFor="adj-manual">
+            근거 ID 직접 입력
+          </label>
+          <input
+            id="adj-manual"
+            className={cx(inputCls, 'font-mono')}
+            value={manual}
+            onChange={(e) => setManual(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addManual()
+              }
+            }}
+            placeholder="ID 직접 입력 — 예: ITPA-제14조, PREC-2022도7718"
+          />
+          <Button variant="secondary" onClick={addManual} disabled={!manual.trim()}>
+            추가
+          </Button>
+        </div>
+      </div>
       <label className="mt-3 block">
         <span className="mb-1 block text-[12.5px] font-semibold text-fg-2">보정 메모</span>
         <textarea rows={2} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -323,6 +363,11 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
         {m.isPending ? '저장 중…' : '보정 저장'}
       </Button>
       <ErrorBox error={err ?? m.error} className="mt-2" />
+      {saved && (
+        <p role="status" className="mt-2 flex items-center justify-center gap-1.5 text-[13px] font-semibold text-go-fg">
+          <IconCheck size={14} strokeWidth={2.5} /> 보정을 저장했습니다 (원본 출력과 별도)
+        </p>
+      )}
 
       <div className="mt-4 border-t border-dashed border-line-strong pt-3">
         <p className="mb-2 text-[12px] font-bold tracking-[0.05em] text-muted">
@@ -355,6 +400,64 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
         </ol>
       </div>
     </Panel>
+  )
+}
+
+/** 근거 검색 (GET /api/search) — 비어 있으면 이 건의 참고 근거(analysis.related)를 먼저 보인다 */
+function EvidenceSearch({ a, added, inOutput, onAdd }: { a: Analysis; added: string[]; inOutput: Set<string>; onAdd: (id: string) => void }) {
+  const [q, setQ] = useState('')
+  const [dq, setDq] = useState('')
+  useEffect(() => {
+    const t = window.setTimeout(() => setDq(q.trim()), 300)
+    return () => window.clearTimeout(t)
+  }, [q])
+  const s = useSearch(dq, 8)
+  const showing = dq.length >= 2
+  const results = showing ? (s.data?.results ?? []) : (a.related ?? [])
+  return (
+    <div className="mt-3">
+      <label htmlFor="adj-search" className="mb-1 block text-[12.5px] font-semibold text-fg-2">
+        법령·판례 검색
+      </label>
+      <span className="relative block">
+        <IconSearch size={15} className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted" />
+        <input id="adj-search" type="search" className={cx(inputCls, 'pl-8')} value={q} onChange={(e) => setQ(e.target.value)} placeholder="예: 수출 신고, 해외 인증 기술자료, 하도급 기술자료" />
+      </span>
+      <p className="mt-1 text-[11.5px] text-muted" aria-live="polite">
+        {showing
+          ? s.isFetching && !s.data
+            ? '검색 중…'
+            : s.data
+              ? `${searchModeLabel(s.data.mode, s.data.embedding)} · ${s.data.results.length}건`
+              : ''
+          : a.related?.length
+            ? `이 건의 참고 근거 ${a.related.length}건 (질문으로 미리 검색한 결과) — 판단에는 쓰지 않은 자료`
+            : '두 글자 이상 적으면 검색합니다'}
+      </p>
+      <ErrorBox error={showing ? s.error : null} className="mt-1" />
+      {results.length > 0 && (
+        <div className={cx('thin-scroll mt-1.5 max-h-80 overflow-y-auto pr-0.5 transition-opacity', s.isPlaceholderData && showing && 'opacity-60')}>
+          <RelatedList
+            dense
+            items={results}
+            action={(r) =>
+              inOutput.has(r.id) ? (
+                <span className="shrink-0 text-[11px] text-muted">이미 출력 근거</span>
+              ) : added.includes(r.id) ? (
+                <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-go-fg">
+                  <IconCheck size={12} strokeWidth={2.5} /> 추가됨
+                </span>
+              ) : (
+                <Button size="sm" variant="secondary" onClick={() => onAdd(r.id)} className="shrink-0" aria-label={`${r.title} 근거에 추가`}>
+                  <IconPlus size={13} /> 근거에 추가
+                </Button>
+              )
+            }
+          />
+        </div>
+      )}
+      {showing && s.data && !s.data.results.length && <p className="mt-1.5 text-[12.5px] text-muted">검색 결과가 없습니다.</p>}
+    </div>
   )
 }
 
@@ -417,7 +520,7 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
     <Panel
       id="decision"
       title="법무팀 답변 (승인 여부)"
-      sub="저장하면 사원 화면의 '법무팀 답변'과 판단 축 '반출 허가 여부'에 반영됩니다"
+      sub="저장하면 사원 답변 화면 맨 위 '법무팀 답변'과 판단 축 '반출 허가 여부'에 반영됩니다"
       icon={<IconGavel size={16} />}
       right={
         <span className="flex items-center gap-1.5 text-[12px] text-muted">

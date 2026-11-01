@@ -213,12 +213,6 @@ export const IconUpload = (p: P) => (
     <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
   </Svg>
 )
-export const IconLock = (p: P) => (
-  <Svg {...p}>
-    <rect x="5" y="10.5" width="14" height="10" rx="2" />
-    <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
-  </Svg>
-)
 export const IconSend2 = (p: P) => (
   <Svg {...p}>
     <path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" />
@@ -253,4 +247,10 @@ export const LogoMark = ({ size = 26 }: { size?: number }) => (
     <path d="M9 14.5h14l-2.4 5.2a2 2 0 0 1-1.8 1.2h-5.6a2 2 0 0 1-1.8-1.2z" fill="currentColor" />
     <path d="M16 8.5v6M16 8.5l4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
+)
+export const IconSearch = (p: P) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m20 20-4.2-4.2" />
+  </Svg>
 )

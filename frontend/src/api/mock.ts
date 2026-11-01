@@ -24,7 +24,25 @@ import type {
   SCode,
   TechCandidate,
 } from './types'
+import { DESCRIBED_ID, emptyRequestInput, type FileMeta, type PreviewOut, type TermProposal, type WikiTermsParams } from './types'
 import { resolveAxes } from '../lib/axes'
+import {
+  MOCK_STATUS,
+  MOCK_SYMBOLS,
+  mockDrawing,
+  mockDrawingDetail,
+  mockLlmText,
+  mockPreviewSvg,
+  mockRelated,
+  mockSearch,
+  mockWikiPropose,
+  mockWikiReview,
+  mockWikiTerms,
+} from './mockExtras'
+
+/** 파일 이름 → 도면 모의 결과의 시드 */
+const seedOf = (name: string) => [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)
+const isPng = (name: string) => /\.png$/i.test(name)
 
 const SEVERITY: Record<Recommendation, number> = { '진행 가능': 0, '조건부 진행': 1, '법무팀 검토 필요': 2, '반출 불가': 3 }
 const maxRec = (a: Recommendation, b: Recommendation) => (SEVERITY[a] >= SEVERITY[b] ? a : b)
@@ -269,8 +287,18 @@ const COUNTRY_WORDS: [string, string][] = [
   ['독일', 'DE'], ['싱가포르', 'SG'], ['그리스', 'GR'], ['네덜란드', 'NL'], ['이탈리아', 'IT'],
 ]
 const COUNTRY_KO: Record<string, string> = Object.fromEntries([...COUNTRY_WORDS.map(([k, v]) => [v, k]), ['KR', '국내']])
-const RECIPIENT_WORDS = ['선급', '선주', '라이선서', '기자재 벤더', '설계 외주', '해외법인']
-const METHOD_WORDS = ['이메일', '선급 포털', '선주 EDM', '클라우드 링크']
+const RECIPIENT_WORDS: [string, string][] = [
+  ['선급', '선급'], ['선주', '선주'], ['라이선서', '라이선서'], ['GTT', '라이선서'], ['기자재', '기자재 벤더'],
+  ['외주', '설계 외주'], ['설계센터', '해외법인'], ['해외법인', '해외법인'],
+]
+const METHOD_WORDS: [string, string][] = [
+  ['선급 포털', '선급 포털'], ['포털', '선급 포털'], ['EDM', '선주 EDM'], ['클라우드', '클라우드 링크'], ['링크', '클라우드 링크'],
+  ['ChatGPT', '외부 AI 서비스'], ['메일', '이메일'],
+]
+
+const PURPOSE_BY_RECIPIENT: Record<string, string> = {
+  선급: '선급 도면승인', 선주: '선주 승인', 라이선서: '라이선서 기술승인', '기자재 벤더': '기자재 인터페이스 협의', '설계 외주': '설계 외주', 해외법인: '해외법인 생산',
+}
 
 function resolveFields(inp: RequestInput): Record<string, ResolvedField> {
   const t = inp.free_text
@@ -284,15 +312,38 @@ function resolveFields(inp: RequestInput): Record<string, ResolvedField> {
     for (const [w, v] of words) if (t.includes(w)) return [v, w] as [string, string]
     return null
   }
+  const rtype = pick(inp.recipient_type, find(RECIPIENT_WORDS))
+  // 목적이 문장에 없으면 수신자 유형에서 추정 (백엔드 request_parse 와 같은 방식)
+  const inferPurpose = (): [string, string] | null => {
+    const r = rtype.value as string | null
+    const p = r ? PURPOSE_BY_RECIPIENT[r] : null
+    return p ? [p, `수신자 유형 '${r}'에서 추정`] : null
+  }
   return {
-    recipient_type: pick(inp.recipient_type, find(RECIPIENT_WORDS.map((w) => [w, w]))),
+    purpose: pick(inp.purpose, inferPurpose),
+    recipient_type: rtype,
     recipient_name: pick(inp.recipient_name),
     recipient_country: pick(inp.recipient_country, find(COUNTRY_WORDS)),
-    transfer_method: pick(inp.transfer_method, find(METHOD_WORDS.map((w) => [w, w]))),
+    transfer_method: pick(inp.transfer_method, find(METHOD_WORDS)),
     contract_basis: pick(inp.contract_basis),
     national_rnd_output: pick(inp.national_rnd_output),
     export_clearance: pick(inp.export_clearance),
   }
+}
+
+/** 파일 없이 질문했을 때: 문장 속 용어로 후보를 낸다 */
+function candidatesForText(text: string): TechCandidate[] {
+  const terms: [SCode, string[]][] = [
+    ['S02', ['화물창', '방벽', '단열', '펌프타워', 'CCS']],
+    ['S08', ['BOG', '증발가스', '연료공급', 'FGSS']],
+    ['S01', ['기본설계', '선형', '해양플랜트']],
+  ]
+  return terms.flatMap(([code, words]) => {
+    const hit = words.filter((w) => text.includes(w))
+    if (!hit.length) return []
+    const evidence = hit.map((w) => ({ term: w, term_id: '', page: null, snippet: text, source: 'text' as const }))
+    return [{ code, label: catLabel(code), score: Math.min(0.95, 0.55 + 0.1 * hit.length), confident: true, evidence }]
+  })
 }
 
 function candidatesFor(filename: string): TechCandidate[] {
@@ -331,10 +382,15 @@ function candidatesFor(filename: string): TechCandidate[] {
 }
 
 const FOREIGN_CHANNELS_R04 = ['CH-01', 'CH-02', 'CH-03', 'CH-04', 'CH-07', 'CH-09']
+const DEF_META: FileMeta = { on_approved_list: '모름', contains_supplier_data: '아니오' }
 
 function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
+  // 파일 없이 질문만 하면 '질문에 설명한 자료' 하나를 판단 대상으로 둔다 (백엔드 graph.ingestion 과 같음)
+  const textOnly = filenames.length === 0
+  const targets = textOnly ? [DESCRIBED_ID] : filenames
+  const metaOf = (i: number) => (textOnly ? (inp.described_item ?? DEF_META) : (inp.files[i] ?? DEF_META))
   const resolved = resolveFields(inp)
-  const channel = META.purposes.find((p) => p.label === inp.purpose)?.channel_code ?? null
+  const channel = META.purposes.find((p) => p.label === resolved.purpose.value)?.channel_code ?? null
   const country = (resolved.recipient_country.value as string | null) ?? null
   const rtype = (resolved.recipient_type.value as string | null) ?? null
   const foreign = (!!country && country !== 'KR') || rtype === '해외법인'
@@ -346,9 +402,9 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
   const ruleIds = new Set<string>()
   const allCodes = new Set<SCode>()
 
-  const files: FileResult[] = filenames.map((fn, i) => {
-    const meta = inp.files[i] ?? { on_approved_list: '모름', contains_supplier_data: '아니오' }
-    const cands = candidatesFor(fn)
+  const files: FileResult[] = targets.map((fn, i) => {
+    const meta = metaOf(i)
+    const cands = textOnly ? candidatesForText(inp.free_text) : candidatesFor(fn)
     cands.forEach((c) => allCodes.add(c.code))
     const codes = new Set<string>(cands.map((c) => c.code))
     if (emp !== '모름') codes.add(emp)
@@ -359,7 +415,7 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     if (inp.transfer_method === '외부 AI 서비스') {
       hits.push({ rule_id: 'R01', name: '외부 AI 서비스 업로드', outcome: '반출 불가', reason: '외부 AI 서비스로의 업로드는 반출 승인 대상이며 클라우드 접근권한 부여도 수출 방법에 해당합니다.', conditions: [], internal_review_options: [] })
     }
-    if (foreign && tech && channel && FOREIGN_CHANNELS_R04.includes(channel) && !exportOk) {
+    if (foreign && tech && (!channel || FOREIGN_CHANNELS_R04.includes(channel)) && !exportOk) {
       hits.push({
         rule_id: 'R04',
         name: '외국 수신자 제공 — 정부 수출 신고 미확인',
@@ -374,7 +430,7 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
         rule_id: 'R06',
         name: '승인도면 목록 밖 파일',
         outcome: '법무팀 검토 필요',
-        reason: `이 파일은 선급·선주 승인도면 목록에 ${meta.on_approved_list}으로 표시되어 제출 범위를 넘을 수 있습니다. 파일별로 판단합니다.`,
+        reason: `${textOnly ? '보내려는 자료가' : '이 파일은'} 선급·선주 승인도면 목록에 ${meta.on_approved_list}으로 표시되어 제출 범위를 넘을 수 있습니다. 파일별로 판단합니다.`,
         conditions: [],
         internal_review_options: ['승인도면 목록 재확인', '설계 부서장 확인'],
       })
@@ -420,6 +476,26 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     const confident = cands.filter((c) => c.confident)
     const notes: string[] = []
     if (/\.png$|\.dxf$/i.test(fn)) notes.push('도면 심볼 인식(YOLO) 미연결 — 심볼 후보는 참고용입니다.')
+    if (textOnly) {
+      notes.push('파일 없이 질문 문장만으로 판단했습니다. 파일을 붙이면 파일별로 더 정확히 확인할 수 있습니다')
+      const grade = inp.free_text.includes('대외비') ? '대외비' : '확인 불가'
+      return {
+        asset_id: DESCRIBED_ID,
+        filename: '질문에 설명한 자료',
+        kind: 'description',
+        sha256: '',
+        pages: null,
+        on_approved_list: meta.on_approved_list,
+        contains_supplier_data: meta.contains_supplier_data,
+        model_candidates: cands,
+        tech_status: cands.length ? '후보 있음' : '후보 없음',
+        info_grade: grade,
+        info_grade_evidence: grade === '대외비' ? '대외비' : '',
+        rule_hits: hits,
+        recommendation: rec,
+        notes,
+      }
+    }
     return {
       asset_id: `A-${id.slice(-3)}-${i + 1}`,
       filename: fn,
@@ -433,6 +509,9 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
       // 문서 정보등급 — 시연 PDF 머리말의 [대외비] 표기를 읽은 것처럼 흉내 낸다
       info_grade: /CCS.*\.pdf$/i.test(fn) ? '대외비' : /\.pdf$/i.test(fn) ? '표기 없음' : '확인 불가',
       info_grade_evidence: /CCS.*\.pdf$/i.test(fn) ? '[대외비]' : '',
+      // PNG 도면 — YOLO 심볼 + OCR (모의). 진행 중 상태는 저장소(startPipeline)가 덮어쓴다
+      drawing: isPng(fn) ? mockDrawing(seedOf(fn)) : null,
+      enrich_status: isPng(fn) ? 'done' : null,
       rule_hits: hits,
       recommendation: rec,
       notes,
@@ -451,20 +530,19 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     missing.push({ field: 'recipient_country', question: '수신 국가를 선택해 주세요.', rule_id: 'R09', asset_id: null })
     ruleIds.add('R09')
   }
-  if (!inp.purpose) missing.push({ field: 'purpose', question: '반출 목적을 선택해 주세요.', rule_id: null, asset_id: null })
-  for (const [i, f] of inp.files.entries()) {
+  if (!resolved.purpose.value) missing.push({ field: 'purpose', question: '반출 목적을 선택해 주세요.', rule_id: null, asset_id: null })
+  for (const f of files) {
     if (f.on_approved_list === '모름')
-      missing.push({ field: 'on_approved_list', question: `"${filenames[i]}"이(가) 승인도면 목록에 포함되어 있나요?`, rule_id: 'R06', asset_id: files[i]?.asset_id ?? null })
+      missing.push({ field: 'on_approved_list', question: `${textOnly ? '보내려는 자료' : `'${f.filename}'`}이(가) 선급·선주 승인도면 목록에 포함된 자료인가요?`, rule_id: 'R06', asset_id: f.asset_id })
   }
 
   let rec: Recommendation = files.reduce<Recommendation>((a, f) => maxRec(a, f.recommendation), '진행 가능')
   const onHold = emp === '모름' && files.every((f) => f.tech_status !== '후보 있음')
   if (onHold) rec = maxRec(rec, '법무팀 검토 필요')
-  if (files.length === 0) rec = '법무팀 검토 필요'
 
   const modelCats = [...allCodes].sort() as SCode[]
   const confidentCats = new Set(files.flatMap((f) => f.model_candidates.filter((c) => c.confident).map((c) => c.code)))
-  const mismatch = emp === '모름' ? confidentCats.size > 0 : !(confidentCats.size === 0 || (confidentCats.size === 1 && confidentCats.has(emp)))
+  const mismatch = emp !== '모름' && confidentCats.size > 0 && !confidentCats.has(emp)
 
   // 조항
   const clauses: ClauseRef[] = []
@@ -496,13 +574,13 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
   if (ruleIds.has('R06')) addPrec('PREC-2024노5872', '자료(파일)마다 국가핵심기술 해당성을 따로 판단 — 승인도면 목록 밖 파일을 따로 보는 근거입니다.', ['R06'])
   if (ruleIds.has('R04')) addPrec('PREC-2025도15967', '고시 문언을 넓게 해석해 기술 범위 해당성을 인정한 법리 — S코드 해당 여부 판단에 참고합니다.', ['R04'])
 
-  const fileLines = files.map((f) => `· ${f.filename}: ${f.recommendation} (${f.rule_hits.map((h) => h.rule_id).join(', ') || '규칙 없음'})`).join('\n')
   const method = inp.transfer_method ?? (resolved.transfer_method.value as string | null) ?? '미상'
   const summary = `${COUNTRY_KO[country ?? ''] ?? country ?? '국가 미상'} ${rtype ?? '수신자'}에게 ${modelCats.join('·') || '기술 후보 없음'} 관련 자료 ${files.length}건을 보내는 요청입니다 (전송 방식: ${method}). 전체 권고는 '${rec}'입니다.`
 
   const out: Analysis = {
     request_id: id,
     analyzed_at: now(),
+    input_mode: textOnly ? 'text_only' : 'files',
     summary,
     resolved,
     channel_code: channel,
@@ -517,14 +595,18 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
     precedents,
     missing,
     explanation: {
-      summary: `${summary}\n${fileLines}`,
+      summary,
       handoff_memo:
         `법무팀 인계: 걸린 규칙 ${[...ruleIds].sort().join(', ') || '없음'}. ` +
         (missing.length ? `미확인 항목 ${missing.length}건(${missing.map((m) => m.field).join(', ')}). ` : '') +
         (mismatch ? `사원 선택(${emp})과 모델 후보(${modelCats.join(', ')})가 다르므로 둘 다 확인 바랍니다.` : ''),
     },
     explanation_source: 'template',
-    versions: { rules: 'rules-0.1', model: 'terms-dict-0.1 / yolo:미연결 / llm:미연결', data: 'mock' },
+    explanation_pending: false,
+    enrichment_pending: false,
+    related: mockRelated(new Set([...clauses.map((c) => c.clause_id), ...precedents.map((p) => p.case_id)])),
+    wiki_drafts: filenames.some(isPng) ? ['MIXING HEADER'] : [],
+    versions: { rules: 'rules-0.1', model: 'terms-dict-0.1 / yolo pid_groups@0a1105127561 / llm kship-qwen3-4b (모의)', data: 'mock' },
   }
   // 판단 축 4개 (백엔드 graph._axes 와 같은 규칙). 반출 허가 여부는 판정 뒤 getRequest 에서 법무팀 값으로 바뀐다
   const axes = resolveAxes(out)
@@ -540,6 +622,52 @@ function analyze(id: string, inp: RequestInput, filenames: string[]): Analysis {
 interface Stored {
   detail: RequestDetail
   filenames: string[]
+  /** 모의 백그라운드 작업 — 이 시각(ms)이 지나면 도면 분석 완료 / LLM 문장 교체 */
+  enrichAt?: number
+  llmAt?: number
+}
+
+/** 백엔드 _schedule_polish 흉내: 도면이 남았으면 도면 분석부터, 아니면 LLM 다듬기 */
+function startPipeline(s: Stored, enrich: boolean) {
+  const a = s.detail.analysis
+  if (!a) return
+  if (enrich && a.files.some((f) => isPng(f.filename))) {
+    a.enrichment_pending = true
+    a.explanation_pending = false
+    for (const f of a.files) if (isPng(f.filename)) Object.assign(f, { drawing: null, enrich_status: 'pending' })
+    s.enrichAt = Date.now() + 5000
+    s.llmAt = undefined
+  } else {
+    a.explanation_pending = true
+    s.llmAt = Date.now() + 7000
+  }
+}
+
+function finishLlm(a: Analysis) {
+  const t = mockLlmText(a)
+  a.explanation = { ...a.explanation, ...t }
+  a.summary = t.summary
+  a.explanation_source = 'llm'
+  a.explanation_pending = false
+}
+
+/** 불러올 때마다 시간이 지난 모의 작업을 마친다 */
+function tick(s: Stored) {
+  const now = Date.now()
+  if (s.enrichAt && now >= s.enrichAt) {
+    s.enrichAt = undefined
+    s.detail.analysis = analyze(s.detail.summary.request_id, s.detail.input, s.filenames)
+    startPipeline(s, false)
+  }
+  if (s.llmAt && now >= s.llmAt && s.detail.analysis) {
+    s.llmAt = undefined
+    finishLlm(s.detail.analysis)
+  }
+}
+
+function findAsset(assetId: string): string | null {
+  for (const s of store.values()) for (const f of s.detail.analysis?.files ?? []) if (f.asset_id === assetId) return f.filename
+  return null
 }
 const store = new Map<string, Stored>()
 let seq = 0
@@ -556,14 +684,16 @@ function employee(id: string): EmployeeOut {
 function summarize(id: string, inp: RequestInput, a: Analysis | null, prev?: RequestSummary): RequestSummary {
   const rt = (a?.resolved.recipient_type?.value as string | null) ?? inp.recipient_type
   const name = inp.recipient_name || ((a?.resolved.recipient_name?.value as string | null) ?? '')
+  const text = inp.free_text.split(/\s+/).filter(Boolean).join(' ')
   return {
     request_id: id,
     status: prev?.status ?? '분석 완료',
+    title: text.length > 40 ? `${text.slice(0, 40)}…` : text,
     employee: employee(inp.employee_id),
     created_at: prev?.created_at ?? now(),
     submitted_at: prev?.submitted_at ?? null,
     category_choice: inp.category_choice,
-    purpose: inp.purpose,
+    purpose: (a?.resolved.purpose?.value as string | null) ?? inp.purpose,
     channel_code: a?.channel_code ?? null,
     recipient: [rt, name].filter(Boolean).join(' · ') || '-',
     recipient_country: (a?.resolved.recipient_country?.value as string | null) ?? inp.recipient_country,
@@ -574,7 +704,8 @@ function summarize(id: string, inp: RequestInput, a: Analysis | null, prev?: Req
   }
 }
 
-function createStored(inp: RequestInput, filenames: string[], createdAt?: string): Stored {
+function createStored(raw: Omit<RequestInput, 'described_item'> & Partial<Pick<RequestInput, 'described_item'>>, filenames: string[], createdAt?: string, live = false): Stored {
+  const inp: RequestInput = { ...raw, described_item: raw.described_item ?? { ...DEF_META } }
   const id = nextId()
   const analysis = analyze(id, inp, filenames)
   const summary = summarize(id, inp, analysis)
@@ -584,6 +715,9 @@ function createStored(inp: RequestInput, filenames: string[], createdAt?: string
     detail: { summary, input: structuredClone(inp), analysis, decisions: [], adjustments: [], similar_past: [], parent_request_id: null },
   }
   store.set(id, s)
+  // 시드 건은 이미 끝난 상태(LLM 문장 포함), 새로 만든 건은 도면 분석 → LLM 다듬기를 흉내 낸다
+  if (live) startPipeline(s, true)
+  else if (analysis) finishLlm(analysis)
   return s
 }
 
@@ -673,6 +807,18 @@ function seed() {
   demo.detail.summary.status = '법무 검토 중'
   demo.detail.summary.submitted_at = '2026-11-01T09:15:00'
   demo.detail.similar_past = similarFor(demo.detail.summary.request_id)
+
+  // 파일 없이 문장만으로 물어본 건 (시스템 답변만 받은 상태)
+  createStored(
+    {
+      employee_id: 'E1002', category_choice: '모름', purpose: null,
+      free_text: 'GTT 기술승인용으로 화물창 펌프타워 설계 변경안을 클라우드 링크로 공유해도 되나요?',
+      recipient_type: null, recipient_name: '', recipient_country: 'FR', transfer_method: null,
+      contract_basis: null, national_rnd_output: null, export_clearance: null, export_clearance_ref: '', files: [],
+    },
+    [],
+    '2026-10-28T16:40:00',
+  )
 }
 seed()
 
@@ -687,9 +833,38 @@ const SEV_SORT: Record<string, number> = { '반출 불가': 3, '법무팀 검토
 export const mockApi = {
   getMeta: () => delay(META),
 
+  preview: (free_text: string, has_files: boolean): Promise<PreviewOut> => {
+    const inp: RequestInput = { ...emptyRequestInput('preview'), free_text }
+    const r = resolveFields(inp)
+    const resolved: PreviewOut['resolved'] = {}
+    for (const [k, f] of Object.entries(r)) if (f.source === '추출' && f.value !== null) resolved[k] = { value: f.value, evidence: f.evidence }
+    const cands = candidatesForText(free_text)
+    const country = (r.recipient_country.value as string | null) ?? null
+    const foreign = (!!country && country !== 'KR') || r.recipient_type.value === '해외법인'
+    const need: PreviewOut['need'] = []
+    const Q: [string, string][] = [
+      ['purpose', '어떤 목적으로 보내나요?'], ['recipient_type', '누구에게 보내나요?'], ['recipient_country', '받는 곳은 어느 나라인가요?'],
+      ['transfer_method', '어떻게 보내나요?'], ['contract_basis', '받는 곳과 어떤 계약이 있나요?'], ['national_rnd_output', '국가 R&D 과제 결과물인가요?'],
+    ]
+    for (const [k, q] of Q) if (!resolved[k]) need.push({ field: k, question: q })
+    if (foreign && cands.some((c) => c.confident)) need.push({ field: 'export_clearance', question: '이번 반출에 대해 정부 수출 신고(또는 승인)를 받았나요?' })
+    if (!has_files) need.push({ field: 'described_item.on_approved_list', question: '보내려는 자료가 선급·선주 승인도면 목록에 있나요?' })
+    const purpose = resolved.purpose?.value as string | undefined
+    return delay(
+      {
+        resolved,
+        tech_candidates: cands,
+        channel_code: META.purposes.find((p) => p.label === purpose)?.channel_code ?? null,
+        need,
+        options: { purpose: META.purposes.map((p) => p.label), ...META.enums, on_approved_list: META.enums.list_inclusion, contains_supplier_data: META.enums.yes_no_unknown },
+      },
+      120,
+    )
+  },
+
   listRequests: (params: RequestListParams = {}) => {
     let rows = [...store.values()].map((s) => s.detail.summary)
-    if (params.status === 'pending') rows = rows.filter((r) => r.status === '분석 완료' || r.status === '법무 검토 중')
+    if (params.status === 'pending') rows = rows.filter((r) => r.status === '법무 검토 중')
     if (params.status === 'done') rows = rows.filter((r) => r.status === '판정 완료')
     if (params.recommendation) rows = rows.filter((r) => r.recommendation === params.recommendation)
     if (params.department) rows = rows.filter((r) => r.employee.department === params.department)
@@ -701,6 +876,7 @@ export const mockApi = {
 
   getRequest: (id: string) => {
     const s = get(id)
+    tick(s)
     s.detail.similar_past = similarFor(id)
     // 백엔드 main._detail 처럼: 판정이 있으면 반출 허가 여부 축만 법무팀 판정으로 채운다
     if (s.detail.analysis) s.detail.analysis.axes = resolveAxes({ ...s.detail.analysis }, s.detail.decisions)
@@ -708,8 +884,19 @@ export const mockApi = {
   },
 
   createRequest: (input: RequestInput, files: File[]) => {
-    const s = createStored(input, files.map((f) => f.name))
+    const s = createStored(input, files.map((f) => f.name), undefined, true)
     return delay(s.detail, 600)
+  },
+
+  addFiles: (id: string, input: RequestInput, files: File[]) => {
+    const s = get(id)
+    if (input.files.length !== s.filenames.length + files.length) return Promise.reject(new Error('파일 메타 수가 맞지 않습니다 (모의 모드)'))
+    s.filenames = [...s.filenames, ...files.map((f) => f.name)]
+    s.detail.input = structuredClone(input)
+    s.detail.analysis = analyze(id, input, s.filenames)
+    s.detail.summary = summarize(id, input, s.detail.analysis, s.detail.summary)
+    startPipeline(s, files.some((f) => isPng(f.name)))
+    return delay(s.detail, 700)
   },
 
   updateRequest: (id: string, input: RequestInput) => {
@@ -717,6 +904,7 @@ export const mockApi = {
     s.detail.input = structuredClone(input)
     s.detail.analysis = analyze(id, input, s.filenames)
     s.detail.summary = summarize(id, input, s.detail.analysis, s.detail.summary)
+    startPipeline(s, false)
     return delay(s.detail, 500)
   },
 
@@ -742,8 +930,34 @@ export const mockApi = {
 
   resubmit: (id: string) => {
     const parent = get(id)
-    const s = createStored(structuredClone(parent.detail.input), [...parent.filenames])
+    const s = createStored(structuredClone(parent.detail.input), [...parent.filenames], undefined, true)
     s.detail.parent_request_id = id
     return delay(s.detail)
   },
+
+  getDrawing: (assetId: string, _viewer: string) => {
+    const fn = findAsset(assetId)
+    if (!fn || !isPng(fn)) return Promise.reject(new Error('도면 분석이 아직 끝나지 않았습니다'))
+    return delay(mockDrawingDetail(seedOf(fn)), 200)
+  },
+
+  drawingPreviewUrl: (assetId: string, _viewer: string, _width = 1600) => mockPreviewSvg(seedOf(findAsset(assetId) ?? assetId)),
+
+  search: (q: string, k = 8) => delay(mockSearch(q, k), 180),
+
+  getStatus: () => delay(MOCK_STATUS, 80),
+
+  wikiTerms: (p: WikiTermsParams = {}) => delay(mockWikiTerms(p), 150),
+
+  wikiReview: (termId: string, reviewer_id: string, approve: boolean) => {
+    try {
+      return delay(mockWikiReview(termId, reviewer_id, approve, employee(reviewer_id).role === 'legal'))
+    } catch (e) {
+      return Promise.reject(e)
+    }
+  },
+
+  wikiPropose: (body: TermProposal) => delay(mockWikiPropose(body)),
+
+  wikiSymbols: () => delay(MOCK_SYMBOLS),
 }

@@ -3,7 +3,8 @@
 // · 기술 후보 문장 → NCT-NOTICE-별표-Sxx 고시 조항
 // · 출처 ID 를 하나도 못 붙이는 문장은 '발견'이 아니라 '시스템 메모'로만 보인다 (근거 없는 결론 금지)
 // 번호는 보고서에 처음 인용되는 순서: 요약 → 검토 요약 표 → 법령 근거 → 판례.
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+// 답변 화면의 결론·해야 할 일도 같은 번호를 쓴다 (같은 CitationProvider 안).
+import { Fragment, createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { Analysis, ClauseRef, PrecedentCard, Recommendation, RuleHit, SCode } from '../../api/types'
 import { FIELD_LABEL, REC_ANSWER, SEVERITY } from '../../lib/labels'
 import { ExtLink, Pill, Tooltip, cx } from '../ui'
@@ -72,9 +73,9 @@ export function buildCitations(a: Analysis, catLabel: (c: string) => string): Ci
     const cites = uniq(codes.flatMap(forCode))
     abstract.push({ text: `관련 기술 후보는 ${codes.map((c) => `${c} ${catLabel(c)}`).join(', ')}입니다 (관련 후보이며 해당 확정이 아님).`, cites, memo: !cites.length })
   } else {
-    abstract.push({ text: '첨부 문서에서 8개 핵심기술 관련 후보를 찾지 못했습니다.', cites: [], memo: true })
+    abstract.push({ text: '8개 핵심기술 관련 후보를 찾지 못했습니다.', cites: [], memo: true })
   }
-  if (a.on_hold) abstract.push({ text: '정보가 부족해 판단을 보류했습니다. 아래 확인 사항에 답하면 다시 판단합니다.', cites: [], memo: true })
+  if (a.on_hold) abstract.push({ text: '정보가 부족해 판단을 보류했습니다. 질문에 답하면 다시 판단합니다.', cites: [], memo: true })
   if (a.missing.length) {
     const fields = [...new Set(a.missing.map((m) => FIELD_LABEL[m.field] ?? m.field))]
     abstract.push({ text: `아직 비어 있는 정보 ${a.missing.length}건(${fields.join(', ')})에 답하면 권고가 달라질 수 있습니다.`, cites: [], memo: true })
@@ -135,9 +136,21 @@ export function refDomId(prefix: string, n: number) {
   return `${prefix}-ref-${n}`
 }
 
+/** 출처 칩을 누르면 접힌 근거 보고서를 먼저 연다 (ReportSection 이 듣는다) */
+export const OPEN_REPORT_EVENT = 'kship:open-report'
+
 function jump(prefix: string, n: number) {
   const el = document.getElementById(refDomId(prefix, n))
   if (!el) return
+  if (el.closest('[data-open="false"]')) {
+    document.dispatchEvent(new CustomEvent(OPEN_REPORT_EVENT))
+    window.setTimeout(() => focusRef(el), 260)
+    return
+  }
+  focusRef(el)
+}
+
+function focusRef(el: HTMLElement) {
   el.scrollIntoView({ block: 'center' })
   el.classList.remove('animate-changed')
   void el.offsetWidth
@@ -203,6 +216,76 @@ export function CitedSentence({ s }: { s: Sentence }) {
     <p className="text-[13.5px] leading-relaxed text-fg">
       {s.text} <Cite ids={s.cites} />
     </p>
+  )
+}
+
+/* ---------------- LLM 문장 속 [근거ID] ---------------- */
+
+// 로컬 LLM 은 문장 끝에 [ITP-GUIDE-제17조] · [PREC-2011도1614] · [R04] 같은 근거 ID 를 붙인다.
+// 화면에는 대괄호를 그대로 보이지 않고, 같은 번호 체계의 인용 칩으로 바꾼다.
+// ID 처럼 생기지 않은 대괄호([대외비] 등)는 글자 그대로 둔다. 모르는 ID 는 칩 없이 지운다.
+const MARK = /\s*\[([^[\]\n]{1,120})\]/g
+const ID_LIKE = /^(R\d{2}[a-z]?|[A-Z]{2,}(?:-[A-Z]+)*-\S+)$/
+
+function markerTokens(inner: string): string[] | null {
+  const toks = inner.split(/[,;·]\s*|\s+/).map((t) => t.trim()).filter(Boolean)
+  return toks.length && toks.every((t) => ID_LIKE.test(t)) ? toks : null
+}
+
+/** 근거 ID → 인용할 출처 ID (규칙 ID 면 그 규칙에 연결된 출처) */
+function resolveMarker(tok: string, ctx: Citations | null): string[] {
+  if (!ctx) return []
+  if (ctx.num(tok)) return [tok]
+  if (/^R\d{2}/.test(tok)) return ctx.forRule(tok)
+  return []
+}
+
+export type MarkedPart = { t: 'text'; v: string } | { t: 'cite'; ids: string[] }
+
+export function splitMarked(text: string, ctx: Citations | null): MarkedPart[] {
+  const out: MarkedPart[] = []
+  let last = 0
+  for (const m of text.matchAll(MARK)) {
+    const toks = markerTokens(m[1])
+    if (!toks) continue
+    if (m.index! > last) out.push({ t: 'text', v: text.slice(last, m.index) })
+    out.push({ t: 'cite', ids: [...new Set(toks.flatMap((x) => resolveMarker(x, ctx)))] })
+    last = m.index! + m[0].length
+  }
+  if (last < text.length) out.push({ t: 'text', v: text.slice(last) })
+  return out
+}
+
+/** [근거ID] 를 지운 순수 문장 */
+export function stripMarkers(text: string): string {
+  return splitMarked(text, null)
+    .filter((p) => p.t === 'text')
+    .map((p) => (p as { v: string }).v)
+    .join('')
+    .trim()
+}
+
+/** 문장 속 [근거ID] 가 가리키는 출처 ID */
+export function markerCites(text: string, ctx: Citations | null): string[] {
+  return [...new Set(splitMarked(text, ctx).flatMap((p) => (p.t === 'cite' ? p.ids : [])))]
+}
+
+/** 문장을 그리면서 [근거ID] 자리에 인용 칩을 넣는다 */
+export function CitedText({ text }: { text: string }) {
+  const ctx = useCitations()
+  return (
+    <>
+      {splitMarked(text, ctx).map((p, i) =>
+        p.t === 'text' ? (
+          <Fragment key={i}>{p.v}</Fragment>
+        ) : p.ids.length ? (
+          <Fragment key={i}>
+            {' '}
+            <Cite ids={p.ids} />
+          </Fragment>
+        ) : null,
+      )}
+    </>
   )
 }
 

@@ -1,0 +1,672 @@
+{
+  "_source": "AI-Hub 조선·해양플랜트 P&ID 심볼 식별 데이터 샘플 169장 (COCO, 146종 중 93종 등장) — scripts/prepare_yolo.py",
+  "_note": "YOLO 는 상위 그룹(카테고리명 '@' 앞) 단위로 학습. 세부 클래스는 참고용. id 는 YOLO 클래스 번호",
+  "merge_notes": {
+    "Heat Exchanges": "주석 7개뿐이라 Equipments 에 합침",
+    "General": "주석 2개뿐이라 Equipments 에 합침",
+    "Filters": "샘플에 주석 0개 — Equipments 에 이름만 매핑 (탐지 성능 없음)",
+    "Vessels": "샘플에 주석 0개 — Equipments 에 이름만 매핑 (탐지 성능 없음)",
+    "Compressors": "샘플에 주석 0개 — 학습 제외. 이 모델은 압축기를 탐지하지 못함 (BOG 압축기 등은 OCR 글자로만 확인)"
+  },
+  "groups": [
+    {
+      "id": 0,
+      "name": "Valves",
+      "name_ko": "밸브",
+      "merged_from": [
+        "Valves"
+      ],
+      "n_annotations": 1496,
+      "classes": [
+        {
+          "name": "Valves@3-Way Valve",
+          "n_annotations": 5
+        },
+        {
+          "name": "Valves@Ball Valve Type 1",
+          "n_annotations": 287
+        },
+        {
+          "name": "Valves@Ball Valve Type 2",
+          "n_annotations": 87
+        },
+        {
+          "name": "Valves@Ball Valve Type 3",
+          "n_annotations": 32
+        },
+        {
+          "name": "Valves@Butterfly Lug Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Butterfly Valve Type 1",
+          "n_annotations": 46
+        },
+        {
+          "name": "Valves@Butterfly Valve Type 2",
+          "n_annotations": 234
+        },
+        {
+          "name": "Valves@Butterfly Wafer Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Check Valve Type 1",
+          "n_annotations": 78
+        },
+        {
+          "name": "Valves@Check Valve Type 2",
+          "n_annotations": 63
+        },
+        {
+          "name": "Valves@Choke Valve/Angle Valve",
+          "n_annotations": 7
+        },
+        {
+          "name": "Valves@Compact DBB Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Cylinder Actuator Ball Valve",
+          "n_annotations": 15
+        },
+        {
+          "name": "Valves@Cylinder Actuator Butterfly Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@DBB Needle Valve",
+          "n_annotations": 8
+        },
+        {
+          "name": "Valves@DBB Valve",
+          "n_annotations": 46
+        },
+        {
+          "name": "Valves@Diaphragm Actuator 3-Way Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Diaphragm Actuator Globe Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Diaphragm Actuator Valve",
+          "n_annotations": 11
+        },
+        {
+          "name": "Valves@ESD 3-Way Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Gate Valve",
+          "n_annotations": 139
+        },
+        {
+          "name": "Valves@Gauge Valve",
+          "n_annotations": 129
+        },
+        {
+          "name": "Valves@Globe Valve",
+          "n_annotations": 99
+        },
+        {
+          "name": "Valves@Hydraulic Operated Butterfly Valve",
+          "n_annotations": 1
+        },
+        {
+          "name": "Valves@Instrument Connection Ball Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Motor Actuator Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Needle Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Pilot Relief Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Piston Actuated 3-Way Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Piston Actuated Ball Valve",
+          "n_annotations": 7
+        },
+        {
+          "name": "Valves@Piston Actuated Butterfly Valve",
+          "n_annotations": 123
+        },
+        {
+          "name": "Valves@Piston Actuated Globe Valve",
+          "n_annotations": 14
+        },
+        {
+          "name": "Valves@Piston Actuated Valve",
+          "n_annotations": 5
+        },
+        {
+          "name": "Valves@Pneumatic Actuated 3-Way Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Pneumatic Actuated Ball Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Pneumatic Actuated Butterfly Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Pneumatic Actuated Gate Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Pneumatic Actuated Globe Valve",
+          "n_annotations": 2
+        },
+        {
+          "name": "Valves@Pressure Relief Valve",
+          "n_annotations": 7
+        },
+        {
+          "name": "Valves@Quick Closing Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Reduced Ball Valve",
+          "n_annotations": 18
+        },
+        {
+          "name": "Valves@Relief Valve",
+          "n_annotations": 18
+        },
+        {
+          "name": "Valves@SBB Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Self Actuated Valve",
+          "n_annotations": 6
+        },
+        {
+          "name": "Valves@Self Closing Valve",
+          "n_annotations": 8
+        },
+        {
+          "name": "Valves@Solenoid Operated 3-Way Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Solenoid Operated Diaphragm Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Solenoid Operated Gate Valve",
+          "n_annotations": 1
+        },
+        {
+          "name": "Valves@Solenoid Operated Globe Valve",
+          "n_annotations": 0
+        },
+        {
+          "name": "Valves@Two Port Solenoid Valve",
+          "n_annotations": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Piping Accessories",
+      "name_ko": "배관 부속",
+      "merged_from": [
+        "Piping Accessories"
+      ],
+      "n_annotations": 1109,
+      "classes": [
+        {
+          "name": "Piping Accessories@Air Filter Regulator",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Basket Type Strainer",
+          "n_annotations": 7
+        },
+        {
+          "name": "Piping Accessories@Bird Screen",
+          "n_annotations": 2
+        },
+        {
+          "name": "Piping Accessories@Cap",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Compensator",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Diaphragm Seal",
+          "n_annotations": 44
+        },
+        {
+          "name": "Piping Accessories@Diffuser",
+          "n_annotations": 2
+        },
+        {
+          "name": "Piping Accessories@Drain Item",
+          "n_annotations": 14
+        },
+        {
+          "name": "Piping Accessories@Drain Trap",
+          "n_annotations": 5
+        },
+        {
+          "name": "Piping Accessories@Duplex Strainer",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Ejector/Injector",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Expansion Joint",
+          "n_annotations": 93
+        },
+        {
+          "name": "Piping Accessories@Flame Arrestor",
+          "n_annotations": 3
+        },
+        {
+          "name": "Piping Accessories@Flange",
+          "n_annotations": 203
+        },
+        {
+          "name": "Piping Accessories@Flange With Blind Flange",
+          "n_annotations": 106
+        },
+        {
+          "name": "Piping Accessories@Flexible Hose",
+          "n_annotations": 108
+        },
+        {
+          "name": "Piping Accessories@Flexible Joint",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Gully/Scupper",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Hammer Lug Union",
+          "n_annotations": 13
+        },
+        {
+          "name": "Piping Accessories@Insulating Gasket",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Moisture Eliminator",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Mud Box",
+          "n_annotations": 37
+        },
+        {
+          "name": "Piping Accessories@Plug",
+          "n_annotations": 53
+        },
+        {
+          "name": "Piping Accessories@Pulsation Damper",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Quick Connect",
+          "n_annotations": 1
+        },
+        {
+          "name": "Piping Accessories@Quick Coupling",
+          "n_annotations": 32
+        },
+        {
+          "name": "Piping Accessories@Reducer",
+          "n_annotations": 219
+        },
+        {
+          "name": "Piping Accessories@Rose Plate/Box",
+          "n_annotations": 3
+        },
+        {
+          "name": "Piping Accessories@Rupture Disc",
+          "n_annotations": 1
+        },
+        {
+          "name": "Piping Accessories@Sounding Cap",
+          "n_annotations": 23
+        },
+        {
+          "name": "Piping Accessories@Sounding Plug",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Spacer",
+          "n_annotations": 2
+        },
+        {
+          "name": "Piping Accessories@Spade",
+          "n_annotations": 2
+        },
+        {
+          "name": "Piping Accessories@Spectacle Blind",
+          "n_annotations": 92
+        },
+        {
+          "name": "Piping Accessories@Spool Piece",
+          "n_annotations": 17
+        },
+        {
+          "name": "Piping Accessories@Steam Trap",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Swivel Joint",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@T-Type Strainer",
+          "n_annotations": 3
+        },
+        {
+          "name": "Piping Accessories@Temporary Strainer/Filter",
+          "n_annotations": 2
+        },
+        {
+          "name": "Piping Accessories@Vent",
+          "n_annotations": 13
+        },
+        {
+          "name": "Piping Accessories@Vent Head",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@Vortex Eductor Nozzle",
+          "n_annotations": 0
+        },
+        {
+          "name": "Piping Accessories@WECO Connection",
+          "n_annotations": 1
+        },
+        {
+          "name": "Piping Accessories@Y-Type Strainer",
+          "n_annotations": 8
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Instruments",
+      "name_ko": "계기",
+      "merged_from": [
+        "Instruments"
+      ],
+      "n_annotations": 865,
+      "classes": [
+        {
+          "name": "Instruments@Different Pressure Indicator",
+          "n_annotations": 35
+        },
+        {
+          "name": "Instruments@Different Pressure Indicator Alarm",
+          "n_annotations": 0
+        },
+        {
+          "name": "Instruments@Flow Indicator",
+          "n_annotations": 3
+        },
+        {
+          "name": "Instruments@Flow Transmitter",
+          "n_annotations": 4
+        },
+        {
+          "name": "Instruments@Hand Indicator Controller",
+          "n_annotations": 11
+        },
+        {
+          "name": "Instruments@Hand Switch",
+          "n_annotations": 23
+        },
+        {
+          "name": "Instruments@Level Alarm",
+          "n_annotations": 67
+        },
+        {
+          "name": "Instruments@Level Gauge",
+          "n_annotations": 24
+        },
+        {
+          "name": "Instruments@Level Indicator",
+          "n_annotations": 36
+        },
+        {
+          "name": "Instruments@Level Indicator Alarm",
+          "n_annotations": 0
+        },
+        {
+          "name": "Instruments@Level Indicator Transmitter",
+          "n_annotations": 33
+        },
+        {
+          "name": "Instruments@Level Safety Alarm",
+          "n_annotations": 0
+        },
+        {
+          "name": "Instruments@Level Switch",
+          "n_annotations": 117
+        },
+        {
+          "name": "Instruments@Level Transmitter",
+          "n_annotations": 42
+        },
+        {
+          "name": "Instruments@Miscellaneous Alarm",
+          "n_annotations": 1
+        },
+        {
+          "name": "Instruments@Orifice Plate",
+          "n_annotations": 37
+        },
+        {
+          "name": "Instruments@Position Indicator",
+          "n_annotations": 15
+        },
+        {
+          "name": "Instruments@Position Indicator Controller",
+          "n_annotations": 6
+        },
+        {
+          "name": "Instruments@Position Switch",
+          "n_annotations": 17
+        },
+        {
+          "name": "Instruments@Pressure Alarm",
+          "n_annotations": 78
+        },
+        {
+          "name": "Instruments@Pressure Gauge",
+          "n_annotations": 86
+        },
+        {
+          "name": "Instruments@Pressure Indicator",
+          "n_annotations": 80
+        },
+        {
+          "name": "Instruments@Pressure Indicator Alarm",
+          "n_annotations": 5
+        },
+        {
+          "name": "Instruments@Pressure Safety Alarm",
+          "n_annotations": 3
+        },
+        {
+          "name": "Instruments@Pressure Transmitter",
+          "n_annotations": 67
+        },
+        {
+          "name": "Instruments@Temperature Gauge",
+          "n_annotations": 28
+        },
+        {
+          "name": "Instruments@Temperature Indicator",
+          "n_annotations": 25
+        },
+        {
+          "name": "Instruments@Temperature Indicator Alarm",
+          "n_annotations": 2
+        },
+        {
+          "name": "Instruments@Temperature Safety Alarm",
+          "n_annotations": 6
+        },
+        {
+          "name": "Instruments@Temperature Transmitter",
+          "n_annotations": 14
+        },
+        {
+          "name": "Instruments@Vibration Indicator",
+          "n_annotations": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Equipments",
+      "name_ko": "장비·기타",
+      "merged_from": [
+        "Equipments",
+        "Filters",
+        "General",
+        "Heat Exchanges",
+        "Vessels"
+      ],
+      "n_annotations": 56,
+      "classes": [
+        {
+          "name": "Equipments@Agitator",
+          "n_annotations": 17
+        },
+        {
+          "name": "Equipments@Eye Washer",
+          "n_annotations": 0
+        },
+        {
+          "name": "Equipments@High Rate Mixer",
+          "n_annotations": 1
+        },
+        {
+          "name": "Equipments@Hose Reel",
+          "n_annotations": 2
+        },
+        {
+          "name": "Equipments@Mud Gun",
+          "n_annotations": 12
+        },
+        {
+          "name": "Equipments@Spray Nozzle",
+          "n_annotations": 0
+        },
+        {
+          "name": "Equipments@Tank Cleaner",
+          "n_annotations": 15
+        },
+        {
+          "name": "Filters@Air Filter",
+          "n_annotations": 0
+        },
+        {
+          "name": "Filters@Gas Sampling Filter",
+          "n_annotations": 0
+        },
+        {
+          "name": "General@2-Way Fire Water/Foam Hydrant",
+          "n_annotations": 0
+        },
+        {
+          "name": "General@Accumulator",
+          "n_annotations": 2
+        },
+        {
+          "name": "General@Fire Damper",
+          "n_annotations": 0
+        },
+        {
+          "name": "General@Silencer",
+          "n_annotations": 0
+        },
+        {
+          "name": "Heat Exchanges@Heat Exchanger",
+          "n_annotations": 7
+        },
+        {
+          "name": "Vessels@Vortex Breaker",
+          "n_annotations": 0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Pumps",
+      "name_ko": "펌프",
+      "merged_from": [
+        "Pumps"
+      ],
+      "n_annotations": 26,
+      "classes": [
+        {
+          "name": "Pumps@Centrifugal Pump",
+          "n_annotations": 26
+        },
+        {
+          "name": "Pumps@Diaphragm Pump",
+          "n_annotations": 0
+        },
+        {
+          "name": "Pumps@Pump General",
+          "n_annotations": 0
+        },
+        {
+          "name": "Pumps@Screw Pump",
+          "n_annotations": 0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Motors",
+      "name_ko": "전동기",
+      "merged_from": [
+        "Motors"
+      ],
+      "n_annotations": 20,
+      "classes": [
+        {
+          "name": "Motors@Electric Motor",
+          "n_annotations": 20
+        }
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "name": "Compressors",
+      "reason": "샘플에 주석 0개 — 학습 제외. 이 모델은 압축기를 탐지하지 못함 (BOG 압축기 등은 OCR 글자로만 확인)",
+      "classes": [
+        "Compressors@Compressor"
+      ]
+    }
+  ]
+}

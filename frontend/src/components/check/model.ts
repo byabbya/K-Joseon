@@ -1,33 +1,23 @@
-// 확인할 자료와 반출 상황 도우미 — 입력값(RequestInput) · 추출값(analysis.resolved) · 파일 행을 화면용으로 맞춘다.
-import type { Analysis, FileMeta, RequestInput } from '../../api/types'
-
-/** 화면의 파일 행. 신청 전에는 로컬 File, 신청 뒤에는 analysis.files 와 짝을 이룬다 (같은 순서 가정). */
-export interface FileRow {
-  key: string
-  name: string
-  size?: number
-  asset_id?: string
-  sha256?: string
-  pages?: number | null
-  local?: File
-}
+// 확인 화면 도우미 — 입력값(RequestInput) · 추출값(analysis.resolved) · 파일 메타를 화면용으로 맞춘다.
+import { DESCRIBED_ID, type Analysis, type FileMeta, type RequestInput } from '../../api/types'
 
 export const DEFAULT_FILE_META: FileMeta = { on_approved_list: '모름', contains_supplier_data: '아니오' }
 
 export const ACCEPT = '.pdf,.docx,.png,.dxf'
-export const ACCEPT_EXT = ['pdf', 'docx', 'png', 'dxf']
+const ACCEPT_EXT = ['pdf', 'docx', 'png', 'dxf']
 
-/** 신청 때 고른 파일 크기 (API 가 크기를 돌려주지 않아 세션 동안 기억) */
-const knownSizes = new Map<string, number>()
-export function rememberSizes(files: File[]) {
-  for (const f of files) knownSizes.set(f.name, f.size)
+export function acceptable(f: File): boolean {
+  return ACCEPT_EXT.includes(f.name.split('.').pop()?.toLowerCase() ?? '')
 }
 
-export function rowsFromAnalysis(input: RequestInput, a: Analysis | null): FileRow[] {
-  if (a?.files.length) {
-    return a.files.map((f) => ({ key: f.asset_id, name: f.filename, asset_id: f.asset_id, sha256: f.sha256, pages: f.pages, size: knownSizes.get(f.filename) }))
-  }
-  return input.files.map((_, i) => ({ key: `f${i}`, name: `첨부 ${i + 1}` }))
+export function isTextOnly(a: Analysis | null | undefined): boolean {
+  if (!a) return false
+  return a.input_mode === 'text_only' || a.files.some((f) => f.kind === 'description')
+}
+
+/** 실제로 붙인 파일만 (질문에 설명된 자료 DESC 제외) */
+export function realFiles(a: Analysis | null | undefined) {
+  return (a?.files ?? []).filter((f) => f.kind !== 'description')
 }
 
 export type FieldKey =
@@ -43,7 +33,7 @@ export type FieldKey =
 
 export interface FieldView {
   value: string | boolean | null
-  /** 사원이 비워 두었고 문장에서 추출한 값을 보여 주는 중 */
+  /** 사원이 비워 두었고 문장에서 읽은 값을 보여 주는 중 */
   extracted: boolean
   evidence: string
 }
@@ -57,21 +47,24 @@ export function fieldView(input: RequestInput, a: Analysis | null, k: FieldKey):
   return { value: null, extracted: false, evidence: '' }
 }
 
-export function sameInput(a: RequestInput, b: RequestInput): boolean {
-  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b))
+/** 파일 메타 한 칸 고치기. assetId 가 DESC 면 described_item, 아니면 analysis.files 와 같은 순서의 input.files[i] */
+export function patchFileMeta(x: RequestInput, a: Analysis | null, assetId: string | null, patch: Partial<FileMeta>): RequestInput {
+  if (assetId === DESCRIBED_ID) return { ...x, described_item: { ...(x.described_item ?? DEFAULT_FILE_META), ...patch } }
+  const files = realFiles(a)
+  const i = files.findIndex((f) => f.asset_id === assetId)
+  if (i < 0) return x
+  const fs = files.map((_, j) => ({ ...(x.files[j] ?? DEFAULT_FILE_META) }))
+  fs[i] = { ...fs[i], ...patch }
+  return { ...x, files: fs }
 }
 
-function normalize(x: RequestInput) {
-  const { employee_id: _e, ...rest } = x
-  return { ...rest, free_text: rest.free_text.trim() }
+export function fileMetaOf(x: RequestInput, a: Analysis | null, assetId: string | null): FileMeta | null {
+  if (assetId === DESCRIBED_ID) return x.described_item ?? DEFAULT_FILE_META
+  const i = realFiles(a).findIndex((f) => f.asset_id === assetId)
+  return i >= 0 ? (x.files[i] ?? DEFAULT_FILE_META) : null
 }
 
-/** 수출 신고 질문을 보여 줄지 (질문이 나왔거나 이미 값이 있을 때) */
-export function showExportClearance(input: RequestInput, a: Analysis | null): boolean {
-  return !!(input.export_clearance || a?.missing.some((m) => m.field === 'export_clearance') || a?.resolved?.export_clearance?.value)
-}
-
-/** 바뀐 부분 (다시 분석 뒤 강조용) */
+/** 바뀐 부분 (다시 확인 뒤 강조용) */
 export function changedParts(prev: Analysis | null, next: Analysis | null): Set<string> {
   const s = new Set<string>()
   if (!prev || !next) return s

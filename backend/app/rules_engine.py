@@ -26,6 +26,7 @@ class FileFacts:
     contains_supplier_data: str           # 예 / 아니오 / 모름
     s_codes: set[str]                     # 사원 선택 ∪ 모델 후보 (위험을 올리는 쪽)
     tech_status: str                      # 후보 있음 / 후보 없음 / 미확정
+    label: str = ""                       # 질문 문구에 쓸 파일 이름
 
 
 @dataclass
@@ -125,6 +126,10 @@ def evaluate(req: dict, files: list[FileFacts]) -> EngineResult:
         if needs_export_check and req.get("export_clearance") is None:
             r04 = next(r for r in cfg["rules"] if r["id"] == "R04")
             _add_question(questions, Question("export_clearance", r04["question"], "R04"))
+        if f.on_approved_list == "모름":
+            what = f"'{f.label}'" if f.label else "보내려는 자료"
+            _add_question(questions, Question("on_approved_list",
+                                              f"{what}이(가) 선급·선주 승인도면 목록에 포함된 자료인가요?", "R06", f.asset_id))
         if f.contains_supplier_data == "모름":
             r08 = next(r for r in cfg["rules"] if r["id"] == "R08")
             _add_question(questions, Question("contains_supplier_data", r08["question_if_unknown"], "R08", f.asset_id))
