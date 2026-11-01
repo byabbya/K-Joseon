@@ -1,8 +1,8 @@
 // 공용 UI 원자 — 모두 index.css 의 토큰(bg-surface, text-muted, ring-go-line …)만 쓴다.
-import { useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react'
 import type { Recommendation, Verdict } from '../api/types'
 import { REC_TONE, TONE_CLS, VERDICT_TONE, type Tone } from '../lib/labels'
-import { IconChevronDown, IconExternal } from './icons'
+import { IconChevronDown, IconExternal, IconFileDrawing, IconFileImage, IconFileText, IconInfo } from './icons'
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ')
@@ -30,7 +30,7 @@ export function Pill({
     <span
       title={title}
       className={cx(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-chip font-medium whitespace-nowrap ring-1 ring-inset',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-pill font-medium whitespace-nowrap ring-1 ring-inset',
         size === 'xs' && 'px-1.5 py-px text-[11px] leading-4',
         size === 'sm' && 'px-2 py-0.5 text-xs leading-5',
         size === 'md' && 'px-3 py-1 text-sm leading-5 font-semibold',
@@ -62,14 +62,36 @@ export function VerdictPill({ verdict, size = 'sm' }: { verdict: Verdict | null 
   )
 }
 
-/** 규칙 ID·요청 ID 같은 식별자 꼬리표 (고정폭) */
-export function IdTag({ children, className, title }: { children: ReactNode; className?: string; title?: string }) {
+/** 규칙 ID·요청 ID·S코드 같은 식별자 꼬리표 (고정폭) */
+export function IdTag({ children, className, title, tone = 'plain' }: { children: ReactNode; className?: string; title?: string; tone?: 'plain' | 'primary' | 'teal' }) {
   return (
     <span
       title={title}
-      className={cx('inline-flex shrink-0 items-center rounded-md bg-surface-2 px-1.5 font-mono text-[11.5px] leading-5 text-fg-2 ring-1 ring-line ring-inset', className)}
+      className={cx(
+        'inline-flex shrink-0 items-center gap-1 rounded-[4px] px-1.5 font-mono text-[11.5px] leading-5 ring-1 ring-inset tabular-nums',
+        tone === 'plain' && 'bg-surface-2 text-fg-2 ring-line',
+        tone === 'primary' && 'bg-primary-soft text-primary-ink ring-primary-line',
+        tone === 'teal' && 'bg-teal-soft text-teal-ink ring-teal-line',
+        className,
+      )}
     >
       {children}
+    </span>
+  )
+}
+
+/** 도면 지시선 번호처럼 쓰는 원형 번호 (섹션 머리) */
+export function Callout({ n, done, className }: { n: number | string; done?: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cx(
+        'grid size-6 shrink-0 place-items-center rounded-full font-mono text-[12px] font-semibold tabular-nums ring-1 ring-inset transition-colors duration-200',
+        done ? 'bg-primary text-on-primary ring-primary' : 'bg-surface text-primary-ink ring-primary-line',
+        className,
+      )}
+    >
+      {n}
     </span>
   )
 }
@@ -84,10 +106,10 @@ export function Button({
   size = 'md',
   className,
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; size?: 'sm' | 'md' }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; size?: 'sm' | 'md' | 'lg' }) {
   const v = {
-    primary: 'bg-accent text-on-accent hover:bg-accent-hover disabled:opacity-45',
-    secondary: 'bg-surface text-fg ring-1 ring-inset ring-line-strong hover:bg-surface-2 disabled:text-muted',
+    primary: 'bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-45 shadow-card',
+    secondary: 'bg-surface text-fg ring-1 ring-inset ring-line-strong hover:bg-surface-3 disabled:text-muted',
     ghost: 'text-fg-2 hover:bg-surface-3 disabled:text-muted',
     danger: 'bg-stop-dot text-white hover:opacity-90 disabled:opacity-45',
   }[variant]
@@ -96,8 +118,10 @@ export function Button({
       type="button"
       {...rest}
       className={cx(
-        'press inline-flex items-center justify-center gap-1.5 rounded-field font-semibold',
-        size === 'md' ? 'h-9 px-3.5 text-sm' : 'h-7.5 px-2.5 text-[13px]',
+        'press inline-flex items-center justify-center gap-1.5 rounded-field font-semibold whitespace-nowrap',
+        size === 'lg' && 'h-11 px-5 text-[15px]',
+        size === 'md' && 'h-9 px-3.5 text-sm',
+        size === 'sm' && 'h-7.5 px-2.5 text-[13px]',
         v,
         className,
       )}
@@ -107,28 +131,40 @@ export function Button({
   )
 }
 
-export function IconButton({
-  label,
+/* ---------------- 단일 선택 그룹 (radio 시맨틱 + 화살표 키) ---------------- */
+
+/** role="radiogroup" — 안쪽 [role=radio] 사이를 ←→↑↓ 로 옮기며 선택한다 */
+export function RadioGroup({
   children,
+  label,
+  labelledBy,
   className,
-  ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+}: {
+  children: ReactNode
+  label?: string
+  labelledBy?: string
+  className?: string
+}) {
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End']
+    if (!keys.includes(e.key)) return
+    const radios = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]:not([disabled])')]
+    const i = radios.indexOf(document.activeElement as HTMLButtonElement)
+    if (i < 0) return
+    e.preventDefault()
+    const n =
+      e.key === 'Home' ? 0 : e.key === 'End' ? radios.length - 1 : (i + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1) + radios.length) % radios.length
+    radios[n].focus()
+    radios[n].click()
+  }
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      {...rest}
-      className={cx('press grid size-8 place-items-center rounded-field text-muted hover:bg-surface-3 hover:text-fg disabled:opacity-40', className)}
-    >
+    <div role="radiogroup" aria-label={label} aria-labelledby={labelledBy} onKeyDown={onKeyDown} className={className}>
       {children}
-    </button>
+    </div>
   )
 }
 
-/* ---------------- 선택 칩 ---------------- */
-
-/** 빠른 답변 칩. role="radio"(단일 선택 그룹 안) 또는 토글 버튼(aria-pressed). */
+/** 빠른 답변 칩. role="radio"(RadioGroup 안) 또는 토글(aria-pressed). */
 export function ChoiceChip({
   selected,
   onClick,
@@ -137,6 +173,7 @@ export function ChoiceChip({
   disabled,
   className,
   title,
+  size = 'md',
 }: {
   selected: boolean
   onClick: () => void
@@ -145,6 +182,7 @@ export function ChoiceChip({
   disabled?: boolean
   className?: string
   title?: string
+  size?: 'sm' | 'md'
 }) {
   const aria = mode === 'radio' ? { role: 'radio' as const, 'aria-checked': selected } : { 'aria-pressed': selected }
   return (
@@ -155,9 +193,10 @@ export function ChoiceChip({
       disabled={disabled}
       onClick={onClick}
       className={cx(
-        'press inline-flex min-h-8 items-center gap-1.5 rounded-chip border px-3 text-[13.5px] leading-5',
+        'press inline-flex items-center gap-1.5 rounded-chip border leading-5',
+        size === 'md' ? 'min-h-8 px-3 text-[13.5px]' : 'min-h-7 px-2.5 text-[12.5px]',
         selected
-          ? 'border-accent bg-accent-soft font-semibold text-accent-ink'
+          ? 'border-primary-ink bg-primary-soft font-semibold text-primary-ink'
           : 'border-line-strong bg-surface text-fg-2 hover:border-muted hover:bg-surface-2',
         disabled && 'opacity-50',
         className,
@@ -173,41 +212,126 @@ export function ChoiceChip({
   )
 }
 
-/* ---------------- 카드·툴팁·펼침 ---------------- */
-
-export function Card({ children, className, as: As = 'section' }: { children: ReactNode; className?: string; as?: 'section' | 'div' | 'article' }) {
-  return <As className={cx('rounded-card border border-line bg-surface shadow-card', className)}>{children}</As>
-}
-
-export function CardHeader({ title, icon, actions, sub }: { title: ReactNode; icon?: ReactNode; actions?: ReactNode; sub?: ReactNode }) {
+/** 붙어 있는 세그먼트 컨트롤 (포함/미포함/모름 같은 짧은 선택) */
+export function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+  disabled,
+  size = 'md',
+  toneOf,
+}: {
+  value: T | null | undefined
+  options: readonly T[]
+  onChange: (v: T) => void
+  label: string
+  disabled?: boolean
+  size?: 'sm' | 'md'
+  /** 선택된 값의 색 (예: 미포함 → review) */
+  toneOf?: (v: T) => 'primary' | 'review' | 'muted' | 'teal'
+}) {
   return (
-    <header className="flex items-start gap-2 border-b border-line px-4 py-3">
-      {icon && <span className="mt-0.5 text-muted">{icon}</span>}
-      <div className="min-w-0 flex-1">
-        <h3 className="text-[14.5px] leading-6 font-semibold text-fg">{title}</h3>
-        {sub && <p className="text-xs text-muted">{sub}</p>}
-      </div>
-      {actions}
-    </header>
+    <RadioGroup label={label} className="inline-flex max-w-full flex-wrap gap-0.5 rounded-field bg-surface-3 p-0.5 ring-1 ring-line ring-inset">
+      {options.map((o) => {
+        const sel = value === o
+        const tone = sel ? (toneOf?.(o) ?? 'primary') : null
+        return (
+          <button
+            key={o}
+            type="button"
+            role="radio"
+            aria-checked={sel}
+            disabled={disabled}
+            onClick={() => onChange(o)}
+            className={cx(
+              'press rounded-[6px] font-medium whitespace-nowrap',
+              size === 'md' ? 'h-7.5 px-3 text-[13px]' : 'h-6.5 px-2.5 text-[12px]',
+              tone === 'primary' && 'bg-surface text-primary-ink shadow-card ring-1 ring-primary-line ring-inset',
+              tone === 'review' && 'bg-surface text-review-fg shadow-card ring-1 ring-review-line ring-inset',
+              tone === 'muted' && 'bg-surface text-fg-2 shadow-card ring-1 ring-line-strong ring-inset',
+              tone === 'teal' && 'bg-surface text-teal-ink shadow-card ring-1 ring-teal-line ring-inset',
+              !sel && 'text-muted hover:text-fg',
+              disabled && !sel && 'opacity-60',
+            )}
+          >
+            {o}
+          </button>
+        )
+      })}
+    </RadioGroup>
   )
 }
 
-/** 마우스 오버/포커스 시 내용을 띄우는 툴팁 (CSS 만) */
-export function Tooltip({ content, children, wide, align = 'left' }: { content: ReactNode; children: ReactNode; wide?: boolean; align?: 'left' | 'right' }) {
+/* ---------------- 카드·툴팁·펼침 ---------------- */
+
+export function Card({ children, className, as: As = 'section', id }: { children: ReactNode; className?: string; as?: 'section' | 'div' | 'article'; id?: string }) {
+  return (
+    <As id={id} className={cx('rounded-card border border-line bg-surface shadow-card', className)}>
+      {children}
+    </As>
+  )
+}
+
+/** 마우스 오버/포커스 시 내용을 띄우는 툴팁 (CSS 만). 트리거는 children. */
+export function Tooltip({ content, children, wide, align = 'left', block }: { content: ReactNode; children: ReactNode; wide?: boolean; align?: 'left' | 'right'; block?: boolean }) {
   const id = useId()
   return (
-    <span className="group/tt relative inline-flex" tabIndex={0} aria-describedby={id}>
+    <span className={cx('group/tt relative', block ? 'flex' : 'inline-flex')} aria-describedby={id}>
       {children}
       <span
         id={id}
         role="tooltip"
         className={cx(
-          'pointer-events-none absolute bottom-full z-50 mb-2 hidden animate-fade-in rounded-lg bg-[#1f1e1c] px-3 py-2 text-xs leading-relaxed font-normal text-[#f4f2ee] shadow-pop group-focus-within/tt:block group-hover/tt:block dark:bg-[#3a3833]',
+          'pointer-events-none absolute bottom-full z-50 mb-2 hidden animate-fade-in rounded-field bg-[#0b1a2e] px-3 py-2 text-xs leading-relaxed font-normal text-[#eef3f9] shadow-pop group-focus-within/tt:block group-hover/tt:block',
           align === 'left' ? 'left-0' : 'right-0',
           wide ? 'w-[22rem] max-w-[80vw]' : 'w-72 max-w-[70vw]',
         )}
       >
         {content}
+      </span>
+    </span>
+  )
+}
+
+/** ⓘ 버튼 — 누르면 고정되는 팝오버 (마우스 오버·포커스에도 보임). Esc·바깥 클릭으로 닫힘. */
+export function InfoPopover({ label, children, align = 'right' }: { label: string; children: ReactNode; align?: 'left' | 'right' }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLSpanElement>(null)
+  const id = useId()
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
+    const onKey = (e: globalThis.KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+  return (
+    <span ref={ref} className="group/pop relative inline-flex">
+      <button
+        type="button"
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(!open)}
+        className="press grid size-6 place-items-center rounded-full text-muted hover:bg-surface-3 hover:text-primary-ink"
+      >
+        <IconInfo size={15} />
+      </button>
+      <span
+        id={id}
+        role="note"
+        className={cx(
+          'absolute top-full z-50 mt-1.5 w-[19rem] max-w-[78vw] animate-pop-in rounded-field border border-line bg-surface p-3 text-left text-[12.5px] leading-relaxed text-fg-2 shadow-pop',
+          align === 'right' ? 'right-0' : 'left-0',
+          open ? 'block' : 'hidden group-hover/pop:block',
+        )}
+      >
+        {children}
       </span>
     </span>
   )
@@ -221,19 +345,20 @@ export function Collapsible({
   children,
   defaultOpen = false,
   variant = 'section',
+  right,
 }: {
   label: ReactNode
   count?: number
   icon?: ReactNode
   children: ReactNode
   defaultOpen?: boolean
-  variant?: 'section' | 'inline' | 'card'
+  variant?: 'section' | 'inline'
+  right?: ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const id = useId()
   return (
-    <div className={variant === 'section' ? 'border-t border-line' : ''}>
-      {/* card: 카드 맨 위에서 쓰는 형태 (위 테두리 없음) */}
+    <div>
       <button
         type="button"
         aria-expanded={open}
@@ -241,8 +366,7 @@ export function Collapsible({
         onClick={() => setOpen(!open)}
         className={cx(
           'group flex w-full items-center gap-2 text-left',
-          variant === 'inline' ? 'py-1 text-xs font-medium text-accent-ink hover:underline' : 'px-5 py-3 text-[14px] font-medium text-fg-2 hover:bg-surface-2/70',
-          variant === 'card' && 'rounded-card py-4 text-[15px] font-semibold text-fg',
+          variant === 'inline' ? 'py-1 text-xs font-medium text-primary-ink hover:underline' : 'py-1 text-[14px] font-semibold text-fg',
         )}
       >
         {icon && <span className="text-muted">{icon}</span>}
@@ -250,11 +374,12 @@ export function Collapsible({
           {label}
           {count !== undefined && <span className="ml-1.5 font-normal text-muted tabular-nums">{count}</span>}
         </span>
-        <IconChevronDown size={variant === 'inline' ? 14 : 16} className={cx('text-muted transition-transform duration-200 ease-soft', open && 'rotate-180')} />
+        {right}
+        <IconChevronDown size={variant === 'inline' ? 14 : 16} className={cx('text-muted transition-transform duration-200 ease-out', open && 'rotate-180')} />
       </button>
       <div id={id} className="collapse-grid" data-open={open} inert={!open}>
         <div>
-          <div className={variant === 'inline' ? 'pt-1.5' : 'px-5 pt-1 pb-4'}>{children}</div>
+          <div className={variant === 'inline' ? 'pt-1.5' : 'pt-2'}>{children}</div>
         </div>
       </div>
     </div>
@@ -266,7 +391,7 @@ export function Collapsible({
 export function Spinner({ label = '불러오는 중…', className }: { label?: string; className?: string }) {
   return (
     <div className={cx('flex items-center gap-2.5 p-6 text-sm text-muted', className)} role="status">
-      <span className="size-4 animate-spin rounded-full border-2 border-line-strong border-t-accent" aria-hidden />
+      <span className="size-4 animate-spin rounded-full border-2 border-line-strong border-t-primary-ink" aria-hidden />
       {label}
     </div>
   )
@@ -282,19 +407,10 @@ export function ErrorBox({ error, className }: { error: unknown; className?: str
   )
 }
 
-export function Empty({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted">
-      {icon && <span className="text-line-strong">{icon}</span>}
-      {children}
-    </div>
-  )
-}
-
 export function ExtLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
   if (!href) return <span className="text-muted">{children}</span>
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={cx('inline-flex items-center gap-0.5 text-accent-ink hover:underline', className)}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cx('inline-flex items-center gap-0.5 text-primary-ink hover:underline', className)}>
       {children}
       <IconExternal size={12} />
       <span className="sr-only">(새 탭)</span>
@@ -303,8 +419,56 @@ export function ExtLink({ href, children, className }: { href: string; children:
 }
 
 export const inputCls =
-  'block w-full rounded-field border border-line-strong bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted/80 focus:border-accent focus:outline-2 focus:outline-offset-0 focus:outline-focus/40 disabled:bg-surface-2 disabled:text-muted'
+  'block w-full rounded-field border border-line-strong bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted/80 focus:border-primary-ink focus:outline-2 focus:outline-offset-0 focus:outline-focus/35 disabled:bg-surface-2 disabled:text-muted read-only:bg-surface-2'
 
-export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cx('text-[12px] font-semibold tracking-wide text-muted', className)}>{children}</p>
+export function FieldLabel({ children, htmlFor, id, extra }: { children: ReactNode; htmlFor?: string; id?: string; extra?: ReactNode }) {
+  return (
+    <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+      <label id={id} htmlFor={htmlFor} className="text-[13px] font-semibold text-fg-2">
+        {children}
+      </label>
+      {extra}
+    </div>
+  )
+}
+
+/** 문장에서 추출된 값 표시 */
+export function ExtractedMark({ evidence }: { evidence?: string }) {
+  return (
+    <span
+      title={evidence ? `추가 설명에서 추출: "${evidence}"` : '추가 설명에서 추출'}
+      className="inline-flex items-center gap-1 rounded-[4px] bg-teal-soft px-1.5 text-[10.5px] leading-[18px] font-semibold text-teal-ink ring-1 ring-teal-line ring-inset"
+    >
+      <span aria-hidden className="size-1 rounded-full bg-teal" />
+      추출
+    </span>
+  )
+}
+
+/* ---------------- 파일 아이콘 ---------------- */
+
+export function fileKind(name: string): 'pdf' | 'docx' | 'image' | 'drawing' | 'other' {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  if (ext === 'pdf') return 'pdf'
+  if (ext === 'docx' || ext === 'doc') return 'docx'
+  if (['png', 'jpg', 'jpeg', 'tif', 'tiff'].includes(ext)) return 'image'
+  if (ext === 'dxf' || ext === 'dwg') return 'drawing'
+  return 'other'
+}
+
+export function FileIcon({ name, size = 16, className }: { name: string; size?: number; className?: string }) {
+  const k = fileKind(name)
+  const Icon = k === 'image' ? IconFileImage : k === 'drawing' ? IconFileDrawing : IconFileText
+  const tint = { pdf: 'text-stop-fg', docx: 'text-primary-ink', image: 'text-teal-ink', drawing: 'text-cond-fg', other: 'text-muted' }[k]
+  return <Icon size={size} className={cx(tint, className)} />
+}
+
+export function FileBadge({ name }: { name: string }) {
+  const ext = (name.split('.').pop() ?? '').toUpperCase().slice(0, 4)
+  return (
+    <span className="relative grid size-9 shrink-0 place-items-center rounded-field bg-surface-2 ring-1 ring-line ring-inset">
+      <FileIcon name={name} size={18} />
+      <span className="absolute -bottom-1 rounded-[3px] bg-surface px-1 font-mono text-[8.5px] leading-3 font-bold text-muted ring-1 ring-line">{ext}</span>
+    </span>
+  )
 }

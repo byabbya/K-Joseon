@@ -1,10 +1,9 @@
 # K-Ship Guard AX — 프론트엔드
 
 반출 사전 검토(사원)와 법무 판정(법무팀) 화면. Vite 6 + React 19 + TypeScript, Tailwind CSS v4, React Router 7, TanStack Query 5.
-위치: `frontend/`. 로컬 시연 전용. 사원 화면은 ChatGPT·Claude 같은 **대화형** 화면이고, 법무 화면은 같은 디자인의 검토 작업대입니다.
+위치: `frontend/`. 로컬 시연 전용. 정의서 **2-1 프론트 엔드 부분**의 화면을 그대로 구현한 **업무용 검토 도구**입니다 (대화형 화면 아님).
 
-> **자유 대화는 없습니다.** 대화처럼 보이지만 "어시스턴트" 메시지는 모두 백엔드 규칙 엔진 출력(`Analysis`)을 그린 것이거나 고정 문구입니다.
-> 사원이 첫 메시지 뒤에 입력하는 글은 LLM 에 보내지 않고 **추가 설명(`free_text`)에 덧붙여 같은 첨부로 다시 분석(PUT)** 합니다. 입력창 아래에 그렇게 안내합니다.
+> 화면의 판단 문장은 모두 백엔드 규칙 엔진 출력(`Analysis`)을 그린 것이거나 고정 문구입니다. 근거 ID 가 없는 결론은 만들지 않습니다.
 
 ## 실행
 
@@ -16,103 +15,146 @@ npm run dev:mock     # 백엔드 없이 모의 데이터로 실행 (VITE_USE_MOC
 npm run build        # 타입 검사 + dist/ 생성
 ```
 
-- Node 20.17 에서 동작하도록 **Vite 6** 을 씁니다 (Vite 7·8 은 Node ≥ 20.19 필요).
+- Node 20.17 에서 동작하도록 **Vite 6** 을 씁니다.
 - 글꼴 Pretendard 는 npm 패키지(`pretendard@1.3.9`)의 dynamic-subset CSS 를 `main.tsx` 에서 import 해 번들합니다. **런타임 외부 요청 없음.**
-- 모의 모드는 사이드바 로고 옆에 `MOCK` 표시가 붙습니다. 모의 데이터는 메모리에만 있어 새로고침하면 처음 상태(시연 요청 1건 + 판정 완료 2건)로 돌아갑니다.
+- 모의 모드는 상단바 제품명 옆에 `MOCK` 표시가 붙습니다. 모의 데이터는 메모리에만 있어 새로고침하면 처음 상태로 돌아갑니다.
+- `.claude/launch.json` 에 `frontend-mock`(포트 5174) 구성이 있습니다.
 
 ## 화면 (라우트)
 
 | 경로 | 역할 | 내용 |
 |---|---|---|
-| `/` | 사원 | 새 검토 — 인사말, 예시 칩 3개, 입력창(첨부·기술 분류). 첫 전송 = `POST /api/requests` |
-| `/c/:requestId` | 사원 | 검토 대화 — 분석·확인 질문·검토 요청·판정. 법무 검토 중이면 5초마다 다시 불러와 판정이 새로고침 없이 나타남 |
-| `/legal` | 법무팀 | 요청 목록. 미처리(`status=pending`)/처리 완료(`done`)·권고·부서·정렬은 **URL 검색어** `?tab=&rec=&dept=&sort=` (사이드바가 바꿈) |
-| `/legal/:id` | 법무팀 | 왼쪽: 사원이 본 대화를 같은 메시지 컴포넌트로 읽기 전용 재현. 오른쪽(넓은 화면에서 sticky): 판정 패널 → 근거 보정 → 유사 과거 요청 → 첨부 열람 → 판정 이력 |
-| `/request`, `/request/:id`, `/my` | — | 예전 경로. `/`, `/c/:id`, `/` 로 넘겨줌 |
+| `/request` | 사원 | 새 반출 검토 신청 — 왼쪽 신청서, 오른쪽 검토 결과(분석 전에는 도면 격자 위 출력 순서 안내). "분석" = `POST /api/requests` |
+| `/request/:id` | 사원 | 같은 2단 화면. 빠진 항목 질문에 답하거나 항목을 고치면 "다시 분석"(`PUT`). "법무팀 검토 요청"(`POST /submit`). 법무 검토 중이면 5초마다 다시 불러와 판정이 나타남. 미승인·내부 검토 필요면 "재신청"(`POST /resubmit` → 새 요청으로 이동) |
+| `/my` | 사원 | 내 요청 표(요청 ID·작성·S코드·CH 코드·수신·권고·상태/판정). 좁은 화면은 카드 + 상태 흐름 |
+| `/legal` | 법무팀 | 검토 요청 목록. 미처리/처리 완료 탭(개수), 권고 분류·부서 필터, 요청일/권고 분류/부서 정렬. URL `?tab=&rec=&dept=&sort=` |
+| `/legal/:id` | 법무팀 | 상단 헤더 → 사원 화면(신청서 + 검토 결과)을 **같은 컴포넌트로 읽기 전용** → 법무팀 입력(유사 과거 요청 · 근거 보정 · 승인 여부 입력 · 판정 이력) |
+| `/`, `/c/:id` | — | 예전 경로. `/request`, `/request/:id` 로 넘겨줌 |
 
-역할(사원/법무팀)과 사용자(`/api/meta` employees)는 사이드바 맨 아래 **계정 메뉴**에서 고릅니다. localStorage `kship-guard.user` 에 저장(읽기·쓰기 try/catch).
-역할과 맞지 않는 경로로 들어가면 그 역할의 첫 화면으로 갑니다. 사이드바 접힘 상태는 `kship-guard.sidebar-collapsed`.
+역할(사원/법무팀)과 사용자(`/api/meta` employees)는 상단바 오른쪽 **계정 컨트롤**에서 고릅니다. localStorage `kship-guard.user` 에 저장(읽기·쓰기 try/catch).
+역할과 맞지 않는 경로로 들어가면 그 역할의 첫 화면(`/request` 또는 `/legal`)으로 갑니다. 바닥줄: "판단은 규칙 엔진, 최종 승인은 법무팀 — 근거 없는 결론은 표시하지 않습니다".
 
-## 사원 대화 흐름
+## 정의서 2-1 항목 → 컴포넌트
 
-1. **사용자 메시지** — 추가 설명 + 첨부 파일 칩(아이콘·크기). 첨부가 없으면 보내지 않고 입력창 위에 안내.
-2. **분석 중** — 접수·해시 → 문서 추출 → 용어 매칭 → 기술 후보 → 규칙 검증 → 근거 연결. *화면 연출용 타이밍*이며, 응답이 오면 남은 단계를 빠르게 체크하고 결과로 바뀝니다.
-3. **분석 메시지** (`AnalysisMessage`) — 권고 알약(진행 가능 초록 · 조건부 진행 황색 · 법무팀 검토 필요 주황 · 반출 불가 빨강, `on_hold` → "판단 보류 · 추가 확인 필요"), `explanation.summary`, 설명에서 추출한 값(점선 칩, 툴팁=근거 구간), 파일별 목록(S코드 칩·미확정 점선, 파일 권고, 규칙 hit 한 줄—눌러서 펼침, 조건 체크리스트, notes), 판단 축(내 선택 · 문서 분석, `category_mismatch` 경고), 접이식 "근거 조항 N"(①고시 ②법 ③지침 ④기타, 구버전 표시·발췌), "관련 판례 N"(가로 스크롤 카드, 5W1H·초안/법리·유사점·출처), "법무팀 인계 메모"(`explanation.handoff`/`handoff_memo`), 바닥줄(규칙 ID·버전·설명 출처 템플릿/LLM).
-   다시 분석한 메시지에는 **이전 대비** 줄(전체 권고 변화 + 파일 권고 변화 묶음, 예: 법무팀 검토 필요 → 조건부 진행 (2개 파일)).
-4. **확인 질문** (`QuestionsMessage`, 최신 분석에만) — `analysis.missing` 의 고정 질문을 빠른 답변 칩으로:
-   `contract_basis`·`recipient_type`·`transfer_method`(meta.enums), `national_rnd_output`(예/아니오), `export_clearance`(받음 → 신고번호 입력), `purpose`(meta.purposes), `recipient_country`(국가 칩), 파일별 `contains_supplier_data`.
-   프런트에서 추가로 묻는 것: `on_approved_list == "모름"` 인 파일마다 "승인도면 목록에 포함된 파일인가요?"(포함/미포함), `employee_category_choice == "모름"` 이고 `model_categories` 가 있으면 기술 분류(후보 코드 + 다른 항목… + 잘 모르겠음).
-   "답변 반영해서 다시 분석" → 답을 `RequestInput` 에 합쳐 `PUT /api/requests/{id}` → 답변 요약 말풍선 + 새 분석 메시지(이전 메시지는 남김).
-5. **검토 요청** — 상태 `분석 완료`면 "법무팀 검토 요청"(`POST /submit`)·"설명 수정"(입력창 포커스). 제출 뒤 안내 줄 "법무팀에 검토를 요청했어요 · REQ-… ".
-6. **판정** — `decisions` 마다 "법무팀 · {이름}" 메시지(판정 알약, 조건, 하위 항목, 사유, 근거 ID). 최신 판정이 미승인/내부 검토 필요면 "재신청" → `POST /resubmit` → 새 대화로 이동.
+### 1) 사원 입력 페이지 — 입력 부분 (`components/request/RequestForm.tsx`)
 
-입력창: 자동 높이 textarea(최대 240px), Enter 보내기·Shift+Enter 줄바꿈(한글 조합 중 Enter 무시), 클립 버튼(여러 개, `.pdf,.docx,.png,.dxf`), 대화 영역에 끌어다 놓기, 첨부 칩 빼기, 기술 분류 메뉴(S01~S08 + 잘 모르겠음, 항목에 머물면 고시 원문 미리보기). 첫 메시지 뒤에는 첨부를 바꿀 수 없고(새 검토로), `법무 검토 중` 이후에는 입력창이 잠깁니다.
+| 정의서 항목 | 구현 |
+|---|---|
+| 8개 category 중 하나, S01~S08 작업용 분류명 | `CategorySection` — 선택 필드 하나(`Combobox`): 누르면 "잘 모르겠음" + S01~S08 목록(코드 배지·분류명·"문서 분석 후보" 표시)과 검색칸(코드·분류명·고시 원문으로 걸러내기) |
+| 각 선택지 고시 원문 툴팁 | 목록 오른쪽(좁은 화면은 아래) 미리보기 칸 — 마우스·키보드로 머문 항목의 고시 별표 원문(`meta.categories[].text`) |
+| "잘 모르겠음" 옵션, 다르면 둘 다 법무팀에 표시 | 목록 첫 항목 + 아래 안내 문구. 분석 뒤 필드 아래 제안 칩 "문서 분석 S02 선택 · S08 선택" — 한 번 눌러 적용 |
+| 사원 선택값과 모델 후보값 별도 저장·표시 | 섹션 아래 2칸 표: "내 선택값" / "모델 후보값 (문서 분석)" (불일치면 주황) |
+| 첨부 파일 칸, 허용 형식, MVP 시연 범위 | `FilesSection` — 끌어다 놓기 + 파일 선택(`.pdf,.docx,.png,.dxf`, 그 밖의 형식은 빼고 알림), 안내 문구 |
+| 업로드 시 해시·asset_id | 파일 행: 아이콘·이름·크기·쪽수·파이프라인 종류·`sha256` 앞 10자리·`asset_id` |
+| 승인도면 목록 포함 여부 (포함/미포함/모름), 미포함·모름 → 범위 초과 가능성 | 파일 행 `Segmented` + "범위 초과 가능성" 태그 |
+| 다중 파일, 파일 단위 판정 | 여러 파일 추가·빼기, 섹션 안내 "판정은 파일 단위로 수행" |
+| (추가) 협력사 자료 포함 여부 (R08) | 파일 행 `Segmented` 예/아니오/모름 |
+| 추가 설명 자유 입력 (시연 예문) | `FreeTextSection` textarea, placeholder = 시연 문장 |
+| 문장에서 수신자·국가·전송 방식·계약 근거 추출 | "문장에서 추출" 태그(청록, 툴팁 = 근거 구간) |
+| 빠진 항목은 입력 칸 아래에 질문으로 표시 | `QuestionLine` — `analysis.missing` 질문을 추가 설명 바로 아래에 번호와 함께. 짧은 답(계약 근거·R&D·수출 신고·파일별 항목)은 빠른 답변 칩, 긴 선택지(목적·수신 국가·수신자 유형)는 같은 선택 필드. 답은 해당 필드에 채워짐(④·⑤에도 반영), 수출 신고 "받음"이면 신고번호 입력 |
+| 필수 구조화 항목: 수신자 유형·수신 국가·전송 방식·계약 근거·국가 R&D 산출물 | `StructuredSection` — 수신자 유형(7개)은 선택 필드, 수신 국가는 검색 가능한 선택 필드(한글 국가명 + ISO 코드), 전송 방식·계약 근거(5개)·R&D 는 세그먼트, 수신자명 입력. 추출값은 "추출" 표시·청록 테두리, 직접 입력이 우선 |
+| (추가) 정부 수출 신고 여부 + 신고번호 (R04·R05) | 질문이 나왔거나 값이 있을 때만 표시 |
+| 목적 9종 → 경로 코드 CH-01~09 (1차 분기 키) | `PurposeSection` — 선택 필드: 목록을 승인 제출(CH-01~03) / 협력·외주(CH-04·05·07) / 해외·이전(CH-06·08) / 기타(CH-09)로 묶고 항목마다 CH 배지. 추가 설명에서 추출됐으면 미리 채우고 "추출" 표시. 아래에 선택된 경로 코드 |
+| 상태 흐름 접수 → 분석 완료 → 법무 검토 중 → 판정 완료 → 재신청 | `StatusStepper` — 신청서 아래 동작 줄(넓은 화면에서 sticky) + "분석"/"다시 분석" 버튼 |
 
-### 대화 복원 (`lib/thread.ts`)
+### 1) 사원 입력 페이지 — 출력 부분 (`components/request/ResultPanel.tsx`)
 
-- 한 세션 안에서 같은 요청을 다시 분석한 이력(사용자 메시지·답변·추가 설명·분석들)은 메모리 저장소(`useSyncExternalStore`)에 요청 ID 별로 둡니다. 그래서 이전 분석 메시지와 "이전 대비"가 보입니다. 같은 브라우저에서 역할을 법무팀으로 바꾸면 법무 화면도 이 이력을 그대로 보여줍니다.
-- 저장된 이력이 없으면(새로고침, 사이드바에서 처음 열기) `RequestDetail` 로 다시 만듭니다: 사용자 메시지(`input.free_text` + `analysis.files[].filename`) → 최신 분석.
-- 서버 분석이 저장된 것보다 새로우면(`analyzed_at` 이 다름) 뒤에 붙입니다(`prev` = 직전 분석).
-- 그 뒤의 확인 질문·검토 요청·제출 안내·판정 메시지는 저장하지 않고 매번 상세(`summary.status`, `submitted_at`, `decisions`)에서 그립니다.
-- 사이드바 대화 제목은 요약에 `free_text` 가 없어 각 요청 상세를 함께 불러와(`useRequestDetails`) 추가 설명 앞 20자 → 없으면 첫 파일명으로 정합니다. 점 색은 판정이 있으면 판정, 없으면 권고 색. 오늘/이전으로 묶습니다.
+| 정의서 항목 | 구현 |
+|---|---|
+| 권고 분류 4종 + 권고 이유 + 적용 규칙 ID | `RecBanner` — 큰 권고 표시(색 + 글자), `explanation.summary`, 걸린 규칙(ID·이름·결과) |
+| 정보 부족 → "판단 보류 + 추가 확인 항목" | `on_hold` 이면 배너 안 안내 줄 |
+| (추가) 다시 분석 비교 | "이전 분석 대비" 줄(전체·파일별 권고 변화, 누락 수) + 바뀐 블록 잠깐 강조(`animate-changed`). 이전 분석은 화면 상태에만 보관 |
+| 판단 축 분리 | `AxisCompare` — 사원 선택 / 문서 분석(모델 후보) 나란히, 불일치 경고 |
+| 파일 단위 판정 | `FileVerdict` — S코드 칩(미확정은 점선, 툴팁 = 근거 용어·쪽), 목록 포함·협력사 표시, 규칙 hit 사유, 조건 체크리스트, 파일 권고, notes |
+| 해당하는 법 조항 ①고시 → ②산업기술보호법 → ③지침 → ④기타 | `ClauseGroups` — 네 계층을 항상 이 순서로(없으면 "해당 조항 없음"). 법령명·조문·제목·시행일·국가법령정보센터 원문 링크·"왜" 한 줄·발췌(고시는 펼친 상태)·`구버전` 배지 |
+| 판례 5W1H, 사건번호·선고일·출처, 초안 표시, 유사점 한 줄 | `PrecedentItem` — 법원·사건번호·선고일, `review_status != approved` → "초안", `card_type == principle` → "법리", 유사점 줄, 5W1H 표(첫 카드 펼침), 출처 링크 |
+| 누락·확인 항목: 빠진 필드, 승인도면 목록 미확인 파일, 수신 국가 제재 확인 결과 | `MissingChecks` — 제재 확인은 R09 hit → 확인 대상, 국가 미입력 → 확인 불가, 그 밖 → 시연용 목록(`SANCTIONED`, RULES.md 6번)에 없음 |
+| (추가) 법무팀 인계 메모·버전 | `Handoff` — `explanation.handoff` 접이식, 바닥줄 `versions`·설명 출처(템플릿/LLM) |
+| 제출 버튼 "법무팀 검토 요청" | `SubmitArea` — 신청서가 바뀐 채로는 막고 안내. 제출 뒤 요청 ID·상태·요청 시각 |
+| 사유는 사원 페이지에 반환, 미승인 시 재신청 버튼 | 최신 판정(판정·사유·조건·내부 검토 항목·근거 ID·판정자·시각·권고와 다름), 이전 판정 펼치기, 미승인/내부 검토 필요 → "재신청" |
 
-## 디자인 토큰 (`src/index.css`)
+### 2) 법무팀 페이지 (`pages/LegalListPage.tsx`, `pages/LegalDetailPage.tsx`)
 
-색·그림자는 `:root` CSS 변수로 한 번 정의하고 `@theme inline` 으로 Tailwind 색 이름에 연결합니다. 다크 모드는 `prefers-color-scheme: dark` 에서 같은 변수 값만 바꿉니다.
+| 정의서 항목 | 구현 |
+|---|---|
+| 요청 목록: 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터 | `LegalListPage` — 탭(개수 배지), 권고·부서 select, 정렬 세그먼트, 넓은 화면 표 / 좁은 화면 카드 |
+| 상단 헤더: 요청 ID·사원명·부서·사번·요청 시각·S코드·경로 코드·수신자·국가·전송 방식·첨부 수 | `HeaderStrip` — 사원 이름줄(남색) + 10칸 키-값 격자. 불일치면 모델 후보도 표시 |
+| 1) 화면이 그대로 보이되 출력은 수정 불가 | `RequestForm readOnly audience="legal"` + `ResultPanel audience="legal"` (같은 컴포넌트) |
+| 첨부 파일별 열람, 원본 다운로드는 권한자만, 열람 이력 기록 | 읽기 전용 파일 행의 "열람" → `/api/files/{asset_id}?viewer={법무 사용자}` 새 탭(모의 모드는 알림) + 안내 문구 |
+| 유사 과거 요청 3건 (판정·사유·날짜) | `SimilarPanel` |
+| 근거 보정 (추가·제외), 원본과 분리 저장 | `AdjustmentPanel` — 출력 근거 체크로 제외, ID 입력으로 추가, 메모. 아래에 보정 내역을 원본과 따로 표시 |
+| 승인 / 내부 검토 필요 / 미승인 + 각 정의 | `DecisionPanel` — 세 카드에 정의 한 줄(`VERDICT_DEF`) |
+| 내부 검토 필요 → 하위 선택 | `meta.internal_review_options` 칩(규칙이 제안한 항목 표시) |
+| 승인 → 조건 입력란 | placeholder "승인도면 목록 내 파일만 전송, 시공 절차서 제외" + 규칙 조건 넣기 칩 |
+| 사유 자유 서술 + 근거 조항·판례 체크박스(출력 항목 중) | 사유 textarea + 출력의 조항·판례 체크 목록 |
+| 권고와 다름 플래그 | 저장 전 미리 안내(백엔드 `CONTRARY_VERDICT` 와 같은 기준), 저장된 판정에 배지 |
+| 판정·사유·근거·판정자·시각 감사 로그, 수정 시 이전 버전 보존 | 저장 버튼 "판정 저장 (vN, 이전 버전 보존)", `HistoryPanel` 버전 타임라인 |
+
+**구현하지 않은 것:** 원본 다운로드 권한 분리·열람 이력 화면 표시는 백엔드 `/api/files`·감사 로그에 맡기고 화면은 안내만 합니다. 실제 전송·DLP·정부 신고는 정의서 범위 밖입니다.
+
+## 디자인
+
+해양 엔지니어링 × 보안 검토. 차갑고 정확한 업무 도구: 회청색 바탕(#F3F5F8), 흰 면, 짙은 남색(#0F2A4A) 상단바·주 버튼, 강철 청록은 "추출"·문서 분석 후보 표시에만. 도면에서 빌린 표식: 섹션 번호 원(지시선 번호), 표제란 같은 신청서 머리, 모서리 눈금, 빈 결과 패널의 격자, 고정폭 ID·해시.
+
+### 디자인 토큰 (`src/index.css`)
+
+`:root` CSS 변수로 한 번 정의하고 `@theme inline` 으로 Tailwind 색 이름에 연결. 다크 모드는 `prefers-color-scheme: dark` 에서 같은 변수 값만 바꿉니다.
 
 | 토큰 | 유틸리티 예 | 용도 |
 |---|---|---|
-| `--bg` #F8F7F4, `--surface`, `--surface-2/3`, `--bubble` | `bg-bg`, `bg-surface`, `bg-surface-2`, `bg-bubble` | 따뜻한 바탕, 흰 카드, 사이드바·hover, 사용자 말풍선 |
-| `--line`, `--line-strong` | `border-line` | 1px 테두리 |
-| `--fg`, `--fg-2`, `--muted` | `text-fg`, `text-muted` | 본문, 보조 글자 (muted 도 AA 대비) |
-| `--accent` #1F4E79 (+hover/ink/soft) | `bg-accent`, `text-accent-ink`, `bg-accent-soft` | 조선소 남색 — 주 버튼·선택 칩·링크에만 |
-| `--go/cond/review/stop-{bg,fg,line,dot}`, `--info-*` | `bg-go-bg text-go-fg ring-go-line` | 권고 4색(+정보). `lib/labels.ts` 의 `REC_TONE`/`VERDICT_TONE` → `TONE_CLS` |
-| `--radius-chip/card/bubble/field` | `rounded-card`, `rounded-bubble` | 9999px / 14px / 18px / 10px |
-| `--shadow-card/pop/composer` | `shadow-card` | 옅은 그림자 (카드, 팝오버, 입력창) |
-| `--spacing` 4px, `--container-thread` 760px, `--container-sidebar` 264px | `max-w-thread`, `w-sidebar` | 간격 체계, 대화 칼럼·사이드바 폭 |
-| `--ease-soft` cubic-bezier(0.22,1,0.36,1), 150/200ms | `animate-msg-in`, `animate-pop-in`, `animate-tick`, `.collapse-grid` | 메시지 등장, 칩 체크, 펼침 높이 애니메이션 |
+| `--bg`, `--surface`, `--surface-2/3`, `--line(-strong)`, `--grid` | `bg-bg`, `bg-surface`, `border-line` | 바탕·면·hover·1px 선·격자 |
+| `--fg`, `--fg-2`, `--muted` | `text-fg`, `text-muted` | 글자 (muted 도 AA 대비) |
+| `--primary`(+hover/ink/soft/line), `--on-primary` | `bg-primary`, `text-primary-ink`, `bg-primary-soft` | 남색 주 동작·선택 |
+| `--nav`, `--nav-2`, `--nav-fg`, `--nav-muted` | `bg-nav` | 상단바 |
+| `--teal`(+ink/soft/line) | `bg-teal-soft text-teal-ink` | 추출값·모델 후보·현재 메뉴 밑줄 |
+| `--go/cond/review/stop-{bg,fg,line,dot}`, `--info-*` | `bg-go-bg text-go-fg ring-go-line` | 권고 4색(+정보). `lib/labels.ts` `REC_TONE`/`VERDICT_TONE` → `TONE_CLS` |
+| `--radius-pill/chip/field/card` | `rounded-chip`, `rounded-card` | 9999px / 6px / 8px / 12px |
+| `--sh-card/pop/raise` | `shadow-card`, `shadow-pop` | 카드·팝오버·떠 있는 동작 줄 |
+| `--spacing` 4px, `--container-page` 1440px | `max-w-page` | 간격·본문 폭 |
+| 모션 150–200ms ease-out | `animate-rise-in`, `animate-pop-in`, `animate-changed`, `.collapse-grid`, `.press` | 등장·펼침·칩 누름·바뀐 부분 강조 |
 
-- 본문 15.5px / 줄간격 1.65, 고정폭 글꼴은 요청·규칙 ID·해시에만.
-- 모션은 짧고 조용하게. `prefers-reduced-motion` 이면 애니메이션·전환을 끕니다.
-- 접근성: 모든 칩은 버튼(`role="radio"`+`aria-checked` 또는 `aria-pressed`), 펼침은 `aria-expanded`, 아이콘 버튼은 `aria-label`, `:focus-visible` 링, 새 분석·판정은 `aria-live="polite"` 안내, 권고·판정은 색 + 글자.
+- 본문 15px / 1.6, 날짜·ID 는 `tabular-nums`·고정폭.
+- `prefers-reduced-motion` 이면 애니메이션·전환을 끕니다.
+- 선택 필드(`Combobox`): 트리거는 `role="combobox"`(`aria-expanded`·`aria-controls`), 목록은 `listbox`/`option`(`aria-selected`, 묶음은 `group`), 검색칸은 `aria-activedescendant`. 키보드 ↓/Enter/Space 열기, 글자 입력하면 열면서 걸러내기, ↑↓·Home·End 이동, Enter 선택, Esc 닫고 트리거로 포커스. 넓은 화면은 트리거에 붙은 팝오버(아래 공간이 모자라면 위로), 640px 미만은 바닥 시트(배경 어둡게, 닫기 버튼). 읽기 전용에서는 값만 보이는 칸.
+- 접근성: 단일 선택은 모두 `role="radiogroup"`/`radio` + 화살표·Home·End 키(`RadioGroup`), 토글 칩은 `aria-pressed`, 탭은 `role="tab"`, 펼침은 `aria-expanded`, 아이콘 버튼은 `aria-label`, `:focus-visible` 링, 검토 결과·제출 영역은 `aria-live="polite"`, 권고·판정은 항상 색 + 글자.
+- 반응형: 1100px 이상 2단(결과 패널 sticky, 자체 스크롤), 그 아래는 위아래로. 375px 에서 가로 스크롤 없음. 분석 동작 줄은 640px 이상에서만 sticky.
 
 ## 구조
 
 ```
 frontend/src/
   api/
-    types.ts        backend/app/schemas.py 를 옮긴 TS 타입 (+ emptyRequestInput, RequestListParams.employee_id)
-    client.ts       fetch 래퍼, 엔드포인트 함수, VITE_USE_MOCK 분기, fileUrl()
-    mock.ts         모의 API — 메모리 저장소, 시연 시나리오, RULES.md 흐름을 흉내 내는 작은 규칙 평가 (employee_id 필터 추가)
-    hooks.ts        TanStack Query 훅 (useRequestDetail(id, {pollWhileReviewing}), useRequestDetails, mutation …)
+    types.ts        backend/app/schemas.py 를 옮긴 TS 타입 (+ emptyRequestInput)
+    client.ts       fetch 래퍼, 엔드포인트, VITE_USE_MOCK 분기, fileUrl()
+    mock.ts         모의 API — 메모리 저장소, 시연 시나리오, RULES.md 흐름 흉내
+    hooks.ts        TanStack Query 훅 (useRequestDetail(id, {pollWhileReviewing}) …)
   lib/
-    labels.ts       국가 목록, 권고/판정 → 색 계열(tone), 조항 계층 라벨, 5W1H 라벨, 포맷터
-    thread.ts       대화 이력 저장소·복원(reconstruct, mergeWithDetail), 사이드바 제목
+    labels.ts       국가, 권고/판정 색·정의, 5W1H 라벨, 상태 흐름, 제재 시연 목록, 포맷터
     user.tsx        역할·사용자 컨텍스트
   components/
-    icons.tsx       인라인 SVG 아이콘
-    ui.tsx          Pill/RecPill/VerdictPill, IdTag, Button, IconButton, ChoiceChip, Card, Tooltip, Collapsible, Spinner, ErrorBox …
-    AppShell.tsx    사이드바(사원: 새 검토 + 대화 목록 / 법무: 미처리·처리 완료 개수 + 필터), 계정 메뉴, 좁은 화면 서랍, 머리줄 슬롯(useShellHeader)
-    chat/
-      Message.tsx          UserBubble, AssistantMessage, SystemNote, FileIcon
-      Composer.tsx         입력창 + 기술 분류 메뉴
-      ProgressMessage.tsx  분석 중 단계 표시
-      AnalysisMessage.tsx  분석 메시지(파일별, 판단 축, 조항, 판례, 인계 메모, 이전 대비)
-      QuestionsMessage.tsx 확인 질문(빠른 답변 칩) + 답 → RequestInput 병합
-      StatusMessages.tsx   검토 요청, 제출 안내, 대기 안내, 판정 메시지
-      Thread.tsx           이력 + 꼬리 메시지 렌더러 (사원/법무 공용)
+    icons.tsx       인라인 SVG 아이콘 + 제품 마크
+    ui.tsx          Pill/RecPill/VerdictPill, IdTag, Callout, Button, RadioGroup, ChoiceChip, Segmented,
+                    Card, Tooltip, InfoPopover, Collapsible, Spinner, ErrorBox, ExtLink, ExtractedMark, FileIcon/FileBadge
+    Combobox.tsx    선택 필드 + 팝오버/바닥 시트 목록 (검색·묶음·미리보기 칸)
+    AppShell.tsx    상단 내비게이션(역할별 메뉴, 미처리 배지) + 계정 컨트롤 + 바닥줄
+    request/
+      model.ts          파일 행, 추출값/입력값 표시(fieldView), 변경 비교(changedParts), 크기 기억
+      RequestForm.tsx   신청서 ①~⑤ (readOnly 지원)
+      ResultPanel.tsx   검토 결과 + 제출·판정·재신청
+      StatusStepper.tsx 상태 흐름
+      Workspace.tsx     2단 배치(TwoPane), 페이지 머리, 신청서 표제란
   pages/
-    ChatPage.tsx        사원 대화 (생성·재분석·제출·재신청, 끌어다 놓기, 스크롤)
+    RequestPage.tsx     사원 신청 (새 신청 / 기존 요청 편집·재분석·제출·재신청)
+    MyRequestsPage.tsx  내 요청
     LegalListPage.tsx   법무 목록
-    LegalDetailPage.tsx 법무 상세 (대화 재현 + 판정 작업대)
+    LegalDetailPage.tsx 법무 상세 (헤더 · 읽기 전용 사원 화면 · 유사 요청 · 근거 보정 · 판정 · 이력)
 ```
 
 ## API 계약에서 가정한 점
 
 - `POST /submit`, `/adjustments`, `/decision` 의 응답 본문은 쓰지 않고, 성공 후 `GET /api/requests/{id}` 를 다시 불러옵니다.
-- `GET /api/requests` 에 `employee_id` 를 보내 내 대화만 받고, 화면에서도 한 번 더 거릅니다. `sort` 는 `date` / `severity` 로 보내고 화면에서 다시 정렬합니다.
-- 새 요청의 파일 메타 기본값은 `on_approved_list: "모름"`, `contains_supplier_data: "아니오"` 입니다. 승인도면 목록 여부는 분석 뒤 확인 질문으로 받습니다.
-- `RequestInput.files[i]` 와 `analysis.files[i]` 는 같은 순서라고 가정합니다(답변 병합·파일명 표시).
-- 추가 설명 입력은 기존 `free_text` 뒤에 줄바꿈으로 덧붙입니다(기존 문장에서 추출한 값이 사라지지 않게).
+- 신청 뒤에는 첨부를 바꿀 수 없습니다(`PUT` 은 같은 첨부로 재분석). 파일별 목록 포함 여부·협력사 자료는 고쳐서 다시 분석할 수 있습니다.
+- `RequestInput.files[i]` 와 `analysis.files[i]` 는 같은 순서라고 가정합니다. 파일 크기는 API 가 돌려주지 않아, 이 브라우저 세션에서 올린 파일만 크기를 표시합니다.
+- 구조화 항목은 사원이 비워 두면 `null` 로 보내 백엔드가 추가 설명에서 다시 추출하게 하고, 화면에는 `analysis.resolved` 의 추출값을 "추출" 표시와 함께 보여 줍니다.
+- 목록 필터·정렬은 화면에서 적용합니다(서버에는 `status`, 사원 화면은 `employee_id` 만 보냄).
 - `Meta.categories` / `purposes` 는 `{code,label,text}` / `{label,channel_code}` 키를 가정하고, `meta.enums` 가 비면 schemas.py 의 Literal 값으로 대체합니다.
-- 첨부 열람은 `/api/files/{asset_id}?viewer={법무팀 사용자 ID}` 를 새 탭으로 엽니다 (모의 모드에서는 알림만).

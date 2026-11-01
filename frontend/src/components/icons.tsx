@@ -207,3 +207,50 @@ export const IconCpu = (p: P) => (
     <path d="M9.5 9.5h5v5h-5zM9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5" />
   </Svg>
 )
+export const IconUpload = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" />
+    <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+  </Svg>
+)
+export const IconLock = (p: P) => (
+  <Svg {...p}>
+    <rect x="5" y="10.5" width="14" height="10" rx="2" />
+    <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
+  </Svg>
+)
+export const IconSend2 = (p: P) => (
+  <Svg {...p}>
+    <path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" />
+  </Svg>
+)
+export const IconSort = (p: P) => (
+  <Svg {...p}>
+    <path d="M7 4v16M3.5 16.5 7 20l3.5-3.5M17 20V4M13.5 7.5 17 4l3.5 3.5" />
+  </Svg>
+)
+export const IconClock = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Svg>
+)
+export const IconList = (p: P) => (
+  <Svg {...p}>
+    <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" />
+  </Svg>
+)
+export const IconGavel = (p: P) => (
+  <Svg {...p}>
+    <path d="m14 5 5 5M11.5 7.5l5 5M12.8 6.2l3.5-3.5 5 5-3.5 3.5M10.2 8.8l-7 7a1.4 1.4 0 0 0 2 2l7-7M13 21h8" />
+  </Svg>
+)
+/** 제품 마크 — 방패 안의 선체 단면(용골선) */
+export const LogoMark = ({ size = 26 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+    <path d="M16 2.5 4.5 6.8v8.4c0 7 4.8 12.4 11.5 14.3 6.7-1.9 11.5-7.3 11.5-14.3V6.8z" fill="currentColor" opacity="0.14" />
+    <path d="M16 2.5 4.5 6.8v8.4c0 7 4.8 12.4 11.5 14.3 6.7-1.9 11.5-7.3 11.5-14.3V6.8z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M9 14.5h14l-2.4 5.2a2 2 0 0 1-1.8 1.2h-5.6a2 2 0 0 1-1.8-1.2z" fill="currentColor" />
+    <path d="M16 8.5v6M16 8.5l4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+)

@@ -1,104 +1,128 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   K-Ship Guard AX 디자인 토큰
-   색·반경·그림자·모션은 여기서만 정의하고, 컴포넌트는 Tailwind 유틸리티
-   (bg-surface, text-muted, border-line, bg-go-bg …)로만 쓴다.
-   다크 모드는 prefers-color-scheme 로 같은 토큰 값을 바꾼다.
+   K-Ship Guard AX 디자인 토큰 — 해양 엔지니어링 × 보안 검토
+   차가운 회청색 바탕, 흰 면, 짙은 남색(주 동작·상단바), 강철 청록(보조, 아껴 씀),
+   권고 4색(초록·황색·주황·빨강, 항상 글자와 함께).
+   색·반경·그림자·모션은 여기서만 정의하고 컴포넌트는 Tailwind 유틸리티만 쓴다.
+   다크 모드는 prefers-color-scheme 에서 같은 토큰 값만 바꾼다.
 ------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
   /* 바탕·면 */
-  --bg: #f8f7f4;
+  --bg: #f3f5f8;
   --surface: #ffffff;
-  --surface-2: #f1efea; /* 사이드바, 옅은 칸 */
-  --surface-3: #e9e6df; /* hover */
-  --bubble: #ecebe6; /* 사용자 말풍선 */
-  --line: #e4e1da;
-  --line-strong: #d3cfc6;
+  --surface-2: #f6f8fb; /* 옅은 칸, 표 머리 */
+  --surface-3: #e9eef4; /* hover */
+  --line: #dde3eb;
+  --line-strong: #c3ccd8;
+  --grid: rgb(15 42 74 / 0.055); /* 빈 결과 패널의 도면 격자 */
 
   /* 글자 */
-  --fg: #1f1e1c;
-  --fg-2: #3d3b37;
-  --muted: #67645e; /* bg 대비 5.4:1 */
+  --fg: #0e1b2c;
+  --fg-2: #33435a;
+  --muted: #586880; /* bg 대비 5.1:1, surface 대비 5.6:1 */
 
-  /* 강조색 (조선소 남색) — 아껴 쓴다 */
-  --accent: #1f4e79;
-  --accent-hover: #173d60;
-  --accent-ink: #1f4e79; /* 링크·강조 글자 */
-  --accent-soft: #e7edf4;
-  --on-accent: #ffffff;
-  --focus: #2b6cb0;
+  /* 주색 (남색) */
+  --primary: #0f2a4a;
+  --primary-hover: #1a3d66;
+  --primary-ink: #1b4f86; /* 링크·선택 글자 — 흰 바탕 대비 7.9:1 */
+  --primary-soft: #e6eef7;
+  --primary-line: #a9c1dd;
+  --on-primary: #ffffff;
+
+  /* 상단바 */
+  --nav: #0f2a4a;
+  --nav-2: #173a61; /* hover · 활성 */
+  --nav-fg: #e8eef6;
+  --nav-muted: #9fb3cc;
+
+  /* 보조 (강철 청록) — 추출 표시·도면 표식 등에만 */
+  --teal: #0e7c86;
+  --teal-ink: #0a6670;
+  --teal-soft: #e2f3f4;
+  --teal-line: #9fd2d6;
+
+  --focus: #2f7dd1;
 
   /* 권고 4색 (bg / fg / line / dot) */
-  --go-bg: #e7f3ea;
-  --go-fg: #1c6435;
-  --go-line: #b7dbc3;
-  --go-dot: #2f9a57;
-  --cond-bg: #fbf1d9;
-  --cond-fg: #744f00;
-  --cond-line: #ead096;
-  --cond-dot: #c9930e;
-  --review-bg: #fcebdc;
-  --review-fg: #94400f;
-  --review-line: #efc5a2;
-  --review-dot: #e0711f;
-  --stop-bg: #fbe5e3;
-  --stop-fg: #9f2119;
-  --stop-line: #eebbb6;
-  --stop-dot: #d2382d;
-  --info-bg: #eef1f6;
-  --info-fg: #2c4a6b;
-  --info-line: #cbd6e4;
+  --go-bg: #e6f4ec;
+  --go-fg: #17663a;
+  --go-line: #b2dbc2;
+  --go-dot: #2a9a58;
+  --cond-bg: #fdf4da;
+  --cond-fg: #714b00;
+  --cond-line: #ead08c;
+  --cond-dot: #cf960f;
+  --review-bg: #fdede1;
+  --review-fg: #983d08;
+  --review-line: #f0c4a2;
+  --review-dot: #e2701c;
+  --stop-bg: #fce8e8;
+  --stop-fg: #a01b1b;
+  --stop-line: #efbcbc;
+  --stop-dot: #d33131;
+  --info-bg: #eaf0f7;
+  --info-fg: #1f4670;
+  --info-line: #c4d3e5;
 
   /* 그림자 */
-  --sh-card: 0 1px 2px rgb(31 30 28 / 0.04), 0 1px 3px rgb(31 30 28 / 0.04);
-  --sh-pop: 0 12px 32px -12px rgb(31 30 28 / 0.22), 0 2px 6px rgb(31 30 28 / 0.06);
-  --sh-composer: 0 4px 20px -6px rgb(31 30 28 / 0.12), 0 1px 2px rgb(31 30 28 / 0.05);
+  --sh-card: 0 1px 0 rgb(15 42 74 / 0.04), 0 1px 3px rgb(15 42 74 / 0.06);
+  --sh-pop: 0 16px 40px -14px rgb(15 42 74 / 0.32), 0 2px 6px rgb(15 42 74 / 0.08);
+  --sh-raise: 0 6px 18px -8px rgb(15 42 74 / 0.22);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #1b1a18;
-    --surface: #242320;
-    --surface-2: #201f1d;
-    --surface-3: #2e2c29;
-    --bubble: #302e2a;
-    --line: #36342f;
-    --line-strong: #4a4740;
-    --fg: #ecebe6;
-    --fg-2: #d3d0c9;
-    --muted: #a9a59c;
-    --accent: #3b6fa3;
-    --accent-hover: #4a7db2;
-    --accent-ink: #94bde6;
-    --accent-soft: #233243;
-    --on-accent: #ffffff;
-    --focus: #7fb0e3;
-    --go-bg: #16301f;
-    --go-fg: #92d6a9;
-    --go-line: #2b5a3a;
-    --go-dot: #4cb875;
-    --cond-bg: #33290f;
-    --cond-fg: #ebc86e;
-    --cond-line: #5d4a1c;
+    --bg: #0a111d;
+    --surface: #101a2a;
+    --surface-2: #0d1624;
+    --surface-3: #18253a;
+    --line: #213048;
+    --line-strong: #31445f;
+    --grid: rgb(140 184 234 / 0.06);
+    --fg: #e5ebf3;
+    --fg-2: #c0cbda;
+    --muted: #91a1b8;
+    --primary: #2f6db3;
+    --primary-hover: #3b7cc4;
+    --primary-ink: #8fbbec;
+    --primary-soft: #15263d;
+    --primary-line: #2d4c74;
+    --on-primary: #ffffff;
+    --nav: #07101c;
+    --nav-2: #13233a;
+    --nav-fg: #e5ebf3;
+    --nav-muted: #8ea2bc;
+    --teal: #3fb3bc;
+    --teal-ink: #7fd2d8;
+    --teal-soft: #0e2b30;
+    --teal-line: #1f5a61;
+    --focus: #7fb4ee;
+    --go-bg: #11291b;
+    --go-fg: #8ed5a8;
+    --go-line: #275638;
+    --go-dot: #47b673;
+    --cond-bg: #2e250c;
+    --cond-fg: #ebc86b;
+    --cond-line: #5b4a19;
     --cond-dot: #d9a521;
-    --review-bg: #3a2415;
-    --review-fg: #f3ab7b;
-    --review-line: #6a4024;
+    --review-bg: #33200f;
+    --review-fg: #f3ab78;
+    --review-line: #683e20;
     --review-dot: #ec8640;
-    --stop-bg: #3b1b19;
-    --stop-fg: #f2a19a;
-    --stop-line: #6c2e2a;
+    --stop-bg: #351717;
+    --stop-fg: #f3a09a;
+    --stop-line: #6b2b2b;
     --stop-dot: #e45a4f;
-    --info-bg: #222c38;
-    --info-fg: #a9c4e2;
-    --info-line: #34465a;
-    --sh-card: 0 1px 2px rgb(0 0 0 / 0.3);
-    --sh-pop: 0 14px 36px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
-    --sh-composer: 0 6px 24px -8px rgb(0 0 0 / 0.55), 0 1px 2px rgb(0 0 0 / 0.3);
+    --info-bg: #142338;
+    --info-fg: #a9c6e6;
+    --info-line: #2b415e;
+    --sh-card: 0 1px 2px rgb(0 0 0 / 0.35);
+    --sh-pop: 0 16px 40px -12px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.35);
+    --sh-raise: 0 6px 18px -8px rgb(0 0 0 / 0.6);
   }
 }
 
@@ -110,17 +134,25 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
-  --color-bubble: var(--bubble);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-fg: var(--fg);
   --color-fg-2: var(--fg-2);
   --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
-  --color-on-accent: var(--on-accent);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-line: var(--primary-line);
+  --color-on-primary: var(--on-primary);
+  --color-nav: var(--nav);
+  --color-nav-2: var(--nav-2);
+  --color-nav-fg: var(--nav-fg);
+  --color-nav-muted: var(--nav-muted);
+  --color-teal: var(--teal);
+  --color-teal-ink: var(--teal-ink);
+  --color-teal-soft: var(--teal-soft);
+  --color-teal-line: var(--teal-line);
   --color-focus: var(--focus);
 
   --color-go-bg: var(--go-bg);
@@ -145,59 +177,50 @@
 
   --shadow-card: var(--sh-card);
   --shadow-pop: var(--sh-pop);
-  --shadow-composer: var(--sh-composer);
+  --shadow-raise: var(--sh-raise);
 }
 
 @theme {
-  /* 4px 간격 체계 (p-1 = 4px). 대화 칼럼 폭·사이드바 폭은 별도 토큰 */
+  /* 4px 간격 체계 (p-1 = 4px) */
   --spacing: 0.25rem;
-  --container-thread: 47.5rem; /* 760px — max-w-thread */
-  --container-sidebar: 16.5rem; /* 264px */
+  --container-page: 90rem; /* 1440px 본문 최대 폭 */
 
-  --radius-chip: 9999px;
-  --radius-card: 0.875rem; /* 14px */
-  --radius-bubble: 1.125rem; /* 18px */
-  --radius-field: 0.625rem; /* 10px */
+  --radius-pill: 9999px;
+  --radius-chip: 0.375rem; /* 6px — 칩·타일 */
+  --radius-field: 0.5rem; /* 8px — 입력·버튼 */
+  --radius-card: 0.75rem; /* 12px — 카드·패널 */
 
-  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-fast: 150ms;
   --duration-base: 200ms;
 
-  --animate-msg-in: msg-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-fade-in: fade-in 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-pop-in: pop-in 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-tick: tick 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-shimmer: shimmer 1.6s linear infinite;
-  --animate-breathe: breathe 1.4s ease-in-out infinite;
-  --animate-drawer-in: drawer-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-rise-in: rise-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop-in: pop-in 150ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-tick: tick 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-changed: changed 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
-  @keyframes msg-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: none; }
-  }
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
   @keyframes pop-in {
-    from { opacity: 0; transform: translateY(4px) scale(0.98); }
+    from { opacity: 0; transform: translateY(3px) scale(0.985); }
     to { opacity: 1; transform: none; }
   }
   @keyframes tick {
     from { opacity: 0; transform: scale(0.6); }
     to { opacity: 1; transform: none; }
   }
-  @keyframes shimmer {
-    from { background-position: 200% 0; }
-    to { background-position: -200% 0; }
-  }
-  @keyframes breathe {
-    0%, 100% { opacity: 0.35; }
-    50% { opacity: 1; }
-  }
-  @keyframes drawer-in {
-    from { transform: translateX(-100%); }
-    to { transform: none; }
+  /* 다시 분석 뒤 바뀐 부분을 잠깐 표시 */
+  @keyframes changed {
+    0% { box-shadow: 0 0 0 0 var(--focus); background-color: var(--primary-soft); }
+    20% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 35%, transparent); background-color: var(--primary-soft); }
+    100% { box-shadow: 0 0 0 0 transparent; }
   }
 }
 
@@ -210,18 +233,17 @@
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
-    font-size: 15.5px;
-    line-height: 1.65;
+    font-size: 15px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "ss06";
   }
   :focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
   ::selection {
-    background: var(--accent-soft);
+    background: var(--primary-soft);
   }
   button {
     cursor: pointer;
@@ -232,19 +254,12 @@
 }
 
 @layer components {
-  /* 스켈레톤 줄 */
-  .skeleton {
-    background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
-    background-size: 200% 100%;
-    animation: skel-shimmer 1.6s linear infinite;
-    border-radius: 6px;
-  }
   /* 펼침 영역 높이 애니메이션: grid-template-rows 0fr → 1fr */
   .collapse-grid {
     display: grid;
     grid-template-rows: 0fr;
     grid-template-columns: minmax(0, 1fr);
-    transition: grid-template-rows 200ms var(--ease-soft), opacity 200ms var(--ease-soft);
+    transition: grid-template-rows 200ms var(--ease-out), opacity 180ms var(--ease-out);
     opacity: 0;
   }
   .collapse-grid[data-open="true"] {
@@ -256,23 +271,51 @@
     min-height: 0;
     min-width: 0;
   }
-  /* 칩 누름 피드백 */
+  /* 누름 피드백 */
   .press {
-    transition: transform 120ms var(--ease-soft), background-color 150ms, border-color 150ms, color 150ms, box-shadow 150ms;
+    transition: transform 120ms var(--ease-out), background-color 150ms, border-color 150ms, color 150ms, box-shadow 150ms;
   }
   .press:active:not(:disabled) {
     transform: scale(0.97);
   }
-  /* 얇은 스크롤바 */
   .thin-scroll {
     scrollbar-width: thin;
     scrollbar-color: var(--line-strong) transparent;
   }
-}
-
-@keyframes skel-shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  /* 도면 격자 — 빈 결과 패널 */
+  .drafting-grid {
+    background-color: var(--surface);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+  }
+  /* 도면 표제란처럼 쓰는 모서리 눈금 */
+  .corner-ticks {
+    position: relative;
+  }
+  .corner-ticks::before,
+  .corner-ticks::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--line-strong);
+    pointer-events: none;
+  }
+  .corner-ticks::before {
+    top: 8px;
+    left: 8px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  .corner-ticks::after {
+    right: 8px;
+    bottom: 8px;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -283,8 +326,5 @@
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
-  }
-  .skeleton {
-    animation: none;
   }
 }

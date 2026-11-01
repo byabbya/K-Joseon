@@ -39,7 +39,7 @@ export const TONE_CLS: Record<Tone, { pill: string; dot: string; soft: string }>
   cond: { pill: 'bg-cond-bg text-cond-fg ring-cond-line', dot: 'bg-cond-dot', soft: 'border-cond-line bg-cond-bg/60' },
   review: { pill: 'bg-review-bg text-review-fg ring-review-line', dot: 'bg-review-dot', soft: 'border-review-line bg-review-bg/60' },
   stop: { pill: 'bg-stop-bg text-stop-fg ring-stop-line', dot: 'bg-stop-dot', soft: 'border-stop-line bg-stop-bg/60' },
-  info: { pill: 'bg-info-bg text-info-fg ring-info-line', dot: 'bg-accent', soft: 'border-info-line bg-info-bg/60' },
+  info: { pill: 'bg-info-bg text-info-fg ring-info-line', dot: 'bg-primary-ink', soft: 'border-info-line bg-info-bg/60' },
   neutral: { pill: 'bg-surface-2 text-fg-2 ring-line', dot: 'bg-muted', soft: 'border-line bg-surface-2' },
 }
 
@@ -100,4 +100,31 @@ export function fmtValue(v: unknown): string {
   if (v === false) return '아니오'
   if (v === null || v === undefined || v === '') return '-'
   return String(v)
+}
+
+/** 판정 값의 정의 (정의서 2-1 2) 승인 여부 입력) */
+export const VERDICT_DEF: Record<Verdict, string> = {
+  승인: '현재 입력과 첨부 기준으로 반출 절차 진행 가능',
+  '내부 검토 필요': '기술보호 담당·설계 부서장·외부 기관 확인(판정 신청, KAITS 질의, 전략물자 판정 등) 후 재심',
+  미승인: '반출 불가 또는 요청 수정 후 재신청',
+}
+
+/** 권고 분류 한 줄 설명 */
+export const REC_DEF: Record<Recommendation, string> = {
+  '진행 가능': '걸린 규칙 없이 필수 항목이 모두 채워짐',
+  '조건부 진행': '조건을 지키면 반출 절차를 진행할 수 있음',
+  '법무팀 검토 필요': '법무팀 확인 없이는 진행할 수 없음',
+  '반출 불가': '이 경로로는 반출할 수 없음',
+}
+
+/** 시연용 제재·수출통제 확인 대상국 (docs/RULES.md 6번 — 실제 목록으로 교체 필요) */
+export const SANCTIONED = ['KP', 'IR', 'SY', 'RU', 'BY']
+
+export const STATUS_FLOW = ['접수', '분석 완료', '법무 검토 중', '판정 완료'] as const
+
+export function fmtSize(n?: number): string {
+  if (n === undefined) return ''
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
