@@ -1,9 +1,290 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+/* ------------------------------------------------------------------
+   K-Ship Guard AX 디자인 토큰
+   색·반경·그림자·모션은 여기서만 정의하고, 컴포넌트는 Tailwind 유틸리티
+   (bg-surface, text-muted, border-line, bg-go-bg …)로만 쓴다.
+   다크 모드는 prefers-color-scheme 로 같은 토큰 값을 바꾼다.
+------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* 바탕·면 */
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface-2: #f1efea; /* 사이드바, 옅은 칸 */
+  --surface-3: #e9e6df; /* hover */
+  --bubble: #ecebe6; /* 사용자 말풍선 */
+  --line: #e4e1da;
+  --line-strong: #d3cfc6;
+
+  /* 글자 */
+  --fg: #1f1e1c;
+  --fg-2: #3d3b37;
+  --muted: #67645e; /* bg 대비 5.4:1 */
+
+  /* 강조색 (조선소 남색) — 아껴 쓴다 */
+  --accent: #1f4e79;
+  --accent-hover: #173d60;
+  --accent-ink: #1f4e79; /* 링크·강조 글자 */
+  --accent-soft: #e7edf4;
+  --on-accent: #ffffff;
+  --focus: #2b6cb0;
+
+  /* 권고 4색 (bg / fg / line / dot) */
+  --go-bg: #e7f3ea;
+  --go-fg: #1c6435;
+  --go-line: #b7dbc3;
+  --go-dot: #2f9a57;
+  --cond-bg: #fbf1d9;
+  --cond-fg: #744f00;
+  --cond-line: #ead096;
+  --cond-dot: #c9930e;
+  --review-bg: #fcebdc;
+  --review-fg: #94400f;
+  --review-line: #efc5a2;
+  --review-dot: #e0711f;
+  --stop-bg: #fbe5e3;
+  --stop-fg: #9f2119;
+  --stop-line: #eebbb6;
+  --stop-dot: #d2382d;
+  --info-bg: #eef1f6;
+  --info-fg: #2c4a6b;
+  --info-line: #cbd6e4;
+
+  /* 그림자 */
+  --sh-card: 0 1px 2px rgb(31 30 28 / 0.04), 0 1px 3px rgb(31 30 28 / 0.04);
+  --sh-pop: 0 12px 32px -12px rgb(31 30 28 / 0.22), 0 2px 6px rgb(31 30 28 / 0.06);
+  --sh-composer: 0 4px 20px -6px rgb(31 30 28 / 0.12), 0 1px 2px rgb(31 30 28 / 0.05);
 }
 
-html {
-  word-break: keep-all;
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #1b1a18;
+    --surface: #242320;
+    --surface-2: #201f1d;
+    --surface-3: #2e2c29;
+    --bubble: #302e2a;
+    --line: #36342f;
+    --line-strong: #4a4740;
+    --fg: #ecebe6;
+    --fg-2: #d3d0c9;
+    --muted: #a9a59c;
+    --accent: #3b6fa3;
+    --accent-hover: #4a7db2;
+    --accent-ink: #94bde6;
+    --accent-soft: #233243;
+    --on-accent: #ffffff;
+    --focus: #7fb0e3;
+    --go-bg: #16301f;
+    --go-fg: #92d6a9;
+    --go-line: #2b5a3a;
+    --go-dot: #4cb875;
+    --cond-bg: #33290f;
+    --cond-fg: #ebc86e;
+    --cond-line: #5d4a1c;
+    --cond-dot: #d9a521;
+    --review-bg: #3a2415;
+    --review-fg: #f3ab7b;
+    --review-line: #6a4024;
+    --review-dot: #ec8640;
+    --stop-bg: #3b1b19;
+    --stop-fg: #f2a19a;
+    --stop-line: #6c2e2a;
+    --stop-dot: #e45a4f;
+    --info-bg: #222c38;
+    --info-fg: #a9c4e2;
+    --info-line: #34465a;
+    --sh-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --sh-pop: 0 14px 36px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+    --sh-composer: 0 6px 24px -8px rgb(0 0 0 / 0.55), 0 1px 2px rgb(0 0 0 / 0.3);
+  }
+}
+
+@theme inline {
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "D2Coding", Consolas, monospace;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-bubble: var(--bubble);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-focus: var(--focus);
+
+  --color-go-bg: var(--go-bg);
+  --color-go-fg: var(--go-fg);
+  --color-go-line: var(--go-line);
+  --color-go-dot: var(--go-dot);
+  --color-cond-bg: var(--cond-bg);
+  --color-cond-fg: var(--cond-fg);
+  --color-cond-line: var(--cond-line);
+  --color-cond-dot: var(--cond-dot);
+  --color-review-bg: var(--review-bg);
+  --color-review-fg: var(--review-fg);
+  --color-review-line: var(--review-line);
+  --color-review-dot: var(--review-dot);
+  --color-stop-bg: var(--stop-bg);
+  --color-stop-fg: var(--stop-fg);
+  --color-stop-line: var(--stop-line);
+  --color-stop-dot: var(--stop-dot);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-info-line: var(--info-line);
+
+  --shadow-card: var(--sh-card);
+  --shadow-pop: var(--sh-pop);
+  --shadow-composer: var(--sh-composer);
+}
+
+@theme {
+  /* 4px 간격 체계 (p-1 = 4px). 대화 칼럼 폭·사이드바 폭은 별도 토큰 */
+  --spacing: 0.25rem;
+  --container-thread: 47.5rem; /* 760px — max-w-thread */
+  --container-sidebar: 16.5rem; /* 264px */
+
+  --radius-chip: 9999px;
+  --radius-card: 0.875rem; /* 14px */
+  --radius-bubble: 1.125rem; /* 18px */
+  --radius-field: 0.625rem; /* 10px */
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+
+  --animate-msg-in: msg-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop-in: pop-in 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-tick: tick 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-breathe: breathe 1.4s ease-in-out infinite;
+  --animate-drawer-in: drawer-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes tick {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(-100%); }
+    to { transform: none; }
+  }
+}
+
+@layer base {
+  html {
+    word-break: keep-all;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 15.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss06";
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /* 스켈레톤 줄 */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+    background-size: 200% 100%;
+    animation: skel-shimmer 1.6s linear infinite;
+    border-radius: 6px;
+  }
+  /* 펼침 영역 높이 애니메이션: grid-template-rows 0fr → 1fr */
+  .collapse-grid {
+    display: grid;
+    grid-template-rows: 0fr;
+    grid-template-columns: minmax(0, 1fr);
+    transition: grid-template-rows 200ms var(--ease-soft), opacity 200ms var(--ease-soft);
+    opacity: 0;
+  }
+  .collapse-grid[data-open="true"] {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  .collapse-grid > * {
+    overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+  }
+  /* 칩 누름 피드백 */
+  .press {
+    transition: transform 120ms var(--ease-soft), background-color 150ms, border-color 150ms, color 150ms, box-shadow 150ms;
+  }
+  .press:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  /* 얇은 스크롤바 */
+  .thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+}
+
+@keyframes skel-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton {
+    animation: none;
+  }
 }

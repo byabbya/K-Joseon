@@ -31,33 +31,29 @@ export const SEVERITY: Record<Recommendation, number> = {
   '반출 불가': 3,
 }
 
-export const REC_STYLE: Record<Recommendation, { badge: string; banner: string; dot: string }> = {
-  '진행 가능': {
-    badge: 'bg-green-50 text-green-800 ring-green-600/30',
-    banner: 'bg-green-50 border-green-300 text-green-900',
-    dot: 'bg-green-500',
-  },
-  '조건부 진행': {
-    badge: 'bg-amber-50 text-amber-800 ring-amber-600/30',
-    banner: 'bg-amber-50 border-amber-300 text-amber-900',
-    dot: 'bg-amber-500',
-  },
-  '법무팀 검토 필요': {
-    badge: 'bg-orange-50 text-orange-800 ring-orange-600/30',
-    banner: 'bg-orange-50 border-orange-300 text-orange-900',
-    dot: 'bg-orange-500',
-  },
-  '반출 불가': {
-    badge: 'bg-red-50 text-red-800 ring-red-600/30',
-    banner: 'bg-red-50 border-red-300 text-red-900',
-    dot: 'bg-red-500',
-  },
+/** 색 계열(tone) — index.css 의 go / cond / review / stop 토큰과 1:1 */
+export type Tone = 'go' | 'cond' | 'review' | 'stop' | 'info' | 'neutral'
+
+export const TONE_CLS: Record<Tone, { pill: string; dot: string; soft: string }> = {
+  go: { pill: 'bg-go-bg text-go-fg ring-go-line', dot: 'bg-go-dot', soft: 'border-go-line bg-go-bg/60' },
+  cond: { pill: 'bg-cond-bg text-cond-fg ring-cond-line', dot: 'bg-cond-dot', soft: 'border-cond-line bg-cond-bg/60' },
+  review: { pill: 'bg-review-bg text-review-fg ring-review-line', dot: 'bg-review-dot', soft: 'border-review-line bg-review-bg/60' },
+  stop: { pill: 'bg-stop-bg text-stop-fg ring-stop-line', dot: 'bg-stop-dot', soft: 'border-stop-line bg-stop-bg/60' },
+  info: { pill: 'bg-info-bg text-info-fg ring-info-line', dot: 'bg-accent', soft: 'border-info-line bg-info-bg/60' },
+  neutral: { pill: 'bg-surface-2 text-fg-2 ring-line', dot: 'bg-muted', soft: 'border-line bg-surface-2' },
 }
 
-export const VERDICT_STYLE: Record<Verdict, string> = {
-  승인: 'bg-green-50 text-green-800 ring-green-600/30',
-  '내부 검토 필요': 'bg-orange-50 text-orange-800 ring-orange-600/30',
-  미승인: 'bg-red-50 text-red-800 ring-red-600/30',
+export const REC_TONE: Record<Recommendation, Tone> = {
+  '진행 가능': 'go',
+  '조건부 진행': 'cond',
+  '법무팀 검토 필요': 'review',
+  '반출 불가': 'stop',
+}
+
+export const VERDICT_TONE: Record<Verdict, Tone> = {
+  승인: 'go',
+  '내부 검토 필요': 'review',
+  미승인: 'stop',
 }
 
 export const LAYER_LABEL: Record<number, string> = {

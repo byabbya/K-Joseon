@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { AdjustmentInput, DecisionInput, RequestDetail, RequestInput, RequestListParams } from './types'
 
@@ -16,11 +16,22 @@ export function useRequestList(params: RequestListParams = {}) {
   return useQuery({ queryKey: qk.list(params), queryFn: () => api.listRequests(params) })
 }
 
-export function useRequestDetail(id: string | undefined) {
+export function useRequestDetail(id: string | undefined, opts: { pollWhileReviewing?: boolean } = {}) {
   return useQuery({
     queryKey: qk.detail(id ?? ''),
     queryFn: () => api.getRequest(id!),
     enabled: !!id,
+    // 법무 검토 중이면 5초마다 다시 불러와 판정이 새로고침 없이 나타나게 한다
+    refetchInterval: opts.pollWhileReviewing
+      ? (q) => (q.state.data?.summary.status === '법무 검토 중' ? 5000 : false)
+      : false,
+  })
+}
+
+/** 사이드바 대화 제목(추가 설명 앞부분·첫 파일명)용 — 요약에는 free_text 가 없어 상세를 함께 불러온다 */
+export function useRequestDetails(ids: string[]) {
+  return useQueries({
+    queries: ids.map((id) => ({ queryKey: qk.detail(id), queryFn: () => api.getRequest(id), staleTime: 30_000 })),
   })
 }
 

@@ -255,6 +255,7 @@ export interface RequestListParams {
   status?: 'pending' | 'done'
   recommendation?: string
   department?: string
+  employee_id?: string
   sort?: string
 }
 

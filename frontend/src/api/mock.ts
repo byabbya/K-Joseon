@@ -681,6 +681,7 @@ export const mockApi = {
     if (params.status === 'done') rows = rows.filter((r) => r.status === '판정 완료')
     if (params.recommendation) rows = rows.filter((r) => r.recommendation === params.recommendation)
     if (params.department) rows = rows.filter((r) => r.employee.department === params.department)
+    if (params.employee_id) rows = rows.filter((r) => r.employee.employee_id === params.employee_id)
     if (params.sort === 'severity') rows.sort((a, b) => (SEV_SORT[b.recommendation ?? ''] ?? -1) - (SEV_SORT[a.recommendation ?? ''] ?? -1))
     else rows.sort((a, b) => b.created_at.localeCompare(a.created_at))
     return delay(rows)
