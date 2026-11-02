@@ -2,7 +2,6 @@
 // Analysis(규칙 엔진 출력)를 그대로 그린다. 문장을 새로 지어내지 않고, 출처 없는 문장은 시스템 메모로만 보인다.
 // 답변 화면에서는 접힌 채로 결론·해야 할 일 아래에 놓인다 (CitationProvider 는 바깥 SystemAnswer 가 감싼다).
 import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { useMeta } from '../../api/hooks'
 import type { Analysis, Axis, AxisKey, ClauseRef, DecisionOut, FileResult, PrecedentCard, Recommendation, Verdict } from '../../api/types'
 import { AXIS_ORDER, resolveAxes } from '../../lib/axes'
@@ -53,16 +52,6 @@ export function Report({ a, prev, decisions, audience }: { a: Analysis; prev: An
       </Block>
       <Block n={6} title="확인 사항" icon={<IconAlert size={15} />} className={ch('missing')}>
         <Checks a={a} />
-        {audience === 'legal' && !!a.wiki_drafts?.length && (
-          <p className="mt-3 flex flex-wrap items-center gap-x-1.5 rounded-[6px] bg-surface-2 px-2.5 py-1.5 text-[12.5px] text-fg-2 ring-1 ring-line ring-inset">
-            <IconBook size={13} className="shrink-0 text-muted" />
-            이번 문서에서 위키 후보 {a.wiki_drafts.length}개를 제안했습니다
-            <span className="text-muted">({a.wiki_drafts.slice(0, 4).join(', ')}{a.wiki_drafts.length > 4 ? ' …' : ''})</span>
-            <Link to={`/wiki?tab=draft&q=${encodeURIComponent(a.request_id)}`} className="font-semibold text-primary-ink hover:underline">
-              → 용어 위키
-            </Link>
-          </p>
-        )}
       </Block>
       <Block n={7} title="출처" count={cit?.list.length ?? 0} sub="보고서에 처음 인용된 순서">
         <References />

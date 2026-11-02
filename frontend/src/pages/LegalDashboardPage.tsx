@@ -6,7 +6,7 @@ import type { Recommendation, RequestSummary } from '../api/types'
 import { checkTitle } from '../components/check/ListBits'
 import { Page, PageHead, Panel } from '../components/PageHead'
 import { ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx } from '../components/ui'
-import { IconArrowLeft, IconBook } from '../components/icons'
+import { IconArrowLeft } from '../components/icons'
 import { REC_TONE, SEVERITY, TONE_CLS, countryName, fmtDate } from '../lib/labels'
 
 const RECS: Recommendation[] = ['진행 가능', '조건부 진행', '법무팀 검토 필요', '반출 불가']
@@ -194,16 +194,6 @@ export function LegalDashboardPage() {
               ))}
             </ol>
           </Panel>
-          <Link to="/wiki" className="flex items-center gap-3 rounded-card border border-line bg-surface px-5 py-4 shadow-card hover:bg-surface-2">
-            <span className="grid size-9 shrink-0 place-items-center rounded-[3px] bg-teal-soft text-teal-ink ring-1 ring-teal-line ring-inset">
-              <IconBook size={17} />
-            </span>
-            <span className="min-w-0 flex-1 leading-tight">
-              <span className="block text-[13px] font-bold text-fg">용어 위키</span>
-              <span className="block text-[11.5px] text-muted">표준 용어 승인 · 도면 기호 표준화</span>
-            </span>
-            <span className="text-[12px] font-bold text-primary-ink">→</span>
-          </Link>
         </aside>
       </div>
     </Page>

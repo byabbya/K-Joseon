@@ -35,12 +35,8 @@ function pageName(p: string): string {
   if (p === '/legal' || p === '/legal/') return '대시보드'
   if (p.startsWith('/legal/requests')) return '검토 요청'
   if (p.startsWith('/legal/')) return '검토 상세'
-  if (p.startsWith('/wiki')) return '용어 위키'
   return ''
 }
-
-/** 두 역할이 함께 쓰는 화면 */
-const SHARED = (p: string) => p.startsWith('/wiki')
 
 export const ROLE_HOME: Record<Role, string> = { employee: '/', legal: '/legal' }
 
@@ -60,7 +56,6 @@ export function AppShell() {
   // 역할과 화면이 맞지 않으면 그 역할의 첫 화면으로
   useEffect(() => {
     const onLegal = loc.pathname.startsWith('/legal')
-    if (SHARED(loc.pathname)) return
     if (role === 'legal' && !onLegal) nav('/legal', { replace: true })
     if (role === 'employee' && onLegal) nav('/', { replace: true })
   }, [role, loc.pathname, nav])

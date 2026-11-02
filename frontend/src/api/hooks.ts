@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { api } from './client'
-import type { AdjustmentInput, DecisionInput, RequestDetail, RequestInput, RequestListParams, TermProposal, WikiTermsParams } from './types'
+import type { AdjustmentInput, DecisionInput, RequestDetail, RequestInput, RequestListParams } from './types'
 
 export const qk = {
   meta: ['meta'] as const,
@@ -121,7 +121,7 @@ export function useDecide(id: string) {
   return useMutation({ mutationFn: (b: DecisionInput) => api.decide(id, b), onSuccess: () => inv(id) })
 }
 
-/* ---------------- 도면 분석 · 검색 · 상태 · 용어 위키 ---------------- */
+/* ---------------- 도면 분석 · 검색 · 상태 ---------------- */
 
 export function useDrawing(assetId: string | undefined, viewer: string | null, enabled = true) {
   return useQuery({
@@ -151,29 +151,5 @@ export function useSystemStatus() {
     queryFn: api.getStatus,
     refetchInterval: (q) => (q.state.data?.embedding === 'loading' ? 10_000 : 60_000),
     retry: 0,
-  })
-}
-
-export function useWikiTerms(p: WikiTermsParams) {
-  return useQuery({ queryKey: ['wiki', 'terms', p], queryFn: () => api.wikiTerms(p), placeholderData: keepPreviousData })
-}
-
-export function useWikiSymbols() {
-  return useQuery({ queryKey: ['wiki', 'symbols'], queryFn: api.wikiSymbols, staleTime: Infinity })
-}
-
-export function useWikiReview() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (v: { termId: string; reviewer: string; approve: boolean }) => api.wikiReview(v.termId, v.reviewer, v.approve),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['wiki', 'terms'] }),
-  })
-}
-
-export function useWikiPropose() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (b: TermProposal) => api.wikiPropose(b),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['wiki', 'terms'] }),
   })
 }

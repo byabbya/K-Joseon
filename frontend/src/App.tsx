@@ -6,8 +6,7 @@ import { AnswerPage } from './pages/AnswerPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { HomePage } from './pages/HomePage'
 
-// 첫 화면 번들을 가볍게: 용어 위키와 법무팀 화면은 필요할 때 불러온다
-const WikiPage = lazy(() => import('./pages/WikiPage'))
+// 첫 화면 번들을 가볍게: 법무팀 화면은 필요할 때 불러온다
 const LegalDashboardPage = lazy(() => import('./pages/LegalDashboardPage').then((m) => ({ default: m.LegalDashboardPage })))
 const LegalListPage = lazy(() => import('./pages/LegalListPage').then((m) => ({ default: m.LegalListPage })))
 const LegalDetailPage = lazy(() => import('./pages/LegalDetailPage').then((m) => ({ default: m.LegalDetailPage })))
@@ -32,8 +31,6 @@ export default function App() {
         <Route path="/legal" element={page(<LegalDashboardPage />)} />
         <Route path="/legal/requests" element={page(<LegalListPage />)} />
         <Route path="/legal/:id" element={page(<LegalDetailPage />)} />
-        {/* 두 역할 공통 — 용어 위키 · 도면 기호 표준화 */}
-        <Route path="/wiki" element={page(<WikiPage />)} />
         {/* 예전 경로 */}
         <Route path="/check" element={<Navigate to="/" replace />} />
         <Route path="/request" element={<Navigate to="/" replace />} />

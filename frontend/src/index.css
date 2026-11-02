@@ -15,8 +15,8 @@
   --surface: #ffffff;
   --surface-2: #f2f6fb; /* 옅은 칸, 표 머리 */
   --surface-3: #e7eef7; /* hover · 선택 */
-  --line: #dbe4ef;
-  --line-strong: #c2d0e0;
+  --line: #c3d1e2; /* 카드 테두리·구분선 — 물결 바탕과 구분되게 */
+  --line-strong: #a9bbd1;
   --field-line: #7d8fa5; /* 입력·체크 칸 테두리 — 흰 면 3.3:1 (WCAG 1.4.11) */
   --grid: rgb(15 42 79 / 0.05);
 
@@ -48,7 +48,7 @@
   /* 물결 무늬 */
   --wave-1: rgb(173 206 240 / 0.34);
   --wave-2: rgb(132 180 230 / 0.22);
-  --wave-3: rgb(206 226 247 / 0.5);
+  --wave-3: rgb(206 226 247 / 0.2);
 
   --focus: #1c6fd1;
   --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
@@ -75,7 +75,7 @@
   --info-line: #c2d4ea;
 
   /* 그림자 — 카드는 아주 옅게, 떠 있는 것(팝오버)은 조금 더 */
-  --sh-card: 0 1px 2px rgb(15 42 79 / 0.04), 0 4px 16px -8px rgb(15 42 79 / 0.08);
+  --sh-card: 0 1px 2px rgb(15 42 79 / 0.06), 0 6px 18px -10px rgb(15 42 79 / 0.14);
   --sh-pop: 0 12px 32px -12px rgb(15 42 79 / 0.3), 0 2px 6px rgb(15 42 79 / 0.08);
   --sh-raise: 0 8px 24px -12px rgb(15 42 79 / 0.18);
 }
@@ -87,8 +87,8 @@
     --surface: #0f1d33;
     --surface-2: #0c182b;
     --surface-3: #172a45;
-    --line: #1f3350;
-    --line-strong: #2d4466;
+    --line: #2a4163;
+    --line-strong: #3a5478;
     --field-line: #5d7798;
     --grid: rgb(160 196 239 / 0.06);
     --fg: #e4ecf6;
@@ -110,7 +110,7 @@
     --teal-line: #24577a;
     --wave-1: rgb(58 120 194 / 0.12);
     --wave-2: rgb(74 168 214 / 0.08);
-    --wave-3: rgb(40 80 140 / 0.14);
+    --wave-3: rgb(40 80 140 / 0.1);
     --focus: #7fb6f0;
     --alert: #9b2f35;
     --go-bg: #142a22;
@@ -256,7 +256,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  body { background-image: radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%233a78c2' fill-opacity='0.10'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%234aa8d6' fill-opacity='0.07'/></svg>") !important; }
+  body { background-image: radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%233a78c2' fill-opacity='0.05'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%234aa8d6' fill-opacity='0.035'/></svg>") !important; }
 }
 
 @layer base {
@@ -269,7 +269,7 @@
     /* 바다 느낌의 옅은 세로 물결 — 화면에 고정, 내용은 그 위로 스크롤 */
     background-image:
       radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%23adcef0' fill-opacity='0.42'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%2384b4e6' fill-opacity='0.30'/><path d='M0 0 L150 0 C250 300 80 620 190 900 L0 900 Z' fill='%23cee2f7' fill-opacity='0.45'/></svg>");
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%23adcef0' fill-opacity='0.14'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%2384b4e6' fill-opacity='0.09'/><path d='M0 0 L150 0 C250 300 80 620 190 900 L0 900 Z' fill='%23cee2f7' fill-opacity='0.18'/></svg>");
     background-size: 100% 100%, 100% 100%;
     background-attachment: fixed, fixed;
     background-repeat: no-repeat;

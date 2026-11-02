@@ -98,15 +98,6 @@ export function NextStep({
   )
 }
 
-/** 근거 ID → 사람이 읽는 이름 (조항: 법령 조문, 판례: 법원 사건번호). 모르면 ID 그대로 */
-function evidenceName(id: string, d: RequestDetail): string {
-  const c = d.analysis?.clauses.find((x) => x.clause_id === id)
-  if (c) return `${c.layer === 'notice' ? '국가핵심기술 고시' : c.law_name} ${c.article_no}`.replace(/\s+/g, ' ')
-  const p = d.analysis?.precedents.find((x) => x.case_id === id)
-  if (p) return `${p.court} ${p.case_no}`
-  return id
-}
-
 /** 법무팀 답변 — 시스템 답변보다 우선. 답변 화면 맨 위 */
 export function LegalAnswerCard({ d }: { d: RequestDetail }) {
   const people = useMeta().data?.employees ?? []
@@ -159,12 +150,6 @@ export function LegalAnswerCard({ d }: { d: RequestDetail }) {
         <p className="mt-2 text-[13px] text-fg-2">
           <span className="font-semibold">추가 확인 항목 · </span>
           {last.sub_options.join(', ')}
-        </p>
-      )}
-      {last.checked_evidence.length > 0 && (
-        <p className="mt-2 text-[12.5px] text-muted">
-          <span className="font-semibold">법무팀이 본 근거 · </span>
-          {last.checked_evidence.map((e) => evidenceName(e, d)).join(', ')}
         </p>
       )}
       {d.decisions.length > 1 && (
