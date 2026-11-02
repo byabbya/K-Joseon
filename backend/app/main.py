@@ -511,7 +511,8 @@ def resubmit(rid: str):
 
 
 @app.get("/api/files/{asset_id}")
-def view_file(asset_id: str, viewer: str):
+def view_file(asset_id: str, viewer: str, download: bool = False):
+    """원본 열람 — 기본은 브라우저 안에서 보기(inline), download=1 이면 내려받기. 둘 다 감사 로그에 남는다."""
     with Session(engine) as s:
         a = s.get(Asset, asset_id)
         if not a:
@@ -519,9 +520,9 @@ def view_file(asset_id: str, viewer: str):
         v = _employee(s, viewer)
         if v.role != "legal" and v.employee_id != a.uploaded_by:
             raise HTTPException(403, "원본 열람 권한이 없습니다")
-        audit(s, a.request_id, viewer, "view_file", asset_id=asset_id, filename=a.filename)
+        audit(s, a.request_id, viewer, "download_file" if download else "view_file", asset_id=asset_id, filename=a.filename)
         s.commit()
-        return FileResponse(a.path, filename=a.filename)
+        return FileResponse(a.path, filename=a.filename, content_disposition_type="attachment" if download else "inline")
 
 
 @app.get("/api/files/{asset_id}/drawing")

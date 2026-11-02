@@ -151,6 +151,7 @@ export type Api = typeof realApi
 
 export const api: Api = USE_MOCK ? mockApi : realApi
 
-export function fileUrl(assetId: string, viewerId: string): string {
-  return `/api/files/${encodeURIComponent(assetId)}?viewer=${encodeURIComponent(viewerId)}`
+/** 원본 파일 — 기본은 브라우저 안에서 보기, download 이면 내려받기 (둘 다 감사 로그) */
+export function fileUrl(assetId: string, viewerId: string, download = false): string {
+  return `/api/files/${encodeURIComponent(assetId)}?viewer=${encodeURIComponent(viewerId)}${download ? '&download=1' : ''}`
 }

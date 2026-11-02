@@ -15,7 +15,7 @@
 | POST | `/api/requests/{id}/adjustments` | 법무팀 근거 보정 (`AdjustmentInput`) — 원본 출력과 분리 저장 |
 | POST | `/api/requests/{id}/decision` | 법무 판정 (`DecisionInput`) — 새 버전으로 저장, 권고와 다르면 플래그 |
 | POST | `/api/requests/{id}/resubmit` | 미승인 건 재신청 → 입력을 복사한 새 요청 (`RequestDetail`, `parent_request_id` 연결) |
-| GET | `/api/files/{asset_id}?viewer=` | 첨부 열람 (열람 이력 기록) |
+| GET | `/api/files/{asset_id}?viewer=[&download=1]` | 첨부 원본 — 기본은 브라우저 안 미리보기(inline), `download=1` 이면 내려받기(attachment). 둘 다 열람 이력 기록 (`view_file` / `download_file`) |
 | GET | `/api/requests/{id}/audit` | 감사 로그 |
 
 ## 파일 없이 질문하기

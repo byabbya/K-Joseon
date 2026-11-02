@@ -15,8 +15,8 @@
   --surface: #ffffff;
   --surface-2: #f2f6fb; /* 옅은 칸, 표 머리 */
   --surface-3: #e7eef7; /* hover · 선택 */
-  --line: #c3d1e2; /* 카드 테두리·구분선 — 물결 바탕과 구분되게 */
-  --line-strong: #a9bbd1;
+  --line: #a2a9b1; /* 카드 테두리·구분선 — 진회색 */
+  --line-strong: #858d96;
   --field-line: #7d8fa5; /* 입력·체크 칸 테두리 — 흰 면 3.3:1 (WCAG 1.4.11) */
   --grid: rgb(15 42 79 / 0.05);
 
@@ -48,10 +48,10 @@
   /* 물결 무늬 */
   --wave-1: rgb(173 206 240 / 0.34);
   --wave-2: rgb(132 180 230 / 0.22);
-  --wave-3: rgb(206 226 247 / 0.2);
+  --wave-3: rgb(206 226 247 / 0.12);
 
   --focus: #1c6fd1;
-  --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
+  --alert: #be123c; /* 꼭 할 일 · 빠진 정보 머리 띠 — 로즈 레드, 80% 로 써도 흰 글자 4.7:1 */
 
   /* 권고 4색 (bg / fg / line / dot) */
   --go-bg: #e8f3ee;
@@ -66,10 +66,10 @@
   --review-fg: #8c4320;
   --review-line: #e8c6b1;
   --review-dot: #c96a3a;
-  --stop-bg: #f8e7e7;
-  --stop-fg: #962f33;
-  --stop-line: #e5bcbe;
-  --stop-dot: #c2474c;
+  --stop-bg: #fff1f2;
+  --stop-fg: #9f1239;
+  --stop-line: #fecdd3;
+  --stop-dot: #f43f5e;
   --info-bg: #e8f0fa;
   --info-fg: #1f4a78;
   --info-line: #c2d4ea;
@@ -87,8 +87,8 @@
     --surface: #0f1d33;
     --surface-2: #0c182b;
     --surface-3: #172a45;
-    --line: #2a4163;
-    --line-strong: #3a5478;
+    --line: #3b4651;
+    --line-strong: #4f5b67;
     --field-line: #5d7798;
     --grid: rgb(160 196 239 / 0.06);
     --fg: #e4ecf6;
@@ -110,9 +110,9 @@
     --teal-line: #24577a;
     --wave-1: rgb(58 120 194 / 0.12);
     --wave-2: rgb(74 168 214 / 0.08);
-    --wave-3: rgb(40 80 140 / 0.1);
+    --wave-3: rgb(40 80 140 / 0.07);
     --focus: #7fb6f0;
-    --alert: #9b2f35;
+    --alert: #be123c;
     --go-bg: #142a22;
     --go-fg: #92cfb4;
     --go-line: #2a5444;
@@ -125,10 +125,10 @@
     --review-fg: #eeb08e;
     --review-line: #5f3b28;
     --review-dot: #d9824f;
-    --stop-bg: #311a1b;
-    --stop-fg: #eea3a5;
-    --stop-line: #633234;
-    --stop-dot: #d6595e;
+    --stop-bg: #3a1220;
+    --stop-fg: #fda4af;
+    --stop-line: #7a2340;
+    --stop-dot: #fb7185;
     --info-bg: #142a48;
     --info-fg: #a9c8ea;
     --info-line: #2c4a72;
@@ -256,7 +256,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  body { background-image: radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%233a78c2' fill-opacity='0.05'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%234aa8d6' fill-opacity='0.035'/></svg>") !important; }
+  body { background-image: radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%233a78c2' fill-opacity='0.035'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%234aa8d6' fill-opacity='0.025'/></svg>") !important; }
 }
 
 @layer base {
@@ -269,7 +269,7 @@
     /* 바다 느낌의 옅은 세로 물결 — 화면에 고정, 내용은 그 위로 스크롤 */
     background-image:
       radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%23adcef0' fill-opacity='0.14'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%2384b4e6' fill-opacity='0.09'/><path d='M0 0 L150 0 C250 300 80 620 190 900 L0 900 Z' fill='%23cee2f7' fill-opacity='0.18'/></svg>");
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%23adcef0' fill-opacity='0.08'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%2384b4e6' fill-opacity='0.05'/><path d='M0 0 L150 0 C250 300 80 620 190 900 L0 900 Z' fill='%23cee2f7' fill-opacity='0.1'/></svg>");
     background-size: 100% 100%, 100% 100%;
     background-attachment: fixed, fixed;
     background-repeat: no-repeat;

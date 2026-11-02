@@ -178,7 +178,7 @@ function StatTiles({ a }: { a: Analysis }) {
         return (
           <li key={t.label}>
             {t.href ? (
-              <a href={t.href} className={cx('block rounded-card border px-4 py-4 shadow-card transition-colors duration-150', t.warn ? 'border-stop-line bg-stop-bg hover:border-stop-dot' : 'border-line bg-surface hover:border-primary-line')}>
+              <a href={t.href} className={cx('block rounded-card border px-4 py-4 shadow-card transition-colors duration-150', t.warn ? 'border-stop-line bg-stop-bg/80 hover:border-stop-dot' : 'border-line bg-surface hover:border-primary-line')}>
                 {body}
               </a>
             ) : (
@@ -196,9 +196,9 @@ function TodoCard({ d, a, onAttach, busy, audience, nextStep }: SystemAnswerProp
   const rec = a.recommendation
   const missing = rec === '반출 불가' ? 0 : a.missing.length
   return (
-    <section id="todo-card" aria-labelledby="todo-title" className="scroll-mt-24 overflow-hidden rounded-card border border-stop-line bg-stop-bg shadow-card">
-      <div className="bg-alert px-5 pt-4 pb-3">
-        <p className="text-[11.5px] font-bold tracking-[0.12em] text-white/85 uppercase">Next Actions</p>
+    <section id="todo-card" aria-labelledby="todo-title" className="scroll-mt-24 overflow-hidden rounded-card border border-stop-line bg-stop-bg/80 shadow-card">
+      <div className="bg-alert/80 px-5 pt-4 pb-3">
+        <p className="text-[11.5px] font-bold tracking-[0.12em] text-white uppercase">Next Actions</p>
         <h2 id="todo-title" className="mt-0.5 text-[16px] font-extrabold text-white">
           할 일
         </h2>

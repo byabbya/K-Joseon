@@ -4,11 +4,11 @@
 //   → 유사 과거 요청 → 승인 여부 확인 → 판정 이력(이전 버전 보존)
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { USE_MOCK, fileUrl } from '../api/client'
 import { useAddAdjustment, useDecide, useMeta, useRequestDetail, useSearch } from '../api/hooks'
 import type { Analysis, RequestDetail, Verdict } from '../api/types'
 import { AnalysisView } from '../components/check/Answer'
 import { ApprovalStamps } from '../components/check/Approval'
+import { FileActions } from '../components/check/FilePreview'
 import { realFiles } from '../components/check/model'
 import { StatusStepper } from '../components/check/StatusStepper'
 import { checkTitle } from '../components/check/ListBits'
@@ -152,15 +152,7 @@ function Attachments({ d, viewer }: { d: RequestDetail; viewer: string }) {
               </span>
             </span>
             <span className={cx('rounded-[2px] px-1.5 text-[11px] font-bold ring-1 ring-inset', list === '포함' ? 'bg-surface text-fg-2 ring-line' : 'bg-review-bg text-review-fg ring-review-line')}>승인도면 목록 {list}</span>
-            {USE_MOCK ? (
-              <button type="button" onClick={() => alert(`[모의 모드] ${fileUrl(f.asset_id, viewer)} 열람 — 열람 이력 기록`)} className="text-[12px] font-bold text-primary-ink hover:underline">
-                미리보기
-              </button>
-            ) : (
-              <a href={fileUrl(f.asset_id, viewer)} target="_blank" rel="noopener noreferrer" className="text-[12px] font-bold text-primary-ink hover:underline">
-                미리보기<span className="sr-only"> (새 탭, {f.filename})</span>
-              </a>
-            )}
+            <FileActions assetId={f.asset_id} filename={f.filename} viewer={viewer} />
           </li>
         )
       })}
@@ -680,10 +672,6 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
         <textarea id="reason" rows={4} className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="판단 근거를 자유롭게 적어 주세요. 사원 화면의 법무팀 답변에 그대로 표시됩니다." />
       </div>
 
-      <div className="mt-4 border-t border-line pt-4">
-        <EvidenceSearch a={a} inputId="decision-search" />
-      </div>
-
       <Button size="lg" onClick={save} disabled={m.isPending} className="mt-4 w-full">
         {m.isPending ? '저장 중…' : d.decisions.length ? `판정 저장 (v${d.decisions.length + 1}, 이전 버전 보존)` : '판정 저장'}
       </Button>
@@ -694,6 +682,12 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
         </p>
       )}
       <ErrorBox error={err ?? m.error} className="mt-2" />
+
+      {/* 참고용 검색 — 판정 저장과 무관 */}
+      <div className="mt-6 rounded-field border border-line bg-surface-2/60 p-4">
+        <p className="mb-2 text-[12px] text-muted">판정에 참고할 법령·판례를 찾아볼 수 있어요. 검색 결과는 판정에 저장되지 않아요.</p>
+        <EvidenceSearch a={a} inputId="decision-search" />
+      </div>
     </Panel>
   )
 }
