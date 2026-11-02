@@ -11,6 +11,7 @@ import { Button, IdTag, RecPill, cx } from '../ui'
 import { IconAlert, IconCheck, IconChevronDown, IconFileDrawing, IconPaperclip } from '../icons'
 import { Cite, CitationProvider, CitedText, type Citations } from './citations'
 import { Panel } from '../PageHead'
+import { ApprovalLinePanel } from './Approval'
 import { MissingQuestions, type Apply } from './FollowUps'
 import { fieldView, isTextOnly, realFiles } from './model'
 import { DeltaLine, Report, type Audience } from './Report'
@@ -58,8 +59,9 @@ export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 
             <DrawingSection a={p.a} />
             <EvidencePanel a={p.a} prev={p.prev} d={p.d} audience={p.audience} />
           </div>
-          <aside className={cx('space-y-5', p.stack ? 'max-2xl:order-first 2xl:sticky 2xl:top-24 2xl:self-start' : 'lg:sticky lg:top-24 lg:self-start')}>
+          <aside className={cx('space-y-5', p.stack ? 'max-2xl:order-first 2xl:sticky 2xl:top-24 2xl:self-start' : 'thin-scroll lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto')}>
             <DecisionCard {...p} cit={cit} />
+            <ApprovalLinePanel d={p.d} />
           </aside>
         </div>
       )}

@@ -8,6 +8,7 @@ import { USE_MOCK, fileUrl } from '../api/client'
 import { useAddAdjustment, useDecide, useMeta, useRequestDetail, useRequestList, useSearch } from '../api/hooks'
 import type { Analysis, RequestDetail, Verdict } from '../api/types'
 import { AnalysisView } from '../components/check/Answer'
+import { ApprovalStamps } from '../components/check/Approval'
 import { realFiles } from '../components/check/model'
 import { StatusStepper } from '../components/check/StatusStepper'
 import { checkTitle } from '../components/check/ListBits'
@@ -60,6 +61,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
           {/* 요청 머리 */}
           <header className="flex flex-wrap items-start gap-4 px-6 pt-6 pb-5 sm:px-8">
             <div className="min-w-0 flex-1">
+              {s.recommendation && <span className={cx('mb-2 inline-block border px-2 py-0.5 text-[12px] font-bold', TONE_CLS[REC_TONE[s.recommendation]].pill)}>{s.recommendation}</span>}
               <p className="font-mono text-[12.5px] font-bold text-muted">
                 {[...(s.category_choice !== '모름' ? [s.category_choice] : a?.model_categories ?? []), s.channel_code, s.purpose].filter(Boolean).join(' · ') || '기술 후보 없음'}
               </p>
@@ -68,7 +70,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
                 <span className="font-mono">{s.request_id}</span> · AI 초안은 고정되며 보정 내용은 별도 저장됩니다.
               </p>
             </div>
-            {s.recommendation && <span className={cx('shrink-0 border px-4 py-3 text-[13px] font-bold', TONE_CLS[REC_TONE[s.recommendation]].pill)}>{s.recommendation}</span>}
+            <ApprovalStamps d={d} />
           </header>
           <div className="px-6 pb-6 sm:px-8">
             <FactGrid d={d} />

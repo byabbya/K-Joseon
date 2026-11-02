@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAddFiles, useMeta, useRequestDetail, useResubmit, useSubmitRequest, useUpdateRequest } from '../api/hooks'
 import type { Analysis, FileMeta, RequestDetail } from '../api/types'
 import { AnalysisView } from '../components/check/Answer'
+import { ApprovalStamps } from '../components/check/Approval'
 import { FlowSteps, Page, PageHead } from '../components/PageHead'
 import type { Apply } from '../components/check/FollowUps'
 import { LegalAnswerCard, NextStep } from '../components/check/Handoff'
@@ -12,7 +13,7 @@ import { DEFAULT_FILE_META, realFiles } from '../components/check/model'
 import { QuestionCard } from '../components/check/QuestionCard'
 import { StatusStepper } from '../components/check/StatusStepper'
 import { ErrorBox, RecPill, Spinner } from '../components/ui'
-import { IconPlus, IconRefresh } from '../components/icons'
+import { IconRefresh } from '../components/icons'
 import { REC_HEADLINE, fmtDate } from '../lib/labels'
 
 export function AnswerPage() {
@@ -96,11 +97,7 @@ function Answer({ d }: { d: RequestDetail }) {
         eyebrow="AI Pre-review"
         title="사전분석 결과"
         sub="자료에서 찾은 기술 후보와 근거, 규칙에 따른 사전 권고입니다."
-        right={
-          <Link to="/" className="press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-[13px] font-bold text-on-primary hover:bg-primary-hover">
-            <IconPlus size={14} /> 새 검토 요청
-          </Link>
-        }
+        right={<ApprovalStamps d={d} />}
       />
       <FlowSteps current={step} />
 
