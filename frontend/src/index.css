@@ -51,7 +51,7 @@
   --wave-3: rgb(206 226 247 / 0.12);
 
   --focus: #1c6fd1;
-  --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
+  --alert: #6e1a2a; /* 붉은 강조 — 사이트 전체 붉은색은 딥 버건디 하나로 (흰 글자 11.4:1) */
   /* 붉은 카드 유리 질감 (Liquid Glass) — 머리 띠는 딥 버건디 (#6e1a2a) 90~96% — 흰 글자 9:1 이상 */
   --alert-rgb: 110 26 42;
   --wine-ink: #6e1a2a; /* 붉은 카드 안 강조 글자 */
@@ -59,23 +59,23 @@
   --glass-alert-2: rgb(246 226 231 / 0.55);
   --glass-edge: rgb(255 255 255 / 0.8);
 
-  /* 권고 4색 (bg / fg / line / dot) */
-  --go-bg: #e8f3ee;
-  --go-fg: #23634c;
-  --go-line: #b7d8c9;
-  --go-dot: #397d70;
-  --cond-bg: #f8f2e3;
-  --cond-fg: #6d5320;
-  --cond-line: #e2d0a3;
-  --cond-dot: #b98b2e;
-  --review-bg: #f9ece4;
-  --review-fg: #8c4320;
-  --review-line: #e8c6b1;
-  --review-dot: #c96a3a;
-  --stop-bg: #f8e7e7;
-  --stop-fg: #962f33;
-  --stop-line: #e5bcbe;
-  --stop-dot: #c2474c;
+  /* 권고 4색 (bg / fg / line / dot) — 딥 톤: 숲 초록 · 황토 · 녹 주황 · 버건디. 글자/바탕 8:1 이상, 점 위 흰 글자 4.8:1 이상 */
+  --go-bg: #e5eee8;
+  --go-fg: #1d4a38;
+  --go-line: #b2c9bb;
+  --go-dot: #2f6b54;
+  --cond-bg: #f2ede0;
+  --cond-fg: #56420f;
+  --cond-line: #d3c49c;
+  --cond-dot: #8f6d1c;
+  --review-bg: #f3e8e1;
+  --review-fg: #682f14;
+  --review-line: #d9bcaa;
+  --review-dot: #94461f;
+  --stop-bg: #f5e5e9;
+  --stop-fg: #6e1a2a;
+  --stop-line: #dbb2bd;
+  --stop-dot: #8a2238;
   --info-bg: #e8f0fa;
   --info-fg: #1f4a78;
   --info-line: #c2d4ea;
@@ -118,7 +118,7 @@
     --wave-2: rgb(74 168 214 / 0.08);
     --wave-3: rgb(40 80 140 / 0.07);
     --focus: #7fb6f0;
-    --alert: #9b2f35;
+    --alert: #8a2a3c;
     --alert-rgb: 120 32 48;
     --wine-ink: #f0a5b4;
     --glass-alert-1: rgb(56 26 32 / 0.62);
@@ -136,10 +136,10 @@
     --review-fg: #eeb08e;
     --review-line: #5f3b28;
     --review-dot: #d9824f;
-    --stop-bg: #311a1b;
-    --stop-fg: #eea3a5;
-    --stop-line: #633234;
-    --stop-dot: #d6595e;
+    --stop-bg: #2e161c;
+    --stop-fg: #f0a5b4;
+    --stop-line: #5c2a36;
+    --stop-dot: #b04a62;
     --info-bg: #142a48;
     --info-fg: #a9c8ea;
     --info-line: #2c4a72;

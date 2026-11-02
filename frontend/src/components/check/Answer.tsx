@@ -97,7 +97,7 @@ function HeroCard({ d, a, audience, nextStep, cit }: SystemAnswerProps & { cit: 
       </svg>
       <div className="relative">
         <span className="inline-flex items-center gap-1.5 rounded-pill bg-white/12 px-3 py-1 text-[12.5px] font-bold text-white ring-1 ring-white/25 ring-inset">
-          <span aria-hidden className={cx('size-2 rounded-full', TONE_CLS[REC_TONE[rec]].dot)} />
+          <span aria-hidden className={cx('size-2 rounded-full ring-1 ring-white/80', TONE_CLS[REC_TONE[rec]].dot)} />
           {rec}
         </span>
         <h2 id="conclusion-title" className="mt-3 max-w-[28ch] scroll-mt-40 text-[1.6rem] leading-snug font-extrabold text-white sm:text-[1.85rem]">
@@ -470,7 +470,7 @@ function WhyItem({ w, legal, ok, compact, dark }: { w: Why; legal: boolean; ok?:
   return (
     <li className={cx('flex gap-2.5', dark ? 'text-white/90' : 'text-fg', compact ? (dark ? 'text-[14.5px] leading-7' : 'text-[13px] leading-6') : 'text-[15.5px] leading-7')}>
       {ok ? (
-        <IconCheck size={compact ? 14 : 16} strokeWidth={2.6} aria-hidden className={cx('shrink-0', dark ? 'text-[#9fe0c2]' : 'text-go-fg', compact ? 'mt-1' : 'mt-1.5')} />
+        <IconCheck size={compact ? 14 : 16} strokeWidth={2.6} aria-hidden className={cx('shrink-0', dark ? 'text-[#8fbfa6]' : 'text-go-fg', compact ? 'mt-1' : 'mt-1.5')} />
       ) : (
         <span aria-hidden className={cx('size-1.5 shrink-0 rounded-full', dark ? 'bg-white/70' : 'bg-fg-2', compact ? 'mt-[0.7rem]' : 'mt-[0.7rem]')} />
       )}

@@ -74,7 +74,7 @@ function Stamp({ text }: { text: NonNullable<ApprovalStep['stamp']> }) {
       aria-label={`${text} 도장`}
       className={cx(
         'grid size-10 rotate-[-8deg] place-items-center rounded-full border-2 text-[11.5px] font-extrabold',
-        amber ? 'border-cond-dot text-cond-fg' : 'border-[#d1373b] text-[#d1373b]',
+        amber ? 'border-cond-dot text-cond-fg' : 'border-wine-ink text-wine-ink',
       )}
     >
       {text}

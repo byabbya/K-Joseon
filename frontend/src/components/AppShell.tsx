@@ -174,7 +174,7 @@ function TopBar({ name }: { name: string }) {
           </p>
         </div>
         <div className="flex items-center gap-4 max-md:hidden">
-          <Stat label="기준 정보" value={<>{today()} · {meta.isError ? <span className="text-[#ffb4b6]">연결 안 됨</span> : '정상'}</>} dot={meta.isError ? 'stop' : 'go'} />
+          <Stat label="기준 정보" value={<>{today()} · {meta.isError ? <span className="text-[#f0a5b4]">연결 안 됨</span> : '정상'}</>} dot={meta.isError ? 'stop' : 'go'} />
           <span aria-hidden className="h-8 w-px bg-white/15" />
           <Stat label="KST" value={<Clock />} />
         </div>
