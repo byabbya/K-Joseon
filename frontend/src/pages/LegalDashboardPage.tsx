@@ -71,7 +71,7 @@ export function LegalDashboardPage() {
         <Stat label="미처리 요청" value={pending.data?.length} sub="법무 판정 대기" accent />
         <Stat label="오늘 들어온 요청" value={todayCount} sub={today.replace(/-/g, '.')} />
         <Stat label="처리 완료" value={done.data?.length} sub="판정 기록" />
-        <Stat label="분석 시스템" text={sys.text} tone={sys.tone} sub={sys.sub} />
+        <Stat label="분석 시스템 상태" text={sys.text} tone={sys.tone} sub={sys.sub} />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
