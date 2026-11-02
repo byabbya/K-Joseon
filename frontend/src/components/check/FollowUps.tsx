@@ -155,7 +155,7 @@ function QuestionLine({ m, n, a, input, onAnswer, busy }: { m: MissingItem; n: n
 
   return (
     <li className="flex gap-3 px-1 py-3">
-      <span aria-hidden className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-cond-bg font-mono text-[11px] font-bold text-cond-fg ring-1 ring-cond-line ring-inset">
+      <span aria-hidden className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-alert font-mono text-[11px] font-bold text-white">
         {n}
       </span>
       <div className="min-w-0 flex-1">
