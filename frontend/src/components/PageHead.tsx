@@ -29,7 +29,7 @@ const STEPS = [
 
 export function FlowSteps({ current, done = 0 }: { current: 1 | 2 | 3; done?: number }) {
   return (
-    <ol aria-label="진행 단계" className="mb-6 grid grid-cols-3 border border-line bg-surface">
+    <ol aria-label="진행 단계" className="mb-6 grid grid-cols-3 overflow-hidden rounded-card border border-line bg-surface shadow-card">
       {STEPS.map((s, i) => {
         const n = i + 1
         const on = n === current
@@ -59,7 +59,7 @@ export function FlowSteps({ current, done = 0 }: { current: 1 | 2 | 3; done?: nu
 /** 번호 붙은 입력 칸 (01 · 02 …) — 오른쪽 위 꼬리표(필수/선택)와 옅은 큰 번호 */
 export function SectionCard({ no, title, sub, tag, children, id }: { no: string; title: ReactNode; sub?: ReactNode; tag?: ReactNode; children: ReactNode; id?: string }) {
   return (
-    <section aria-labelledby={id ? `${id}-title` : undefined} id={id} className="border border-line bg-surface">
+    <section aria-labelledby={id ? `${id}-title` : undefined} id={id} className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <header className="flex items-start gap-3 px-5 pt-5 pb-4 sm:px-6">
         <div className="min-w-0 flex-1">
           <h2 id={id ? `${id}-title` : undefined} className="text-[16px] font-extrabold text-fg">
@@ -78,9 +78,9 @@ export function SectionCard({ no, title, sub, tag, children, id }: { no: string;
 }
 
 /** 영문 머리글이 붙은 흰 패널 */
-export function Panel({ eyebrow, title, right, children, className, bodyClass }: { eyebrow?: string; title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string; bodyClass?: string }) {
+export function Panel({ eyebrow, title, right, children, className, bodyClass, id }: { eyebrow?: string; title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string; bodyClass?: string; id?: string }) {
   return (
-    <section className={cx('border border-line bg-surface', className)}>
+    <section id={id} className={cx('scroll-mt-24 overflow-hidden rounded-card border border-line bg-surface shadow-card', className)}>
       {(eyebrow || title) && (
         <header className="flex items-end gap-3 border-b border-line px-5 py-4">
           <div className="min-w-0 flex-1">

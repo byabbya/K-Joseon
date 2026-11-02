@@ -72,7 +72,7 @@ export function Popover({
             aria-label={label}
             style={{ ['--pw' as string]: `${width}rem` }}
             className={cx(
-              'z-50 block animate-pop-in border border-line bg-surface p-3 text-left font-normal shadow-pop',
+              'z-50 block animate-pop-in rounded-field border border-line bg-surface p-3 text-left font-normal shadow-pop',
               'max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:max-h-[80dvh] max-sm:overflow-y-auto max-sm:rounded-t-[16px] max-sm:pb-6',
               'sm:absolute sm:top-full sm:mt-1.5 sm:w-[var(--pw)] sm:max-w-[calc(100vw-2rem)] sm:rounded-card',
               right ? 'sm:right-0' : 'sm:left-0',

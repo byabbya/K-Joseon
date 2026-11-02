@@ -102,7 +102,7 @@ function Answer({ d }: { d: RequestDetail }) {
       <FlowSteps current={step} />
 
       {/* 분석 머리줄 */}
-      <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 border border-line bg-surface px-4 py-3">
+      <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-line bg-surface px-4 py-3 shadow-card">
         <span className="rounded-[2px] bg-teal-soft px-1.5 text-[11px] font-bold text-teal-ink ring-1 ring-teal-line ring-inset">AI 분석 초안</span>
         <span className="font-mono text-[13px] font-bold text-fg">{id}</span>
         <span className="text-[11.5px] text-muted">
@@ -163,7 +163,7 @@ function Answer({ d }: { d: RequestDetail }) {
             }
           />
         ) : (
-          <p className="border border-line bg-surface px-5 py-4 text-[14px] text-muted">아직 분석 결과가 없습니다.</p>
+          <p className="rounded-card border border-line bg-surface px-5 py-4 text-[14px] text-muted">아직 분석 결과가 없습니다.</p>
         )}
       </div>
 

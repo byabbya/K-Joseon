@@ -203,7 +203,7 @@ export function Combobox({
           <div aria-hidden className="fixed inset-0 z-[60] animate-fade-in bg-[#06101c]/45 sm:hidden" onMouseDown={() => close(false)} />
           <div
             className={cx(
-              'z-[61] flex animate-pop-in flex-col overflow-hidden border border-line bg-surface shadow-pop',
+              'z-[61] flex animate-pop-in flex-col overflow-hidden rounded-field border border-line bg-surface shadow-pop',
               // 좁은 화면: 바닥 시트
               'max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:max-h-[78dvh] max-sm:rounded-t-[16px]',
               // 넓은 화면: 트리거에 붙은 팝오버

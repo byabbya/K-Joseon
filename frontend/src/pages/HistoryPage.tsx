@@ -51,7 +51,7 @@ export function HistoryPage() {
           </Link>
         }
       />
-      <section className="border border-line bg-surface p-4 sm:p-5">
+      <section className="rounded-card border border-line bg-surface p-4 shadow-card sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <label className="relative min-w-0 flex-1 basis-64 sm:max-w-md">
             <span className="sr-only">요청 검색</span>

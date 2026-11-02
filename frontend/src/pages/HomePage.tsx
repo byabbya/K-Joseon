@@ -445,7 +445,7 @@ function StructuredFields({ p, fields, set, disabled }: { p?: PreviewOut; fields
           )
         })}
       </div>
-      <label className={cx('mt-2 flex items-start gap-3 border border-line bg-surface-2/60 px-4 py-3', disabled && 'opacity-60')}>
+      <label className={cx('mt-2 flex items-start gap-3 rounded-field border border-line bg-surface-2/60 px-4 py-3', disabled && 'opacity-60')}>
         <input
           type="checkbox"
           className="mt-0.5 size-4 accent-[var(--primary)]"
@@ -514,7 +514,7 @@ function Recent({ userId }: { userId: string | null }) {
     .slice(0, 3)
   if (!userId || !rows.length) return null
   return (
-    <section className="border border-line bg-surface">
+    <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <header className="flex items-baseline border-b border-line px-5 py-3">
         <h2 className="text-[13px] font-extrabold text-fg">최근 내 요청</h2>
         <Link to="/history" className="ml-auto text-[12px] font-semibold text-primary-ink hover:underline">

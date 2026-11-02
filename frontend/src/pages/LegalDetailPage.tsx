@@ -47,7 +47,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
         title="법무 검토함"
         sub="AI 초안과 원문 근거를 분리해 확인하고 최종 판단을 기록합니다."
         right={
-          <div className="border border-line bg-surface px-4 py-2 leading-tight">
+          <div className="rounded-field border border-line bg-surface px-4 py-2 leading-tight">
             <p className="text-[11.5px] font-semibold text-muted">담당자</p>
             <p className="text-[13px] font-bold text-fg">{me ? `${me.name} · ${me.department}` : '—'}</p>
           </div>
@@ -57,7 +57,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
       <div className="grid items-start gap-5 xl:grid-cols-[17rem_minmax(0,1fr)]">
         <Queue current={s.request_id} />
 
-        <article aria-label="검토 상세" className="min-w-0 border border-line bg-surface">
+        <article aria-label="검토 상세" className="min-w-0 overflow-hidden rounded-card border border-line bg-surface shadow-card">
           {/* 요청 머리 */}
           <header className="flex flex-wrap items-start gap-4 px-6 pt-6 pb-5 sm:px-8">
             <div className="min-w-0 flex-1">
@@ -92,7 +92,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
             <Panel title="AI 초안과 판단">
               <LockedOutput a={a} open={full} onToggle={() => setFull(!full)} />
               {full && (
-                <div id="ai-full" className="mt-4 animate-fade-in border border-line bg-surface-2/50 p-3 sm:p-4">
+                <div id="ai-full" className="mt-4 animate-fade-in rounded-field border border-line bg-surface-2/50 p-3 sm:p-4">
                   <AnalysisView d={d} a={a} prev={null} audience="legal" stack />
                 </div>
               )}
@@ -184,7 +184,7 @@ function LockedOutput({ a, open, onToggle }: { a: Analysis; open: boolean; onTog
     })
   const laws = a.clauses.filter((c) => c.status !== '구버전').length
   return (
-    <div className="border border-line bg-surface-2 px-5 py-4">
+    <div className="rounded-field border border-line bg-surface-2 px-5 py-4">
       <p className="text-[11.5px] font-bold tracking-[0.12em] text-teal-ink uppercase">Locked AI Output</p>
       <p className="mt-2 flex flex-wrap items-center gap-2">
         <RecPill rec={a.recommendation} size="xs" />
@@ -221,7 +221,7 @@ function Queue({ current }: { current: string }) {
       : when(y).localeCompare(when(x)),
   )
   return (
-    <aside className="border border-line bg-surface max-xl:hidden xl:sticky xl:top-24">
+    <aside className="overflow-hidden rounded-card border border-line bg-surface shadow-card max-xl:hidden xl:sticky xl:top-24">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
         <h2 className="flex-1 text-[13px] font-extrabold text-fg">미처리 요청</h2>
         <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 font-mono text-[11px] font-bold text-on-primary tabular-nums">{q.data?.length ?? '·'}</span>
@@ -310,7 +310,7 @@ function SimilarPanel({ d, inset }: { d: RequestDetail; inset?: boolean }) {
       {!d.similar_past.length && <p className="text-muted">유사한 과거 판정이 없습니다.</p>}
       <ul className={cx("grid gap-3", inset ? "sm:grid-cols-2" : "md:grid-cols-3")}>
         {d.similar_past.slice(0, 3).map((p) => (
-          <li key={p.request_id} className="border border-line bg-surface-2/60 px-4 py-3">
+          <li key={p.request_id} className="rounded-field border border-line bg-surface-2/60 px-4 py-3">
             <Link to={`/legal/${encodeURIComponent(p.request_id)}`} className="font-mono text-[12px] font-bold text-primary-ink hover:underline">
               {p.request_id}
             </Link>

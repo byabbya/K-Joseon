@@ -59,7 +59,7 @@ export function LegalDashboardPage() {
       <ErrorBox error={pending.error ?? done.error} className="mb-4" />
 
       {/* 현황 4칸 */}
-      <div className="grid border border-line bg-surface sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid sm:grid-cols-2 xl:grid-cols-4 overflow-hidden rounded-card border border-line bg-surface shadow-card">
         <Stat label="미처리 요청" value={pending.data?.length} sub="법무 판정 대기" accent />
         <Stat label="오늘 들어온 요청" value={todayCount} sub={today.replace(/-/g, '.')} />
         <Stat label="처리 완료" value={done.data?.length} sub="판정 기록" />
@@ -97,7 +97,7 @@ export function LegalDashboardPage() {
           </Panel>
 
           {/* 권고 분포 + 이번 달 */}
-          <div className="grid border border-line bg-surface md:grid-cols-[14rem_minmax(0,1fr)]">
+          <div className="grid md:grid-cols-[14rem_minmax(0,1fr)] overflow-hidden rounded-card border border-line bg-surface shadow-card">
             <div className="border-line px-5 py-4 max-md:border-b md:border-r">
               <p className="text-[11px] font-semibold text-muted">이번 달 요청</p>
               <p className="mt-1 text-[1.75rem] leading-none font-extrabold text-fg tabular-nums">
@@ -195,7 +195,7 @@ export function LegalDashboardPage() {
               ))}
             </ol>
           </Panel>
-          <Link to="/wiki" className="flex items-center gap-3 border border-line bg-surface px-5 py-4 hover:bg-surface-2">
+          <Link to="/wiki" className="flex items-center gap-3 rounded-card border border-line bg-surface px-5 py-4 shadow-card hover:bg-surface-2">
             <span className="grid size-9 shrink-0 place-items-center rounded-[3px] bg-teal-soft text-teal-ink ring-1 ring-teal-line ring-inset">
               <IconBook size={17} />
             </span>

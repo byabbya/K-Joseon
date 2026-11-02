@@ -136,7 +136,7 @@ export function ApprovalStamps({ d, className }: { d: RequestDetail; className?:
 export function ApprovalLinePanel({ d }: { d: RequestDetail }) {
   const steps = useApprovalLine(d)
   return (
-    <section aria-labelledby="approval-title" className="border border-line bg-surface">
+    <section aria-labelledby="approval-title" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <div className="border-b border-line px-5 pt-4 pb-3">
         <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Approval Line</p>
         <h2 id="approval-title" className="mt-0.5 text-[15px] font-extrabold text-fg">

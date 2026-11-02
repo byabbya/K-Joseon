@@ -1,51 +1,56 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   K-Ship Guard AX 디자인 토큰 — 사내 기술보호 콘솔
-   옅은 회청 바탕, 흰 면, 짙은 남청(주 동작), 청록(링크·추출 표시). 모서리는 작게(2~4px),
-   그림자 없이 선으로 나눈다. 권고 4색은 채도를 낮춰 항상 글자와 함께 쓴다.
+   K-Ship Guard AX 디자인 토큰 — 바다(조선) 톤의 대시보드
+   흰 바탕에 옅은 푸른 세로 물결, 흰 카드(둥근 모서리 · 아주 옅은 그림자), 네이비 주색, 바다색 보조.
+   권고 4색은 채도를 낮춰 항상 글자와 함께 쓴다. 글꼴은 에이투지체(번들).
    색·반경·그림자·모션은 여기서만 정의하고 컴포넌트는 Tailwind 유틸리티만 쓴다.
    다크 모드는 prefers-color-scheme 에서 같은 토큰 값만 바꾼다.
 ------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
-  /* 바탕·면 */
-  --bg: #f5f7f7;
+  /* 바탕·면 — 흰 바탕 위 옅은 푸른 물결(body 배경), 카드는 흰 면 */
+  --bg: #f6f9fd;
   --surface: #ffffff;
-  --surface-2: #f2f5f5; /* 옅은 칸, 표 머리 */
-  --surface-3: #e9eef0; /* hover · 선택 */
-  --line: #dbe2e4;
-  --line-strong: #c3ced2;
-  --grid: rgb(33 49 58 / 0.05);
+  --surface-2: #f2f6fb; /* 옅은 칸, 표 머리 */
+  --surface-3: #e7eef7; /* hover · 선택 */
+  --line: #dbe4ef;
+  --line-strong: #c2d0e0;
+  --field-line: #7d8fa5; /* 입력·체크 칸 테두리 — 흰 면 3.3:1 (WCAG 1.4.11) */
+  --grid: rgb(15 42 79 / 0.05);
 
   /* 글자 */
-  --fg: #21313a;
-  --fg-2: #3c4f5a;
-  --muted: #56666f; /* 흰 면 6.0:1 · 가장 짙은 회색 면(surface-3) 5.1:1 */
-  --field-line: #7f8f99; /* 입력·체크 칸 테두리 — 흰 면 3.3:1 (WCAG 1.4.11) */
+  --fg: #0f2240;
+  --fg-2: #33465f;
+  --muted: #52647a; /* 가장 짙은 면(surface-3)에서도 5.2:1 */
 
-  /* 주색 (남청) */
-  --primary: #233640;
-  --primary-hover: #304852;
-  --primary-ink: #1a6c8b; /* 링크·선택 글자 */
-  --primary-soft: #edf3f5;
-  --primary-line: #b5cbd4;
+  /* 주색 (네이비) */
+  --primary: #0f2a4f;
+  --primary-hover: #1a3c69;
+  --primary-ink: #1c5fa3; /* 링크·선택 글자 */
+  --primary-soft: #e8f0fa;
+  --primary-line: #b3c9e6;
   --on-primary: #ffffff;
 
-  /* 토스트 등 짙은 면 */
-  --nav: #1b2b34;
-  --nav-2: #2a3d47;
-  --nav-fg: #eef3f5;
-  --nav-muted: #9fb0b9;
+  /* 짙은 면 (결론 카드·토스트) */
+  --nav: #0c2340;
+  --nav-2: #18355c;
+  --nav-fg: #eef4fb;
+  --nav-muted: #9db3cf;
 
-  /* 보조 (청록) */
-  --teal: #2b7f8f;
-  --teal-ink: #1f6676;
-  --teal-soft: #e6f1f3;
-  --teal-line: #a9cfd6;
+  /* 보조 (바다색) */
+  --teal: #1d7fae;
+  --teal-ink: #16658c;
+  --teal-soft: #e3f1f9;
+  --teal-line: #a5cde4;
 
-  --focus: #1a789d;
+  /* 물결 무늬 */
+  --wave-1: rgb(173 206 240 / 0.34);
+  --wave-2: rgb(132 180 230 / 0.22);
+  --wave-3: rgb(206 226 247 / 0.5);
+
+  --focus: #1c6fd1;
 
   /* 권고 4색 (bg / fg / line / dot) */
   --go-bg: #e8f3ee;
@@ -64,45 +69,48 @@
   --stop-fg: #962f33;
   --stop-line: #e5bcbe;
   --stop-dot: #c2474c;
-  --info-bg: #edf3f5;
-  --info-fg: #284f61;
-  --info-line: #c4d5dc;
+  --info-bg: #e8f0fa;
+  --info-fg: #1f4a78;
+  --info-line: #c2d4ea;
 
-  /* 그림자 — 면은 선으로 나누고, 떠 있는 것(팝오버)에만 그림자 */
-  --sh-card: none;
-  --sh-pop: 0 12px 32px -12px rgb(23 38 48 / 0.28), 0 2px 6px rgb(23 38 48 / 0.08);
-  --sh-raise: none;
+  /* 그림자 — 카드는 아주 옅게, 떠 있는 것(팝오버)은 조금 더 */
+  --sh-card: 0 1px 2px rgb(15 42 79 / 0.04), 0 4px 16px -8px rgb(15 42 79 / 0.08);
+  --sh-pop: 0 12px 32px -12px rgb(15 42 79 / 0.3), 0 2px 6px rgb(15 42 79 / 0.08);
+  --sh-raise: 0 8px 24px -12px rgb(15 42 79 / 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #11191e;
-    --surface: #172228;
-    --surface-2: #141e23;
-    --surface-3: #1f2d34;
-    --line: #26353d;
-    --line-strong: #364952;
-    --field-line: #62767f;
-    --grid: rgb(170 200 210 / 0.06);
-    --fg: #e3eaed;
-    --fg-2: #c0ccd2;
-    --muted: #8fa1aa;
-    --primary: #3a6a7e;
-    --primary-hover: #467a8f;
-    --primary-ink: #8cc6da;
-    --primary-soft: #1a2c33;
-    --primary-line: #34515c;
+    --bg: #0a1424;
+    --surface: #0f1d33;
+    --surface-2: #0c182b;
+    --surface-3: #172a45;
+    --line: #1f3350;
+    --line-strong: #2d4466;
+    --field-line: #5d7798;
+    --grid: rgb(160 196 239 / 0.06);
+    --fg: #e4ecf6;
+    --fg-2: #c0cfe2;
+    --muted: #93a7c0;
+    --primary: #3a78c2;
+    --primary-hover: #4a88d2;
+    --primary-ink: #9cc4ef;
+    --primary-soft: #142a48;
+    --primary-line: #2c4a72;
     --on-primary: #ffffff;
-    --nav: #0c1317;
-    --nav-2: #1b2930;
-    --nav-fg: #e3eaed;
-    --nav-muted: #8fa1aa;
-    --teal: #4fa9b8;
-    --teal-ink: #8fd0da;
-    --teal-soft: #152b30;
-    --teal-line: #2a5960;
-    --focus: #7fc0d6;
+    --nav: #0b1b33;
+    --nav-2: #16304f;
+    --nav-fg: #e4ecf6;
+    --nav-muted: #93a7c0;
+    --teal: #4aa8d6;
+    --teal-ink: #8fcdea;
+    --teal-soft: #0f2b3d;
+    --teal-line: #24577a;
+    --wave-1: rgb(58 120 194 / 0.12);
+    --wave-2: rgb(74 168 214 / 0.08);
+    --wave-3: rgb(40 80 140 / 0.14);
+    --focus: #7fb6f0;
     --go-bg: #142a22;
     --go-fg: #92cfb4;
     --go-line: #2a5444;
@@ -119,17 +127,24 @@
     --stop-fg: #eea3a5;
     --stop-line: #633234;
     --stop-dot: #d6595e;
-    --info-bg: #182a31;
-    --info-fg: #a9cbd8;
-    --info-line: #2c4650;
-    --sh-card: none;
+    --info-bg: #142a48;
+    --info-fg: #a9c8ea;
+    --info-line: #2c4a72;
+    --sh-card: 0 1px 2px rgb(0 0 0 / 0.3);
     --sh-pop: 0 12px 32px -10px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.35);
-    --sh-raise: none;
+    --sh-raise: 0 8px 24px -12px rgb(0 0 0 / 0.5);
   }
 }
 
+/* 에이투지체 (SIL OFL) — 번들, 외부 요청 없음. assets/fonts/a2z/NOTICE.md */
+@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-ExtraBold.woff2") format("woff2"); font-weight: 800 900; font-style: normal; font-display: swap; }
+
 @theme inline {
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  --font-sans: "A2Z", "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "D2Coding", Consolas, monospace;
 
   --color-bg: var(--bg);
@@ -188,10 +203,10 @@
   --spacing: 0.25rem;
   --container-page: 90rem; /* 1440px 본문 최대 폭 */
 
-  --radius-pill: 3px; /* 상태 꼬리표도 각진 상자로 */
-  --radius-chip: 2px; /* 칩·타일 */
-  --radius-field: 3px; /* 입력·버튼 */
-  --radius-card: 4px; /* 카드·패널 */
+  --radius-pill: 9999px;
+  --radius-chip: 6px; /* 칩·타일 */
+  --radius-field: 8px; /* 입력·버튼 */
+  --radius-card: 16px; /* 카드·패널 */
 
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-fast: 150ms;
@@ -237,13 +252,24 @@
   }
 }
 
+@media (prefers-color-scheme: dark) {
+  body { background-image: radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%233a78c2' fill-opacity='0.10'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%234aa8d6' fill-opacity='0.07'/></svg>") !important; }
+}
+
 @layer base {
   html {
     word-break: keep-all;
     -webkit-text-size-adjust: 100%;
   }
   body {
-    background: var(--bg);
+    background-color: var(--bg);
+    /* 바다 느낌의 옅은 세로 물결 — 화면에 고정, 내용은 그 위로 스크롤 */
+    background-image:
+      radial-gradient(120% 60% at 18% 0%, var(--wave-3), transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'><path d='M330 0 C470 210 250 470 430 900 L700 900 C540 520 760 250 600 0 Z' fill='%23adcef0' fill-opacity='0.42'/><path d='M980 0 C1130 260 900 540 1080 900 L1250 900 C1080 560 1310 270 1160 0 Z' fill='%2384b4e6' fill-opacity='0.30'/><path d='M0 0 L150 0 C250 300 80 620 190 900 L0 900 Z' fill='%23cee2f7' fill-opacity='0.45'/></svg>");
+    background-size: 100% 100%, 100% 100%;
+    background-attachment: fixed, fixed;
+    background-repeat: no-repeat;
     color: var(--fg);
     font-family: var(--font-sans);
     font-size: 14px;

@@ -88,7 +88,7 @@ export function AppShell() {
   const name = pageName(loc.pathname)
 
   return (
-    <div className="flex min-h-dvh bg-bg text-fg">
+    <div className="flex min-h-dvh text-fg">
       <a href="#main" className="sr-only z-[60] rounded bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
         본문으로 건너뛰기
       </a>
@@ -170,7 +170,7 @@ export function AppShell() {
 function TopBar({ name }: { name: string }) {
   const meta = useMeta()
   return (
-    <header className="app-topbar sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-sm">
+    <header className="app-topbar sticky top-0 z-40 border-b border-line bg-surface/80 backdrop-blur-md">
       <div className="flex min-h-16 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 lg:px-8">
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-[16px] font-extrabold tracking-[0.02em] text-fg">K-SHIP GUARD AX</p>
