@@ -45,18 +45,21 @@ export function QuestionCard(p: QuestionCardProps) {
 
   return (
     <section aria-labelledby="question-title" className="rounded-card border border-line bg-surface shadow-card">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-5 py-3 sm:px-6">
-        <h2 id="question-title" className="text-[13px] font-bold tracking-[0.04em] text-muted">
-          {audience === 'legal' ? `${d.summary.employee.name}의 질문` : '내 질문'}
-        </h2>
+      <header className="flex flex-wrap items-end gap-x-3 gap-y-1 border-b border-line px-5 py-4 sm:px-6">
+        <div>
+          <p className="text-[10.5px] font-bold tracking-[0.12em] text-muted uppercase">Structured Facts</p>
+          <h2 id="question-title" className="mt-0.5 scroll-mt-24 text-[16px] font-extrabold text-fg">
+            {audience === 'legal' ? `${d.summary.employee.name}의 요청` : 'AI가 정리한 요청'}
+          </h2>
+        </div>
         <span className="font-mono text-[11.5px] text-muted tabular-nums">{fmtDate(d.summary.created_at)}</span>
         {editable && !editing && (
           <span className="ml-auto flex flex-wrap gap-1.5">
-            <Button size="sm" variant="ghost" onClick={() => (setText(d.input.free_text), setEditing(true))} disabled={p.busy}>
-              <IconPencil size={14} /> 질문 고치기
+            <Button size="sm" variant="secondary" onClick={() => (setText(d.input.free_text), setEditing(true))} disabled={p.busy}>
+              <IconPencil size={14} /> 설명 고치기
             </Button>
             {p.onAttach && (
-              <Button size="sm" variant="ghost" onClick={() => p.setAttachOpen?.(!p.attachOpen)} disabled={p.busy} aria-expanded={!!p.attachOpen}>
+              <Button size="sm" variant="secondary" onClick={() => p.setAttachOpen?.(!p.attachOpen)} disabled={p.busy} aria-expanded={!!p.attachOpen}>
                 <IconPaperclip size={14} /> 파일 첨부
               </Button>
             )}
@@ -249,9 +252,9 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
   const choice = a.employee_category_choice
   const codes = [...new Set<string>([...(choice !== '모름' ? [choice] : []), ...a.model_categories])]
   const evidenceOf = (...fs: { extracted: boolean; evidence: string }[]) => fs.filter((f) => f.extracted).map((f) => f.evidence).join(' / ')
-  const [open, setOpen] = useState(audience === 'legal')
+  const [open, setOpen] = useState(true)
 
-  // 사원 답변 화면에서는 결론이 첫 화면에 보이도록 한 줄 요약으로 접어 둔다 (법무팀은 펼친 채)
+  // 펼친 채로 시작 — 접으면 한 줄 요약
   const summaryLine = [where, pu.value as string | null, tm.value as string | null, codes.join(' '), cb.value as string | null].filter(Boolean).join(' · ')
   return (
     <div className="border-t border-line bg-surface-2/60 px-5 py-3 sm:px-6">

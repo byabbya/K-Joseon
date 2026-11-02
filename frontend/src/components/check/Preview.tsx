@@ -40,25 +40,50 @@ export function PreviewPanel({
   disabled?: boolean
 }) {
   if (!p) return null
-  const answered = p.need.filter((n) => (n.field === DESCRIBED_FIELD ? described !== null : (fields as Record<string, unknown>)[n.field] !== undefined)).length
   return (
     <div className={cx('border-t border-line transition-opacity duration-150', fetching && 'opacity-70')} aria-live="polite">
       <Understood p={p} fields={fields} setFields={setFields} disabled={disabled} />
-      {p.need.length > 0 && (
-        <div className="border-t border-dashed border-line px-4 pt-3 pb-1 sm:px-5">
-          <p className="flex flex-wrap items-baseline gap-x-2 text-[13px] font-bold text-fg">
-            답하기 전에 확인할 것 {p.need.length}개
-            <span className="text-[12px] font-normal text-muted">
-              {answered ? `${answered}개 답함 · ` : ''}몰라도 괜찮아요
-            </span>
-          </p>
-          <ol className="mt-1 divide-y divide-line">
-            {p.need.map((n) => (
-              <NeedRow key={n.field} field={n.field} question={n.question} p={p} fields={fields} setFields={setFields} described={described} setDescribed={setDescribed} disabled={disabled} />
-            ))}
-          </ol>
-        </div>
-      )}
+      <NeedList p={p} fields={fields} setFields={setFields} described={described} setDescribed={setDescribed} disabled={disabled} className="border-t border-dashed border-line px-4 pt-3 pb-1 sm:px-5" />
+    </div>
+  )
+}
+
+/** '답하기 전에 확인할 것' — exclude 에 든 항목(화면에 이미 입력 칸이 있는 것)은 뺀다 */
+export function NeedList({
+  p,
+  fields,
+  setFields,
+  described,
+  setDescribed,
+  disabled,
+  exclude,
+  className,
+}: {
+  p: PreviewOut
+  fields: DraftFields
+  setFields: (fn: (f: DraftFields) => DraftFields) => void
+  described: ListInclusion | null
+  setDescribed: (v: ListInclusion | null) => void
+  disabled?: boolean
+  exclude?: Set<string>
+  className?: string
+}) {
+  const needs = p.need.filter((n) => !exclude?.has(n.field))
+  if (!needs.length) return null
+  const answered = needs.filter((n) => (n.field === DESCRIBED_FIELD ? described !== null : (fields as Record<string, unknown>)[n.field] !== undefined)).length
+  return (
+    <div className={className} aria-live="polite">
+      <p className="flex flex-wrap items-baseline gap-x-2 text-[13px] font-bold text-fg">
+        답하기 전에 확인할 것 {needs.length}개
+        <span className="text-[12px] font-normal text-muted">
+          {answered ? `${answered}개 답함 · ` : ''}몰라도 괜찮아요
+        </span>
+      </p>
+      <ol className="mt-1 divide-y divide-line">
+        {needs.map((n) => (
+          <NeedRow key={n.field} field={n.field} question={n.question} p={p} fields={fields} setFields={setFields} described={described} setDescribed={setDescribed} disabled={disabled} />
+        ))}
+      </ol>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage'
 
 // 첫 화면 번들을 가볍게: 용어 위키와 법무팀 화면은 필요할 때 불러온다
 const WikiPage = lazy(() => import('./pages/WikiPage'))
+const LegalDashboardPage = lazy(() => import('./pages/LegalDashboardPage').then((m) => ({ default: m.LegalDashboardPage })))
 const LegalListPage = lazy(() => import('./pages/LegalListPage').then((m) => ({ default: m.LegalListPage })))
 const LegalDetailPage = lazy(() => import('./pages/LegalDetailPage').then((m) => ({ default: m.LegalDetailPage })))
 
@@ -23,12 +24,13 @@ export default function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        {/* 사원 — ① 첫 화면(질문 상자) → ②·③ 답변 화면(내 질문 + 답변) */}
+        {/* 설계 사원 — 반출 검토 요청(입력) → 사전분석 결과 · 내 요청 */}
         <Route index element={<HomePage />} />
         <Route path="/check/:id" element={<AnswerPage />} />
         <Route path="/history" element={<HistoryPage />} />
-        {/* 법무팀 — 확인 요청 목록 */}
-        <Route path="/legal" element={page(<LegalListPage />)} />
+        {/* 법무 담당 — 대시보드 · 내 요청(검토할 요청) · 검토 상세 */}
+        <Route path="/legal" element={page(<LegalDashboardPage />)} />
+        <Route path="/legal/requests" element={page(<LegalListPage />)} />
         <Route path="/legal/:id" element={page(<LegalDetailPage />)} />
         {/* 두 역할 공통 — 용어 위키 · 도면 기호 표준화 */}
         <Route path="/wiki" element={page(<WikiPage />)} />

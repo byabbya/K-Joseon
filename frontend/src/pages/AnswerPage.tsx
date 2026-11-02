@@ -2,17 +2,18 @@
 // 법무팀 답변(있으면, 시스템 답변보다 우선) → 결론·왜 그런가요 → 이렇게 하세요(+ 법무팀에 확인 요청) → 자세한 설명 · 근거(접힘).
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useAddFiles, useRequestDetail, useResubmit, useSubmitRequest, useUpdateRequest } from '../api/hooks'
+import { useAddFiles, useMeta, useRequestDetail, useResubmit, useSubmitRequest, useUpdateRequest } from '../api/hooks'
 import type { Analysis, FileMeta, RequestDetail } from '../api/types'
-import { SystemAnswer } from '../components/check/Answer'
+import { AnalysisView } from '../components/check/Answer'
+import { FlowSteps, Page, PageHead } from '../components/PageHead'
 import type { Apply } from '../components/check/FollowUps'
 import { LegalAnswerCard, NextStep } from '../components/check/Handoff'
 import { DEFAULT_FILE_META, realFiles } from '../components/check/model'
 import { QuestionCard } from '../components/check/QuestionCard'
 import { StatusStepper } from '../components/check/StatusStepper'
 import { ErrorBox, RecPill, Spinner } from '../components/ui'
-import { IconArrowLeft, IconRefresh } from '../components/icons'
-import { REC_HEADLINE } from '../lib/labels'
+import { IconPlus, IconRefresh } from '../components/icons'
+import { REC_HEADLINE, fmtDate } from '../lib/labels'
 
 export function AnswerPage() {
   const { id } = useParams()
@@ -86,16 +87,33 @@ function Answer({ d }: { d: RequestDetail }) {
     requestAnimationFrame(() => document.getElementById('question-title')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
   }
 
+  const step = d.summary.status === '법무 검토 중' || d.summary.status === '판정 완료' || d.summary.status === '재신청' ? 3 : 2
+  const meta = useMeta().data
+
   return (
-    <div className="mx-auto w-full max-w-[56rem] px-4 pt-5 pb-16 sm:px-6">
-      <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <Link to="/" className="inline-flex items-center gap-1 text-[13px] font-medium text-muted hover:text-fg">
-          <IconArrowLeft size={14} /> 새로 확인
-        </Link>
-        <span className="font-mono text-[11.5px] text-muted">{id}</span>
+    <Page>
+      <PageHead
+        eyebrow="AI Pre-review"
+        title="사전분석 결과"
+        sub="자료에서 찾은 기술 후보와 근거, 규칙에 따른 사전 권고입니다."
+        right={
+          <Link to="/" className="press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-[13px] font-bold text-on-primary hover:bg-primary-hover">
+            <IconPlus size={14} /> 새 검토 요청
+          </Link>
+        }
+      />
+      <FlowSteps current={step} />
+
+      {/* 분석 머리줄 */}
+      <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 border border-line bg-surface px-4 py-3">
+        <span className="rounded-[2px] bg-teal-soft px-1.5 text-[11px] font-bold text-teal-ink ring-1 ring-teal-line ring-inset">AI 분석 초안</span>
+        <span className="font-mono text-[13px] font-bold text-fg">{id}</span>
+        <span className="text-[11.5px] text-muted">
+          {fmtDate(a?.analyzed_at ?? d.summary.created_at)} · 규칙 {meta?.rules_version ?? '—'}
+        </span>
         {d.parent_request_id && (
-          <span className="text-[12px] text-muted">
-            이전 확인{' '}
+          <span className="text-[11.5px] text-muted">
+            이전 요청{' '}
             <Link to={`/check/${encodeURIComponent(d.parent_request_id)}`} className="font-mono text-primary-ink hover:underline">
               {d.parent_request_id}
             </Link>
@@ -106,25 +124,11 @@ function Answer({ d }: { d: RequestDetail }) {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <QuestionCard
-          d={d}
-          audience="employee"
-          onApply={editable ? apply : undefined}
-          onAttach={editable ? attach : undefined}
-          busy={busy}
-          error={upd.error ?? add.error}
-          attachOpen={attachOpen}
-          setAttachOpen={setAttachOpen}
-        />
-        {!editable && d.summary.status === '법무 검토 중' && (
-          <p className="text-[12.5px] text-muted">법무팀이 확인 중이라 질문을 고칠 수 없어요.</p>
-        )}
-
+      <div className="space-y-5">
         <LegalAnswerCard d={d} />
 
         {a ? (
-          <SystemAnswer
+          <AnalysisView
             d={d}
             a={a}
             prev={prev}
@@ -132,6 +136,21 @@ function Answer({ d }: { d: RequestDetail }) {
             onAnswer={editable ? apply : undefined}
             busy={busy}
             onAttach={editable ? openAttach : undefined}
+            question={
+              <div className="space-y-2">
+                <QuestionCard
+                  d={d}
+                  audience="employee"
+                  onApply={editable ? apply : undefined}
+                  onAttach={editable ? attach : undefined}
+                  busy={busy}
+                  error={upd.error ?? add.error}
+                  attachOpen={attachOpen}
+                  setAttachOpen={setAttachOpen}
+                />
+                {!editable && d.summary.status === '법무 검토 중' && <p className="text-[12.5px] text-muted">법무팀이 확인 중이라 요청을 고칠 수 없어요.</p>}
+              </div>
+            }
             nextStep={
               <NextStep
                 d={d}
@@ -147,13 +166,13 @@ function Answer({ d }: { d: RequestDetail }) {
             }
           />
         ) : (
-          <p className="rounded-card border border-line bg-surface px-5 py-4 text-[14px] text-muted">아직 답변이 없습니다.</p>
+          <p className="border border-line bg-surface px-5 py-4 text-[14px] text-muted">아직 분석 결과가 없습니다.</p>
         )}
       </div>
 
-      {busy && <Toast>다시 확인 중…</Toast>}
+      {busy && <Toast>다시 분석하는 중…</Toast>}
       {!busy && a && <Updated key={notice} n={notice} rec={a.recommendation} why={noticeWhy} />}
-    </div>
+    </Page>
   )
 }
 

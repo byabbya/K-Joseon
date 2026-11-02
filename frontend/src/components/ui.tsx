@@ -1,5 +1,6 @@
 // 공용 UI 원자 — 모두 index.css 의 토큰(bg-surface, text-muted, ring-go-line …)만 쓴다.
-import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import type { Recommendation, Verdict } from '../api/types'
 import { REC_TONE, TONE_CLS, VERDICT_TONE, type Tone } from '../lib/labels'
 import { IconChevronDown, IconExternal, IconFileDrawing, IconFileImage, IconFileText, IconInfo } from './icons'
@@ -258,23 +259,66 @@ export function Card({ children, className, as: As = 'section', id }: { children
   )
 }
 
-/** 마우스 오버/포커스 시 내용을 띄우는 툴팁 (CSS 만). 트리거는 children. */
+/** 마우스 오버/포커스 시 내용을 띄우는 툴팁. 트리거는 children.
+ *  표·스크롤 칸 안에서도 잘리지 않도록 body 에 고정 위치로 그린다 — 위에 자리가 없으면 아래로, 화면 밖으로 나가지 않게 좌우를 맞춘다. */
 export function Tooltip({ content, children, wide, align = 'left', block }: { content: ReactNode; children: ReactNode; wide?: boolean; align?: 'left' | 'right'; block?: boolean }) {
   const id = useId()
+  const ref = useRef<HTMLSpanElement>(null)
+  const tip = useRef<HTMLSpanElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const [open, setOpen] = useState(false)
+
+  useLayoutEffect(() => {
+    if (!open || !ref.current || !tip.current) return
+    const r = ref.current.getBoundingClientRect()
+    const t = tip.current.getBoundingClientRect()
+    const gap = 8
+    const vw = document.documentElement.clientWidth
+    let left = align === 'left' ? r.left : r.right - t.width
+    left = Math.max(8, Math.min(left, vw - t.width - 8))
+    const above = r.top - t.height - gap
+    const top = above >= 8 ? above : r.bottom + gap
+    setPos({ left, top })
+  }, [open, align])
+
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open])
+
   return (
-    <span className={cx('group/tt relative', block ? 'flex' : 'inline-flex')} aria-describedby={id}>
+    <span
+      ref={ref}
+      className={cx('relative', block ? 'flex' : 'inline-flex')}
+      aria-describedby={open ? id : undefined}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => (setOpen(false), setPos(null))}
+      onFocus={() => setOpen(true)}
+      onBlur={() => (setOpen(false), setPos(null))}
+    >
       {children}
-      <span
-        id={id}
-        role="tooltip"
-        className={cx(
-          'pointer-events-none absolute bottom-full z-50 mb-2 hidden animate-fade-in rounded-field bg-[#0b1a2e] px-3 py-2 text-xs leading-relaxed font-normal text-[#eef3f9] shadow-pop group-focus-within/tt:block group-hover/tt:block',
-          align === 'left' ? 'left-0' : 'right-0',
-          wide ? 'w-[22rem] max-w-[80vw]' : 'w-72 max-w-[70vw]',
+      {open &&
+        createPortal(
+          <span
+            ref={tip}
+            id={id}
+            role="tooltip"
+            style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
+            className={cx(
+              'pointer-events-none fixed z-[70] block animate-fade-in rounded-field bg-[#172630] px-3 py-2 text-xs leading-relaxed font-normal text-[#eef3f5] shadow-pop',
+              wide ? 'w-[22rem] max-w-[80vw]' : 'w-72 max-w-[70vw]',
+            )}
+          >
+            {content}
+          </span>,
+          document.body,
         )}
-      >
-        {content}
-      </span>
     </span>
   )
 }

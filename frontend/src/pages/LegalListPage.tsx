@@ -1,10 +1,10 @@
-// 법무팀 — 확인 요청 목록 (/legal): 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터.
+// 법무팀 — 내 요청 (/legal/requests): 법무팀 확인을 요청받은 건. 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터.
 // 탭·필터·정렬은 URL 검색어(?tab=&rec=&dept=&sort=)에 둔다.
 import { useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMeta, useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
-import { PageHead } from '../components/PageHead'
+import { Page, PageHead } from '../components/PageHead'
 import { checkTitle } from '../components/check/ListBits'
 import { ErrorBox, IdTag, Pill, RecPill, Segmented, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconInbox, IconSort } from '../components/icons'
@@ -69,8 +69,8 @@ export function LegalListPage() {
   ]
 
   return (
-    <div className="mx-auto w-full max-w-page px-4 py-6 sm:px-6">
-      <PageHead eyebrow="법무팀" title="확인 요청 목록" sub="사원이 시스템 답변을 받은 뒤 법무팀 확인을 요청한 건입니다. 열면 ① 질문 → ② 시스템 답변(근거 보고서 펼침) → ③ 법무팀 답변 순서로 보입니다." />
+    <Page>
+      <PageHead eyebrow="Legal Review Queue" title="내 요청" sub="사원이 사전분석 뒤 법무팀 확인을 요청한 건입니다. 사전분석 결과와 근거를 보고 판정을 기록합니다." />
 
       <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* 탭 */}
@@ -215,6 +215,6 @@ export function LegalListPage() {
           </>
         )}
       </div>
-    </div>
+    </Page>
   )
 }

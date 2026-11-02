@@ -63,6 +63,18 @@ export function MissingLine({ a, input, onAnswer, busy }: { a: Analysis; input: 
   )
 }
 
+/** 결과 화면 '확인해 주세요' 패널 — 질문을 펼친 목록으로. 답을 고르면 바로 다시 확인한다 */
+export function MissingQuestions({ a, input, onAnswer, busy }: { a: Analysis; input: RequestInput; onAnswer?: Apply; busy?: boolean }) {
+  const list = [...a.missing].sort((x, y) => rank(x.field) - rank(y.field))
+  return (
+    <ol className="divide-y divide-line">
+      {list.map((m, i) => (
+        <QuestionLine key={`${m.field}-${m.asset_id ?? ''}`} m={m} n={i + 1} a={a} input={input} onAnswer={onAnswer} busy={busy} />
+      ))}
+    </ol>
+  )
+}
+
 function rank(f: string) {
   const i = ORDER.indexOf(f)
   return i < 0 ? 99 : i

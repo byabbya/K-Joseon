@@ -1,8 +1,6 @@
-// 시스템 답변 — 이유 먼저.
-// ① 결론 카드: 권고 알약 + 제목 → "왜 그런가요"(규칙의 쉬운 이유 plain 1–3개, 인용 칩) → 남은 질문 한 줄
-// ② 이렇게 하세요: 지킬 조건 체크리스트 + 다음 동작(법무팀에 확인 요청 — 바깥에서 nextStep 으로 넣음)
-// ③ 자세한 설명(접힘): explanation.summary — 문장이 바뀌면 조용히 페이드
-// ④ 도면 분석 ⑤ 근거 자세히 보기(접힘)
+// 사전분석 결과 — 사원 결과 화면과 법무 검토함이 같은 배치를 쓴다 (AnalysisView).
+// 왼쪽: 확인해 주세요 · 관련 기술 후보 · 자세한 설명 · 도면 분석 · 적용 검토 근거(근거 보고서)
+// 오른쪽: 사전 권고(권고 · 왜 그런가요 · 적용 규칙 · 확인 항목 · 다음 동작)
 // 인용 번호는 근거 보고서와 같은 CitationProvider 를 쓴다.
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useMeta } from '../../api/hooks'
@@ -10,9 +8,10 @@ import type { Analysis, FileResult, RequestDetail, RequestInput, RuleHit } from 
 import { REC_HEADLINE, REC_TONE, SEVERITY, TONE_CLS } from '../../lib/labels'
 import { useUser } from '../../lib/user'
 import { Button, IdTag, RecPill, cx } from '../ui'
-import { IconAlert, IconCheck, IconCheckCircle, IconChevronDown, IconFileDrawing, IconPaperclip } from '../icons'
-import { Cite, CitationProvider, CitedText, OPEN_REPORT_EVENT, type Citations } from './citations'
-import { MissingLine, type Apply } from './FollowUps'
+import { IconAlert, IconCheck, IconChevronDown, IconFileDrawing, IconPaperclip } from '../icons'
+import { Cite, CitationProvider, CitedText, type Citations } from './citations'
+import { Panel } from '../PageHead'
+import { MissingQuestions, type Apply } from './FollowUps'
 import { fieldView, isTextOnly, realFiles } from './model'
 import { DeltaLine, Report, type Audience } from './Report'
 
@@ -32,24 +31,178 @@ export interface SystemAnswerProps {
   reportDefaultOpen?: boolean
 }
 
-export function SystemAnswer(p: SystemAnswerProps) {
+/* ---------------- 결과 화면 배치 ----------------
+   왼쪽: AI가 정리한 요청(question) → 확인해 주세요 → 관련 기술 후보 → 자세한 설명 → 도면 → 적용 검토 근거(근거 보고서)
+   오른쪽: 사전 권고(권고 · 이유 · 적용 규칙 · 확인 항목 · 법무팀 요청) */
+
+export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 좁은 칸(법무 검토함): 아주 넓은 화면에서만 두 단, 그 밖에는 사전 권고를 위에 */ stack?: boolean }) {
   const cats = useMeta().data?.categories
   const catLabel = useCallback((c: string) => cats?.find((x) => x.code === c)?.label ?? '', [cats])
   return (
     <CitationProvider a={p.a} catLabel={catLabel} audience={p.audience}>
       {(cit) => (
-        <div className={cx('relative space-y-4 transition-opacity duration-200', p.busy && 'opacity-55')} aria-busy={p.busy}>
+        <div className={cx('grid gap-5 transition-opacity duration-200', p.stack ? '2xl:grid-cols-[minmax(0,1fr)_20rem]' : 'lg:grid-cols-[minmax(0,1fr)_21rem]', p.busy && 'opacity-55')} aria-busy={p.busy}>
           <p className="sr-only" aria-live="polite">
-            {p.busy ? '다시 확인 중입니다.' : `답변: ${REC_HEADLINE[p.a.recommendation]}`}
+            {p.busy ? '다시 확인 중입니다.' : `사전 권고: ${REC_HEADLINE[p.a.recommendation]}`}
           </p>
-          <ConclusionCard {...p} cit={cit} />
-          <DoThis a={p.a} requestId={p.d.summary.request_id} interactive={p.audience === 'employee'} nextStep={p.nextStep} />
-          <Explanation a={p.a} />
-          <DrawingSection a={p.a} />
-          <ReportSection a={p.a} prev={p.prev} d={p.d} audience={p.audience} defaultOpen={p.reportDefaultOpen} />
+          <div className="min-w-0 space-y-5">
+            {p.question}
+            {p.a.missing.length > 0 && p.a.recommendation !== '반출 불가' && (
+              <Panel eyebrow="Missing Check" title="확인해 주세요" right={<span className="grid h-6 min-w-6 place-items-center rounded-full bg-cond-bg px-2 font-mono text-[12px] font-bold text-cond-fg ring-1 ring-cond-line">{p.a.missing.length}</span>} bodyClass="px-4 py-1">
+                <p className="px-1 pt-2 text-[12.5px] text-muted">{p.onAnswer ? '답을 고르면 바로 다시 분석해요. 몰라도 괜찮아요.' : '사원이 아직 답하지 않은 항목입니다.'}</p>
+                <MissingQuestions a={p.a} input={p.d.input} onAnswer={p.onAnswer} busy={p.busy} />
+              </Panel>
+            )}
+            <CandidatesPanel a={p.a} />
+            <Explanation a={p.a} />
+            <DrawingSection a={p.a} />
+            <EvidencePanel a={p.a} prev={p.prev} d={p.d} audience={p.audience} />
+          </div>
+          <aside className={cx('space-y-5', p.stack ? 'max-2xl:order-first 2xl:sticky 2xl:top-24 2xl:self-start' : 'lg:sticky lg:top-24 lg:self-start')}>
+            <DecisionCard {...p} cit={cit} />
+          </aside>
         </div>
       )}
     </CitationProvider>
+  )
+}
+
+/** 사전 권고 — 오른쪽 고정 카드 */
+function DecisionCard({ d, a, prev, onAttach, busy, audience, nextStep, cit }: SystemAnswerProps & { cit: Citations }) {
+  const rec = a.recommendation
+  const t = TONE_CLS[REC_TONE[rec]]
+  const files = realFiles(a)
+  const perFile = files.length > 1 && new Set(files.map((f) => f.recommendation)).size > 1
+  const why = whyLines(a, cit).slice(0, 4)
+  const rules = [...new Set(a.files.flatMap((f) => f.rule_hits).filter((h) => h.outcome).sort(ruleOrder).map((h) => h.rule_id))]
+  return (
+    <section aria-labelledby="conclusion-title" className="border border-line bg-surface">
+      <div className="border-b border-line px-5 pt-4 pb-3">
+        <p className="text-[10.5px] font-bold tracking-[0.12em] text-muted uppercase">Rule Engine</p>
+        <h2 className="mt-0.5 text-[15px] font-extrabold text-fg">사전 권고</h2>
+      </div>
+      <div className="space-y-4 px-5 py-4">
+        <div className={cx('border px-4 py-3', t.soft)}>
+          <RecPill rec={rec} size="md" />
+          <p id="conclusion-title" className="mt-2 scroll-mt-40 text-[17px] leading-snug font-extrabold text-fg">
+            {REC_HEADLINE[rec]}
+          </p>
+          {a.enrichment_pending && (
+            <p role="status" className="mt-1.5 flex items-center gap-2 text-[12px] text-fg-2">
+              <span aria-hidden className="size-1.5 shrink-0 animate-pulse rounded-full bg-teal" />
+              도면을 읽는 중이에요. 끝나면 다시 확인해요.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-[12px] font-bold text-fg-2">왜 그런가요</h3>
+          {perFile ? (
+            <FileList files={files} cit={cit} legal={audience === 'legal'} />
+          ) : (
+            <ul className="mt-1.5 space-y-1.5">
+              {why.length
+                ? why.map((w) => <WhyItem key={w.text} w={w} legal={false} compact />)
+                : okLines(a, d.input).map((x) => <WhyItem key={x} w={{ text: x, cites: [], rules: [], formal: [] }} legal={false} ok compact />)}
+            </ul>
+          )}
+        </div>
+
+        {rules.length > 0 && (
+          <p className="flex flex-wrap items-center gap-1.5 border-t border-line pt-3 text-[12px] text-muted">
+            적용 규칙
+            {rules.map((r) => (
+              <IdTag key={r} className="!text-[10.5px] !leading-4">
+                {r}
+              </IdTag>
+            ))}
+          </p>
+        )}
+
+        <div className="border-t border-line pt-3">
+          <h3 className="text-[12px] font-bold text-fg-2">확인 항목</h3>
+          <TodoList a={a} requestId={d.summary.request_id} interactive={audience === 'employee'} compact />
+        </div>
+
+        {prev && <DeltaLine prev={prev} next={a} />}
+        {d.decisions.length > 0 && <p className="text-[12px] font-medium text-fg-2">위 법무팀 답변이 이 권고보다 우선해요.</p>}
+
+        {isTextOnly(a) && onAttach && rec !== '반출 불가' && (
+          <p className="flex flex-wrap items-center gap-2 text-[12.5px] text-fg-2">
+            파일을 붙이면 파일별로 확인해요.
+            <Button size="sm" variant="secondary" onClick={onAttach} disabled={busy}>
+              <IconPaperclip size={13} /> 파일 첨부
+            </Button>
+          </p>
+        )}
+
+        <p className="border border-cond-line bg-cond-bg px-3 py-2 text-[11.5px] leading-snug text-cond-fg">이 권고는 자동 승인이 아닙니다. 확인 항목을 지키고, 법무팀 확인이 필요하면 답을 받은 뒤 보내세요.</p>
+
+        {nextStep && <div className="border-t border-line pt-4">{nextStep}</div>}
+      </div>
+    </section>
+  )
+}
+
+/** 관련 기술 후보 — 사원 선택과 시스템 후보를 나눠 보인다 */
+function CandidatesPanel({ a }: { a: Analysis }) {
+  const cats = useMeta().data?.categories ?? []
+  const choice = a.employee_category_choice
+  const merged = new Map<string, { code: string; label: string; confident: boolean; terms: string[]; files: string[] }>()
+  for (const f of a.files)
+    for (const c of f.model_candidates) {
+      const m = merged.get(c.code) ?? { code: c.code, label: c.label, confident: false, terms: [], files: [] }
+      m.confident ||= c.confident
+      for (const e of c.evidence) if (!m.terms.includes(e.term)) m.terms.push(e.term)
+      if (f.kind !== 'description' && !m.files.includes(f.filename)) m.files.push(f.filename)
+      merged.set(c.code, m)
+    }
+  const list = [...merged.values()].sort((x, y) => Number(y.confident) - Number(x.confident) || x.code.localeCompare(y.code))
+  return (
+    <Panel eyebrow="Technology Candidates" title="관련 기술 후보" right={<span className="rounded-[2px] bg-surface-2 px-1.5 text-[10.5px] font-bold text-muted ring-1 ring-line ring-inset">내 선택 ≠ 시스템 후보</span>} bodyClass="px-5 py-4">
+      <p className="text-[12.5px] text-fg-2">
+        내가 고른 기술 · <b className="text-fg">{choice === '모름' ? '잘 모르겠음' : `${choice} ${cats.find((c) => c.code === choice)?.label ?? ''}`}</b>
+        {a.category_mismatch && <span className="ml-2 text-review-fg">시스템 후보와 달라요 — 둘 다 법무팀에 보여요</span>}
+      </p>
+      {list.length ? (
+        <ul className="mt-3 grid border-t border-l border-line sm:grid-cols-2">
+          {list.map((c) => (
+            <li key={c.code} className="border-r border-b border-line px-4 py-3">
+              <p className="flex items-center gap-2">
+                <IdTag tone={c.confident ? 'teal' : 'plain'}>{c.code}</IdTag>
+                <span className="min-w-0 truncate text-[13px] font-bold text-fg">{c.label || cats.find((x) => x.code === c.code)?.label}</span>
+                {!c.confident && <span className="ml-auto shrink-0 text-[10.5px] font-semibold text-muted">약한 단서</span>}
+              </p>
+              <p className="mt-1.5 text-[12px] leading-snug text-fg-2">
+                찾은 단서 · {c.terms.slice(0, 5).map((x) => `‘${x}’`).join(', ') || '—'}
+              </p>
+              {c.files.length > 0 && <p className="mt-0.5 truncate text-[11.5px] text-muted">{c.files.join(', ')}</p>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 border border-dashed border-line px-4 py-3 text-[12.5px] text-muted">자료와 설명에서 조선 핵심기술 단서를 찾지 못했어요.</p>
+      )}
+    </Panel>
+  )
+}
+
+/** 적용 검토 근거 — 근거 보고서를 펼친 채로 */
+function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis | null; d: RequestDetail; audience: Audience }) {
+  const laws = a.clauses.filter((c) => c.status !== '구버전').length
+  return (
+    <Panel
+      eyebrow="Legal Evidence"
+      title="적용 검토 근거"
+      right={
+        <span className="text-[12px] text-muted">
+          법령·지침 {laws} · 판례·의결 {a.precedents.length}
+        </span>
+      }
+      className="print:border-0"
+    >
+      <Report a={a} prev={prev} decisions={d.decisions} audience={audience} />
+    </Panel>
   )
 }
 
@@ -113,70 +266,13 @@ function okLines(a: Analysis, input: RequestInput): string[] {
   return out.length ? out : ['걸리는 점이 없어요.']
 }
 
-function ConclusionCard({ d, a, prev, onAttach, onAnswer, busy, audience, cit }: SystemAnswerProps & { cit: Citations }) {
-  const rec = a.recommendation
-  const t = TONE_CLS[REC_TONE[rec]]
-  const legal = audience === 'legal'
-  const files = realFiles(a)
-  const perFile = files.length > 1 && new Set(files.map((f) => f.recommendation)).size > 1
-  const all = whyLines(a, cit)
-  const why = legal ? all : all.slice(0, 3)
-  const decided = d.decisions.length > 0
+function WhyItem({ w, legal, ok, compact }: { w: Why; legal: boolean; ok?: boolean; compact?: boolean }) {
   return (
-    <section aria-labelledby="conclusion-title" className={cx('rounded-card border px-5 py-5 shadow-card sm:px-7 sm:py-6', t.soft)}>
-      <RecPill rec={rec} size="md" />
-      <h2 id="conclusion-title" className="mt-2.5 flex scroll-mt-40 items-start gap-2 text-[1.5rem] leading-snug font-bold tracking-tight text-balance text-fg sm:text-[1.75rem]">
-        {rec === '진행 가능' && <IconCheckCircle size={26} className="mt-1 shrink-0 text-go-fg" />}
-        {REC_HEADLINE[rec]}
-      </h2>
-      {a.enrichment_pending && (
-        <p role="status" className="mt-2 flex items-center gap-2 text-[13.5px] text-fg-2">
-          <span aria-hidden className="size-2 shrink-0 animate-pulse rounded-full bg-teal" />
-          도면을 읽는 중이에요. 끝나면 답을 다시 확인해요.
-        </p>
-      )}
-
-      <div className="mt-5">
-        <h3 className="text-[13px] font-bold tracking-[0.02em] text-fg-2">왜 그런가요</h3>
-        {perFile ? (
-          <FileList files={files} cit={cit} legal={legal} />
-        ) : (
-          <ul className="mt-2 max-w-[65ch] space-y-2">
-            {why.length
-              ? why.map((w) => <WhyItem key={w.text} w={w} legal={legal} />)
-              : okLines(a, d.input).map((x) => <WhyItem key={x} w={{ text: x, cites: [], rules: [], formal: [] }} legal={false} ok />)}
-          </ul>
-        )}
-      </div>
-
-      {rec !== '반출 불가' && <MissingLine a={a} input={d.input} onAnswer={onAnswer} busy={busy} />}
-
-      {isTextOnly(a) && onAttach && rec !== '반출 불가' && (
-        <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px] text-fg-2">
-          <span>파일을 붙이면 파일별로 확인해요.</span>
-          <Button size="sm" variant="secondary" onClick={onAttach} disabled={busy}>
-            <IconPaperclip size={14} /> 파일 첨부
-          </Button>
-        </p>
-      )}
-
-      {decided && <p className="mt-4 text-[13px] font-medium text-fg-2">위 법무팀 답변이 이 답변보다 우선해요.</p>}
-      {prev && (
-        <div className="mt-4">
-          <DeltaLine prev={prev} next={a} />
-        </div>
-      )}
-    </section>
-  )
-}
-
-function WhyItem({ w, legal, ok }: { w: Why; legal: boolean; ok?: boolean }) {
-  return (
-    <li className="flex gap-2.5 text-[15.5px] leading-7 text-fg">
+    <li className={cx('flex gap-2.5 text-fg', compact ? 'text-[13px] leading-6' : 'text-[15.5px] leading-7')}>
       {ok ? (
-        <IconCheck size={16} strokeWidth={2.6} aria-hidden className="mt-1.5 shrink-0 text-go-fg" />
+        <IconCheck size={compact ? 14 : 16} strokeWidth={2.6} aria-hidden className={cx('shrink-0 text-go-fg', compact ? 'mt-1' : 'mt-1.5')} />
       ) : (
-        <span aria-hidden className="mt-[0.7rem] size-1.5 shrink-0 rounded-full bg-fg-2" />
+        <span aria-hidden className={cx('size-1.5 shrink-0 rounded-full bg-fg-2', compact ? 'mt-[0.6rem]' : 'mt-[0.7rem]')} />
       )}
       <span className="min-w-0">
         {w.text} {w.cites.length > 0 && <Cite ids={legal ? w.cites : w.cites.slice(0, 3)} />}
@@ -284,7 +380,8 @@ function loadDone(id: string): string[] {
   }
 }
 
-function DoThis({ a, requestId, interactive, nextStep }: { a: Analysis; requestId: string; interactive: boolean; nextStep?: ReactNode }) {
+/** 지킬 조건 체크리스트 — 체크 상태는 이 브라우저에만 남긴다 */
+function TodoList({ a, requestId, interactive, compact }: { a: Analysis; requestId: string; interactive: boolean; compact?: boolean }) {
   const todos = buildTodos(a)
   const rec = a.recommendation
   const [done, setDone] = useState<string[]>(() => loadDone(requestId))
@@ -298,17 +395,15 @@ function DoThis({ a, requestId, interactive, nextStep }: { a: Analysis; requestI
       }
       return n
     })
+  const size = compact ? 'text-[13px] leading-6' : 'text-[15px] leading-7'
   return (
-    <section aria-labelledby="todo-title" className="rounded-card border border-line bg-surface px-5 py-5 shadow-card sm:px-7">
-      <h2 id="todo-title" className="text-[16px] font-bold tracking-tight text-fg">
-        이렇게 하세요
-      </h2>
+    <>
       {!todos.length ? (
-        <p className="mt-2 max-w-[65ch] text-[15px] leading-7 text-fg-2">
+        <p className={cx('mt-2 max-w-[65ch] text-fg-2', size)}>
           {rec === '진행 가능' || rec === '조건부 진행' ? '평소처럼 사내 반출 절차대로 보내면 돼요.' : '법무팀 답변을 받은 뒤에 보내세요.'}
         </p>
       ) : (
-        <ul className="mt-2.5 max-w-[65ch] space-y-2.5">
+        <ul className={cx('max-w-[65ch]', compact ? 'mt-2 space-y-1.5' : 'mt-2.5 space-y-2.5')}>
           {todos.map((t) => {
             const checked = done.includes(t.key)
             return (
@@ -332,16 +427,15 @@ function DoThis({ a, requestId, interactive, nextStep }: { a: Analysis; requestI
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className={cx('text-[15px] leading-7', t.dont ? 'font-semibold text-stop-fg' : 'text-fg', checked && 'text-muted line-through')}>{t.text}</span>
-                  {t.detail && <span className="block text-[13px] leading-snug break-all text-muted">{t.detail}</span>}
+                  <span className={cx(size, t.dont ? 'font-semibold text-stop-fg' : 'text-fg', checked && 'text-muted line-through')}>{t.text}</span>
+                  {t.detail && <span className="block text-[12px] leading-snug break-all text-muted">{t.detail}</span>}
                 </span>
               </li>
             )
           })}
         </ul>
       )}
-      {nextStep && <div className="mt-5 border-t border-line pt-4">{nextStep}</div>}
-    </section>
+    </>
   )
 }
 
@@ -421,43 +515,5 @@ function DrawingPending({ f, loading }: { f: FileResult; loading?: boolean }) {
         </p>
       </div>
     </div>
-  )
-}
-
-/* ---------------- ⑤ 근거 자세히 보기 (접힘) ---------------- */
-
-function ReportSection({ a, prev, d, audience, defaultOpen = false }: { a: Analysis; prev: Analysis | null; d: RequestDetail; audience: Audience; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen)
-  useEffect(() => {
-    const on = () => setOpen(true)
-    document.addEventListener(OPEN_REPORT_EVENT, on)
-    return () => document.removeEventListener(OPEN_REPORT_EVENT, on)
-  }, [])
-  const laws = a.clauses.filter((c) => c.status !== '구버전').length
-  return (
-    <section aria-label="근거 보고서" className="overflow-hidden rounded-card border border-line bg-surface shadow-card print:border-0 print:shadow-none">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="report-body"
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left hover:bg-surface-2 sm:px-7"
-      >
-        <span className="min-w-0 flex-1 text-[15px] font-bold tracking-tight text-fg">
-          {audience === 'legal' ? '근거 보고서' : open ? '근거 접기' : '근거 자세히 보기'}
-          <span className="ml-2 text-[13px] font-medium text-muted">
-            법 조항 {laws} · 판례 {a.precedents.length}
-          </span>
-        </span>
-        <IconChevronDown size={18} className={cx('shrink-0 text-muted transition-transform duration-200', open && 'rotate-180')} />
-      </button>
-      <div id="report-body" className="collapse-grid" data-open={open} inert={!open}>
-        <div>
-          <div className="border-t border-line">
-            <Report a={a} prev={prev} decisions={d.decisions} audience={audience} />
-          </div>
-        </div>
-      </div>
-    </section>
   )
 }

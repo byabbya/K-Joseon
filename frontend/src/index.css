@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   K-Ship Guard AX 디자인 토큰 — 해양 엔지니어링 × 보안 검토
-   차가운 회청색 바탕, 흰 면, 짙은 남색(주 동작·상단바), 강철 청록(보조, 아껴 씀),
-   권고 4색(초록·황색·주황·빨강, 항상 글자와 함께).
+   K-Ship Guard AX 디자인 토큰 — 사내 기술보호 콘솔
+   옅은 회청 바탕, 흰 면, 짙은 남청(주 동작), 청록(링크·추출 표시). 모서리는 작게(2~4px),
+   그림자 없이 선으로 나눈다. 권고 4색은 채도를 낮춰 항상 글자와 함께 쓴다.
    색·반경·그림자·모션은 여기서만 정의하고 컴포넌트는 Tailwind 유틸리티만 쓴다.
    다크 모드는 prefers-color-scheme 에서 같은 토큰 값만 바꾼다.
 ------------------------------------------------------------------- */
@@ -11,118 +11,118 @@
   color-scheme: light;
 
   /* 바탕·면 */
-  --bg: #f3f5f8;
+  --bg: #f5f7f7;
   --surface: #ffffff;
-  --surface-2: #f6f8fb; /* 옅은 칸, 표 머리 */
-  --surface-3: #e9eef4; /* hover */
-  --line: #dde3eb;
-  --line-strong: #c3ccd8;
-  --grid: rgb(15 42 74 / 0.055); /* 빈 결과 패널의 도면 격자 */
+  --surface-2: #f2f5f5; /* 옅은 칸, 표 머리 */
+  --surface-3: #e9eef0; /* hover · 선택 */
+  --line: #dbe2e4;
+  --line-strong: #c3ced2;
+  --grid: rgb(33 49 58 / 0.05);
 
   /* 글자 */
-  --fg: #0e1b2c;
-  --fg-2: #33435a;
-  --muted: #586880; /* bg 대비 5.1:1, surface 대비 5.6:1 */
+  --fg: #21313a;
+  --fg-2: #3c4f5a;
+  --muted: #627480; /* surface 대비 4.9:1 */
 
-  /* 주색 (남색) */
-  --primary: #0f2a4a;
-  --primary-hover: #1a3d66;
-  --primary-ink: #1b4f86; /* 링크·선택 글자 — 흰 바탕 대비 7.9:1 */
-  --primary-soft: #e6eef7;
-  --primary-line: #a9c1dd;
+  /* 주색 (남청) */
+  --primary: #233640;
+  --primary-hover: #304852;
+  --primary-ink: #1a6c8b; /* 링크·선택 글자 */
+  --primary-soft: #edf3f5;
+  --primary-line: #b5cbd4;
   --on-primary: #ffffff;
 
-  /* 상단바 */
-  --nav: #0f2a4a;
-  --nav-2: #173a61; /* hover · 활성 */
-  --nav-fg: #e8eef6;
-  --nav-muted: #9fb3cc;
+  /* 토스트 등 짙은 면 */
+  --nav: #1b2b34;
+  --nav-2: #2a3d47;
+  --nav-fg: #eef3f5;
+  --nav-muted: #9fb0b9;
 
-  /* 보조 (강철 청록) — 추출 표시·도면 표식 등에만 */
-  --teal: #0e7c86;
-  --teal-ink: #0a6670;
-  --teal-soft: #e2f3f4;
-  --teal-line: #9fd2d6;
+  /* 보조 (청록) */
+  --teal: #2b7f8f;
+  --teal-ink: #1f6676;
+  --teal-soft: #e6f1f3;
+  --teal-line: #a9cfd6;
 
-  --focus: #2f7dd1;
+  --focus: #1a789d;
 
   /* 권고 4색 (bg / fg / line / dot) */
-  --go-bg: #e6f4ec;
-  --go-fg: #17663a;
-  --go-line: #b2dbc2;
-  --go-dot: #2a9a58;
-  --cond-bg: #fdf4da;
-  --cond-fg: #714b00;
-  --cond-line: #ead08c;
-  --cond-dot: #cf960f;
-  --review-bg: #fdede1;
-  --review-fg: #983d08;
-  --review-line: #f0c4a2;
-  --review-dot: #e2701c;
-  --stop-bg: #fce8e8;
-  --stop-fg: #a01b1b;
-  --stop-line: #efbcbc;
-  --stop-dot: #d33131;
-  --info-bg: #eaf0f7;
-  --info-fg: #1f4670;
-  --info-line: #c4d3e5;
+  --go-bg: #e8f3ee;
+  --go-fg: #23634c;
+  --go-line: #b7d8c9;
+  --go-dot: #397d70;
+  --cond-bg: #f8f2e3;
+  --cond-fg: #6d5320;
+  --cond-line: #e2d0a3;
+  --cond-dot: #b98b2e;
+  --review-bg: #f9ece4;
+  --review-fg: #8c4320;
+  --review-line: #e8c6b1;
+  --review-dot: #c96a3a;
+  --stop-bg: #f8e7e7;
+  --stop-fg: #962f33;
+  --stop-line: #e5bcbe;
+  --stop-dot: #c2474c;
+  --info-bg: #edf3f5;
+  --info-fg: #284f61;
+  --info-line: #c4d5dc;
 
-  /* 그림자 */
-  --sh-card: 0 1px 0 rgb(15 42 74 / 0.04), 0 1px 3px rgb(15 42 74 / 0.06);
-  --sh-pop: 0 16px 40px -14px rgb(15 42 74 / 0.32), 0 2px 6px rgb(15 42 74 / 0.08);
-  --sh-raise: 0 6px 18px -8px rgb(15 42 74 / 0.22);
+  /* 그림자 — 면은 선으로 나누고, 떠 있는 것(팝오버)에만 그림자 */
+  --sh-card: none;
+  --sh-pop: 0 12px 32px -12px rgb(23 38 48 / 0.28), 0 2px 6px rgb(23 38 48 / 0.08);
+  --sh-raise: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #0a111d;
-    --surface: #101a2a;
-    --surface-2: #0d1624;
-    --surface-3: #18253a;
-    --line: #213048;
-    --line-strong: #31445f;
-    --grid: rgb(140 184 234 / 0.06);
-    --fg: #e5ebf3;
-    --fg-2: #c0cbda;
-    --muted: #91a1b8;
-    --primary: #2f6db3;
-    --primary-hover: #3b7cc4;
-    --primary-ink: #8fbbec;
-    --primary-soft: #15263d;
-    --primary-line: #2d4c74;
+    --bg: #11191e;
+    --surface: #172228;
+    --surface-2: #141e23;
+    --surface-3: #1f2d34;
+    --line: #26353d;
+    --line-strong: #364952;
+    --grid: rgb(170 200 210 / 0.06);
+    --fg: #e3eaed;
+    --fg-2: #c0ccd2;
+    --muted: #8fa1aa;
+    --primary: #3a6a7e;
+    --primary-hover: #467a8f;
+    --primary-ink: #8cc6da;
+    --primary-soft: #1a2c33;
+    --primary-line: #34515c;
     --on-primary: #ffffff;
-    --nav: #07101c;
-    --nav-2: #13233a;
-    --nav-fg: #e5ebf3;
-    --nav-muted: #8ea2bc;
-    --teal: #3fb3bc;
-    --teal-ink: #7fd2d8;
-    --teal-soft: #0e2b30;
-    --teal-line: #1f5a61;
-    --focus: #7fb4ee;
-    --go-bg: #11291b;
-    --go-fg: #8ed5a8;
-    --go-line: #275638;
-    --go-dot: #47b673;
-    --cond-bg: #2e250c;
-    --cond-fg: #ebc86b;
-    --cond-line: #5b4a19;
-    --cond-dot: #d9a521;
-    --review-bg: #33200f;
-    --review-fg: #f3ab78;
-    --review-line: #683e20;
-    --review-dot: #ec8640;
-    --stop-bg: #351717;
-    --stop-fg: #f3a09a;
-    --stop-line: #6b2b2b;
-    --stop-dot: #e45a4f;
-    --info-bg: #142338;
-    --info-fg: #a9c6e6;
-    --info-line: #2b415e;
-    --sh-card: 0 1px 2px rgb(0 0 0 / 0.35);
-    --sh-pop: 0 16px 40px -12px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.35);
-    --sh-raise: 0 6px 18px -8px rgb(0 0 0 / 0.6);
+    --nav: #0c1317;
+    --nav-2: #1b2930;
+    --nav-fg: #e3eaed;
+    --nav-muted: #8fa1aa;
+    --teal: #4fa9b8;
+    --teal-ink: #8fd0da;
+    --teal-soft: #152b30;
+    --teal-line: #2a5960;
+    --focus: #7fc0d6;
+    --go-bg: #142a22;
+    --go-fg: #92cfb4;
+    --go-line: #2a5444;
+    --go-dot: #4fa58b;
+    --cond-bg: #2b2414;
+    --cond-fg: #e2c47e;
+    --cond-line: #55472a;
+    --cond-dot: #c9a043;
+    --review-bg: #2f1f17;
+    --review-fg: #eeb08e;
+    --review-line: #5f3b28;
+    --review-dot: #d9824f;
+    --stop-bg: #311a1b;
+    --stop-fg: #eea3a5;
+    --stop-line: #633234;
+    --stop-dot: #d6595e;
+    --info-bg: #182a31;
+    --info-fg: #a9cbd8;
+    --info-line: #2c4650;
+    --sh-card: none;
+    --sh-pop: 0 12px 32px -10px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.35);
+    --sh-raise: none;
   }
 }
 
@@ -185,10 +185,10 @@
   --spacing: 0.25rem;
   --container-page: 90rem; /* 1440px 본문 최대 폭 */
 
-  --radius-pill: 9999px;
-  --radius-chip: 0.375rem; /* 6px — 칩·타일 */
-  --radius-field: 0.5rem; /* 8px — 입력·버튼 */
-  --radius-card: 0.75rem; /* 12px — 카드·패널 */
+  --radius-pill: 3px; /* 상태 꼬리표도 각진 상자로 */
+  --radius-chip: 2px; /* 칩·타일 */
+  --radius-field: 3px; /* 입력·버튼 */
+  --radius-card: 4px; /* 카드·패널 */
 
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-fast: 150ms;
@@ -243,7 +243,7 @@
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -355,8 +355,8 @@
 @media print {
   @page { margin: 14mm 12mm; }
   html, body { background: #fff !important; }
-  body > #root header.sticky,
-  body > #root footer.app-footer,
+  .app-sidebar,
+  .app-topbar,
   .print-hide,
   .report button[aria-expanded] > svg,
   [role="tooltip"] {

@@ -1,24 +1,42 @@
-// 앱 틀 — 상단 내비게이션(제품 마크 · 역할별 메뉴 · 계정 컨트롤) + 본문 + 바닥줄.
-// 역할: 사원(확인하기 · 내 확인 기록 · 용어 위키) / 법무팀(확인 요청 목록 · 용어 위키). 계정 컨트롤에서 역할과 사용자를 고른다.
-// 바닥줄: "최종 판단은 법무팀이 합니다" 한 줄. 법무팀 역할에만 '시스템 정보' 팝오버(로컬 처리 상태)를 둔다.
+// 앱 틀 — 왼쪽 사이드바(제품 마크 · 역할별 탭) + 위쪽 머리줄(화면 이름 · 기준 정보 · 시각 · 역할 전환 · 사용자) + 본문.
+// 역할: 설계 사원(반출 검토 요청 · 내 요청) / 법무 담당(대시보드 · 내 요청). 머리줄의 두 칸 버튼으로 역할을 바꾼다.
+// 좁은 화면(lg 미만)에서는 사이드바 대신 머리줄 아래에 탭 줄을 둔다.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK } from '../api/client'
-import { useMeta, useRequestList, useSystemStatus } from '../api/hooks'
+import { useMeta, useRequestList } from '../api/hooks'
 import { useUser, type Role } from '../lib/user'
-import { RadioGroup, Segmented, cx } from './ui'
+import { RadioGroup, cx } from './ui'
 import { IconCheck, IconChevronDown, LogoMark } from './icons'
 
-const NAV: Record<Role, { to: string; label: string; match: (p: string) => boolean }[]> = {
+interface NavItem {
+  to: string
+  label: string
+  match: (p: string) => boolean
+  badge?: 'mine' | 'pending'
+}
+
+const NAV: Record<Role, NavItem[]> = {
   employee: [
-    { to: '/', label: '확인하기', match: (p) => p === '/' || p.startsWith('/check') },
-    { to: '/history', label: '내 확인 기록', match: (p) => p.startsWith('/history') },
-    { to: '/wiki', label: '용어 위키', match: (p) => p.startsWith('/wiki') },
+    { to: '/', label: '반출 검토 요청', match: (p) => p === '/' || p.startsWith('/check') },
+    { to: '/history', label: '내 요청', match: (p) => p.startsWith('/history'), badge: 'mine' },
   ],
   legal: [
-    { to: '/legal', label: '확인 요청 목록', match: (p) => p.startsWith('/legal') },
-    { to: '/wiki', label: '용어 위키', match: (p) => p.startsWith('/wiki') },
+    { to: '/legal', label: '대시보드', match: (p) => p === '/legal' || p === '/legal/' },
+    { to: '/legal/requests', label: '내 요청', match: (p) => p.startsWith('/legal/') && p !== '/legal/', badge: 'pending' },
   ],
+}
+
+/** 머리줄에 쓰는 화면 이름 */
+function pageName(p: string): string {
+  if (p === '/') return '반출 검토 요청'
+  if (p.startsWith('/check')) return '사전분석 결과'
+  if (p.startsWith('/history')) return '내 요청'
+  if (p === '/legal' || p === '/legal/') return '대시보드'
+  if (p.startsWith('/legal/requests')) return '내 요청'
+  if (p.startsWith('/legal/')) return '검토 상세'
+  if (p.startsWith('/wiki')) return '용어 위키'
+  return ''
 }
 
 /** 두 역할이 함께 쓰는 화면 */
@@ -47,172 +65,191 @@ export function AppShell() {
     if (role === 'employee' && onLegal) nav('/', { replace: true })
   }, [role, loc.pathname, nav])
 
-  // 화면이 바뀌면 맨 위에서 시작 (첫 화면에서 아래로 내려 확인하기를 눌러도 답변 화면은 위부터)
+  // 화면이 바뀌면 맨 위에서 시작
   useEffect(() => {
     if (!loc.hash) window.scrollTo(0, 0)
   }, [loc.pathname, loc.hash])
 
-  // 법무팀 미처리 개수 (메뉴 배지)
+  // 탭 배지 — 사원: 법무팀이 확인 중인 내 요청, 법무: 미처리 요청
   const pending = useRequestList({ status: 'pending' })
-  const pendingCount = role === 'legal' ? pending.data?.length : undefined
+  const mine = useRequestList({ employee_id: role === 'employee' ? (userId ?? undefined) : undefined })
+  const badges = {
+    pending: role === 'legal' ? pending.data?.length : undefined,
+    mine: role === 'employee' ? mine.data?.filter((r) => r.employee.employee_id === userId && r.status === '법무 검토 중').length : undefined,
+  }
+
+  const items = NAV[role]
+  const name = pageName(loc.pathname)
 
   return (
-    <div className="flex min-h-dvh flex-col bg-bg text-fg">
+    <div className="flex min-h-dvh bg-bg text-fg">
       <a href="#main" className="sr-only z-[60] rounded bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
         본문으로 건너뛰기
       </a>
-      <header className="sticky top-0 z-40 bg-nav text-nav-fg shadow-[0_1px_0_rgb(255_255_255/0.06)]">
-        <div className="mx-auto flex h-14 max-w-page items-center gap-3 px-4 sm:gap-5 sm:px-6">
-          <Link to={ROLE_HOME[role]} className="flex shrink-0 items-center gap-2.5 rounded-field pr-1 text-nav-fg">
-            <LogoMark size={26} />
-            <span className="leading-tight max-sm:hidden">
-              <span className="block text-[15px] font-bold tracking-tight">K-Ship Guard AX</span>
-              <span className="block text-[10.5px] tracking-[0.08em] text-nav-muted">보내기 전에 확인</span>
-            </span>
-            {USE_MOCK && (
-              <span className="rounded-[4px] bg-cond-dot px-1.5 font-mono text-[10px] leading-4 font-bold text-[#1d1300]" title="모의 데이터로 실행 중">
-                MOCK
-              </span>
-            )}
-          </Link>
-          <span aria-hidden className="h-6 w-px bg-white/12 max-sm:hidden" />
-          <nav aria-label="주 메뉴" className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
-            {NAV[role].map((n) => {
-              const active = n.match(loc.pathname)
-              return (
-                <NavLink
-                  key={n.to}
-                  to={n.to}
-                  aria-current={active ? 'page' : undefined}
-                  className={cx(
-                    'relative flex h-14 shrink-0 items-center gap-1.5 px-2.5 text-[14px] font-medium transition-colors duration-150 sm:px-3',
-                    active ? 'text-white' : 'text-nav-muted hover:text-white',
-                  )}
-                >
-                  {n.label}
-                  {n.to === '/legal' && pendingCount !== undefined && pendingCount > 0 && (
-                    <span className="rounded-pill bg-review-dot px-1.5 text-[11px] leading-4 font-bold text-white tabular-nums">{pendingCount}</span>
-                  )}
-                  <span aria-hidden className={cx('absolute inset-x-2 bottom-0 h-0.5 rounded-t bg-teal transition-opacity duration-150', active ? 'opacity-100' : 'opacity-0')} />
-                </NavLink>
-              )
-            })}
-          </nav>
-          <AccountControl />
-        </div>
-      </header>
 
-      {meta.isError && (
-        <div role="alert" className="mx-auto mt-3 w-full max-w-page px-4 sm:px-6">
-          <p className="rounded-field border border-stop-line bg-stop-bg px-3 py-2 text-sm text-stop-fg">
-            기준정보(/api/meta)를 불러오지 못했습니다. 백엔드 실행 여부를 확인하세요.
+      {/* 사이드바 */}
+      <aside className="app-sidebar sticky top-0 flex h-dvh w-[13rem] shrink-0 flex-col border-r border-line bg-surface max-lg:hidden">
+        <Link to={ROLE_HOME[role]} className="flex items-center gap-3 border-b border-line px-5 py-5">
+          <span className="grid size-9 place-items-center rounded-[3px] bg-surface-2 ring-1 ring-line ring-inset">
+            <LogoMark size={22} />
+          </span>
+          <span className="leading-tight">
+            <span className="block text-[15px] font-extrabold tracking-[0.08em] text-fg">K-SHIP</span>
+            <span className="block text-[10px] font-semibold tracking-[0.2em] text-muted">GUARD AX</span>
+          </span>
+          {USE_MOCK && <span className="ml-auto rounded-[2px] bg-cond-bg px-1 font-mono text-[9.5px] font-bold text-cond-fg ring-1 ring-cond-line">MOCK</span>}
+        </Link>
+        <nav aria-label="주 메뉴" className="flex-1 space-y-0.5 px-2 py-4">
+          {items.map((n) => {
+            const active = n.match(loc.pathname)
+            const count = n.badge ? badges[n.badge] : undefined
+            return (
+              <NavLink
+                key={n.to}
+                to={n.to}
+                end
+                aria-current={active ? 'page' : undefined}
+                className={cx(
+                  'flex h-10 items-center gap-2 rounded-[3px] border-l-2 px-3 text-[13.5px] transition-colors duration-150',
+                  active ? 'border-primary bg-surface-3 font-bold text-fg' : 'border-transparent font-medium text-fg-2 hover:bg-surface-2 hover:text-fg',
+                )}
+              >
+                <span className="flex-1">{n.label}</span>
+                {!!count && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-surface-3 px-1.5 font-mono text-[11px] font-bold text-fg-2 tabular-nums ring-1 ring-line">{count}</span>}
+              </NavLink>
+            )
+          })}
+        </nav>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar name={name} />
+        {/* 좁은 화면 탭 줄 */}
+        <nav aria-label="주 메뉴" className="app-topbar flex gap-1 overflow-x-auto border-b border-line bg-surface px-4 lg:hidden">
+          {items.map((n) => {
+            const active = n.match(loc.pathname)
+            return (
+              <NavLink
+                key={n.to}
+                to={n.to}
+                end
+                aria-current={active ? 'page' : undefined}
+                className={cx('relative flex h-11 shrink-0 items-center px-3 text-[13.5px]', active ? 'font-bold text-fg' : 'font-medium text-muted')}
+              >
+                {n.label}
+                <span aria-hidden className={cx('absolute inset-x-2 bottom-0 h-0.5 bg-primary', active ? 'opacity-100' : 'opacity-0')} />
+              </NavLink>
+            )
+          })}
+        </nav>
+
+        {meta.isError && (
+          <div role="alert" className="px-4 pt-3 lg:px-8">
+            <p className="rounded-field border border-stop-line bg-stop-bg px-3 py-2 text-sm text-stop-fg">
+              기준정보를 불러오지 못했습니다. 백엔드 실행 여부를 확인하세요.
+            </p>
+          </div>
+        )}
+
+        <main id="main" className="flex min-w-0 flex-1 flex-col">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- 머리줄 ---------------- */
+
+function TopBar({ name }: { name: string }) {
+  const meta = useMeta()
+  return (
+    <header className="app-topbar sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-sm">
+      <div className="flex min-h-16 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 lg:px-8">
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="truncate text-[16px] font-extrabold tracking-[0.02em] text-fg">K-SHIP GUARD AX</p>
+          <p className="truncate text-[11.5px] text-muted">
+            Technology Transfer Compliance{name ? ` · ${name}` : ''}
           </p>
         </div>
-      )}
-
-      <main id="main" className="flex min-w-0 flex-1 flex-col">
-        <Outlet />
-      </main>
-
-      <footer className="app-footer border-t border-line bg-surface print:hidden">
-        <div className="mx-auto flex max-w-page flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 text-[12px] text-muted sm:px-6">
-          <span className="font-medium text-fg-2">최종 판단은 법무팀이 합니다</span>
-          {role === 'legal' && <SystemInfo rules={meta.data?.rules_version} />}
+        <div className="flex items-center gap-4 max-md:hidden">
+          <Stat label="기준 정보" value={<>{today()} · {meta.isError ? <span className="text-stop-fg">연결 안 됨</span> : '정상'}</>} dot={meta.isError ? 'stop' : 'go'} />
+          <span aria-hidden className="h-8 w-px bg-line" />
+          <Stat label="KST" value={<Clock />} />
         </div>
-      </footer>
+        <RoleSwitch />
+        <AccountChip />
+      </div>
+    </header>
+  )
+}
+
+function today() {
+  const d = new Date()
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}
+
+function Stat({ label, value, dot }: { label: string; value: React.ReactNode; dot?: 'go' | 'stop' }) {
+  return (
+    <div className="flex items-center gap-2">
+      {dot && <span aria-hidden className={cx('size-1.5 rounded-full', dot === 'go' ? 'bg-go-dot' : 'bg-stop-dot')} />}
+      <div className="leading-tight">
+        <p className="text-[10px] font-semibold tracking-[0.04em] text-muted">{label}</p>
+        <p className="font-mono text-[12.5px] font-bold text-fg tabular-nums">{value}</p>
+      </div>
     </div>
   )
 }
 
-/* ---------------- 로컬 처리 상태 ---------------- */
-
-function Dot({ tone }: { tone: 'go' | 'cond' | 'off' }) {
-  return <span aria-hidden className={cx('size-1.5 shrink-0 rounded-full', tone === 'go' ? 'bg-go-dot' : tone === 'cond' ? 'bg-cond-dot' : 'bg-line-strong')} />
-}
-
-/** 법무팀 화면 바닥줄 오른쪽 — 누르면 로컬 처리 상태를 작은 팝오버로 보인다 */
-function SystemInfo({ rules }: { rules?: string }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+function Clock() {
+  const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    if (!open) return
-    const onDoc = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-  return (
-    <div ref={ref} className="relative ml-auto">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="system-info"
-        onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 rounded-field px-1.5 py-0.5 font-medium text-fg-2 hover:bg-surface-2 hover:text-fg"
-      >
-        시스템 정보
-        <IconChevronDown size={13} className={cx('transition-transform duration-150', !open && 'rotate-180')} />
-      </button>
-      {open && (
-        <div id="system-info" role="dialog" aria-label="시스템 정보" className="absolute right-0 bottom-full z-50 mb-2 w-72 max-w-[calc(100vw-2rem)] animate-pop-in rounded-card border border-line bg-surface p-3 shadow-pop">
-          <LocalStatus rules={rules} />
-        </div>
-      )}
-    </div>
-  )
+    const t = window.setInterval(() => setNow(new Date()), 1000)
+    return () => window.clearInterval(t)
+  }, [])
+  return <>{now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Seoul', hour12: false })}</>
 }
 
-function LocalStatus({ rules }: { rules?: string }) {
-  const q = useSystemStatus()
-  const st = q.data
-  const items: { tone: 'go' | 'cond' | 'off'; text: string; title: string }[] = st
-    ? [
-        st.llm.available
-          ? { tone: 'go', text: 'LLM 연결', title: `로컬 LLM ${st.llm.model} (Ollama) — 답변 문장만 다듬음` }
-          : { tone: 'off', text: 'LLM 꺼짐', title: '로컬 LLM 미연결 — 템플릿 답변만 사용' },
-        st.embedding === 'ready'
-          ? { tone: 'go', text: '검색 hybrid', title: 'BM25 + bge-m3 임베딩 하이브리드 검색' }
-          : { tone: st.embedding === 'loading' ? 'cond' : 'off', text: 'BM25 only', title: `임베딩 ${st.embedding === 'loading' ? '준비 중' : st.embedding} — BM25 검색만 사용` },
-        /가중치 없음/.test(st.yolo)
-          ? { tone: 'off', text: 'YOLO 없음', title: 'YOLO 가중치 없음 — 도면 심볼 탐지 안 함' }
-          : { tone: 'go', text: 'YOLO', title: `YOLO pid_groups@${st.yolo}` },
-        { tone: 'go', text: 'OCR', title: st.ocr },
-      ]
-    : []
-  return (
-    <div className="space-y-1.5 text-[12px] text-fg-2" aria-label="로컬 처리 상태">
-      <p className="flex items-center gap-1.5 font-semibold text-fg">
-        <span aria-hidden className="size-1.5 rounded-full bg-teal" />
-        로컬 처리 · 외부 네트워크 호출 없음
-      </p>
-      {q.isError && <p className="text-muted">상태 확인 불가 (백엔드 연결 없음)</p>}
-      <ul className="space-y-1">
-        {items.map((it) => (
-          <li key={it.text} className="flex items-start gap-1.5">
-            <span className="mt-1.5">
-              <Dot tone={it.tone} />
-            </span>
-            <span className="min-w-0">
-              {it.text} <span className="text-muted">— {it.title}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="font-mono text-[11px] text-muted tabular-nums">rules {st?.rules ?? rules ?? '—'}</p>
-    </div>
-  )
-}
-
-/* ---------------- 계정 컨트롤 ---------------- */
-
-function AccountControl() {
-  const { role, userId, setRole, setUser } = useUser()
-  const meta = useMeta().data
+/** 설계 사원 / 법무 담당 두 칸 */
+function RoleSwitch() {
+  const { role, setRole } = useUser()
   const nav = useNavigate()
+  const opts: { r: Role; label: string }[] = [
+    { r: 'employee', label: '설계 사원' },
+    { r: 'legal', label: '법무 담당' },
+  ]
+  return (
+    <RadioGroup label="역할" className="flex rounded-[3px] bg-surface p-0.5 ring-1 ring-line ring-inset">
+      {opts.map((o) => {
+        const sel = role === o.r
+        return (
+          <button
+            key={o.r}
+            type="button"
+            role="radio"
+            aria-checked={sel}
+            onClick={() => {
+              if (sel) return
+              setRole(o.r)
+              nav(ROLE_HOME[o.r])
+            }}
+            className={cx(
+              'h-8 rounded-[2px] px-3 text-[12.5px] font-bold transition-colors duration-150',
+              sel ? 'bg-primary-soft text-primary-ink ring-1 ring-primary-line ring-inset' : 'text-muted hover:text-fg',
+            )}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </RadioGroup>
+  )
+}
+
+/** 사용자 — 누르면 같은 역할의 시연용 사용자 목록 */
+function AccountChip() {
+  const { role, userId, setUser } = useUser()
+  const meta = useMeta().data
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const me = meta?.employees.find((e) => e.employee_id === userId)
@@ -230,13 +267,6 @@ function AccountControl() {
     }
   }, [open])
 
-  const switchRole = (r: Role) => {
-    if (r === role) return
-    setRole(r)
-    setOpen(false)
-    nav(ROLE_HOME[r])
-  }
-
   return (
     <div ref={ref} className="relative shrink-0">
       <button
@@ -244,30 +274,24 @@ function AccountControl() {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="press flex h-9 items-center gap-2 rounded-field py-1 pr-2 pl-1 text-left ring-1 ring-white/15 ring-inset hover:bg-nav-2"
+        className="flex h-10 items-center gap-2.5 border-l border-line pl-4 text-left"
       >
-        <span aria-hidden className={cx('grid size-7 place-items-center rounded-[6px] text-[12px] font-bold', role === 'legal' ? 'bg-teal text-white' : 'bg-white/90 text-primary')}>
-          {me?.name.slice(-2) ?? '—'}
+        <span aria-hidden className="grid size-8 place-items-center rounded-[3px] bg-primary text-[13px] font-bold text-on-primary">
+          {me?.name.slice(0, 1) ?? '—'}
         </span>
-        <span className="leading-tight max-md:hidden">
-          <span className="block text-[13px] font-semibold text-white">{me?.name ?? '사용자 선택'}</span>
-          <span className="block text-[11px] text-nav-muted">
-            {role === 'legal' ? '법무팀' : '사원'} · {me?.department ?? ''}
+        <span className="leading-tight max-sm:hidden">
+          <span className="block text-[13px] font-bold text-fg">{me?.name ?? '사용자 선택'}</span>
+          <span className="block text-[11px] text-muted">
+            {me?.department ?? ''}
+            {me ? ` · ${role === 'legal' ? '승인권자' : me.employee_id}` : ''}
           </span>
         </span>
-        <span className="sr-only">계정 · 역할 전환</span>
-        <IconChevronDown size={15} className={cx('text-nav-muted transition-transform duration-150', open && 'rotate-180')} />
+        <span className="sr-only">사용자 바꾸기</span>
+        <IconChevronDown size={14} className={cx('text-muted transition-transform duration-150', open && 'rotate-180')} />
       </button>
       {open && (
-        <div role="dialog" aria-label="역할과 사용자" className="absolute top-full right-0 z-50 mt-2 w-72 animate-pop-in rounded-card border border-line bg-surface p-3 text-fg shadow-pop">
-          <p className="mb-1.5 text-[12px] font-semibold text-muted">역할</p>
-          <Segmented<'사원' | '법무팀'>
-            label="역할"
-            value={role === 'legal' ? '법무팀' : '사원'}
-            options={['사원', '법무팀']}
-            onChange={(v) => switchRole(v === '법무팀' ? 'legal' : 'employee')}
-          />
-          <p className="mt-3 mb-1 text-[12px] font-semibold text-muted">사용자 (시연용)</p>
+        <div role="dialog" aria-label="시연용 사용자" className="absolute top-full right-0 z-50 mt-2 w-64 animate-pop-in rounded-card border border-line bg-surface p-2 text-fg shadow-pop">
+          <p className="px-2 pt-1 pb-1.5 text-[11px] font-semibold tracking-[0.04em] text-muted">{role === 'legal' ? '법무 담당' : '설계 사원'} (시연용)</p>
           <RadioGroup label="사용자" className="space-y-0.5">
             {people.map((p) => {
               const sel = p.employee_id === userId
@@ -281,15 +305,15 @@ function AccountControl() {
                     setUser(role, p.employee_id)
                     setOpen(false)
                   }}
-                  className={cx('flex w-full items-center gap-2.5 rounded-field px-2 py-1.5 text-left', sel ? 'bg-primary-soft' : 'hover:bg-surface-3')}
+                  className={cx('flex w-full items-center gap-2.5 rounded-[3px] px-2 py-1.5 text-left', sel ? 'bg-primary-soft' : 'hover:bg-surface-2')}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className={cx('block text-[13.5px]', sel ? 'font-semibold text-primary-ink' : 'text-fg')}>{p.name}</span>
-                    <span className="block text-[11.5px] text-muted">
+                    <span className={cx('block text-[13px]', sel ? 'font-bold text-primary-ink' : 'text-fg')}>{p.name}</span>
+                    <span className="block text-[11px] text-muted">
                       {p.department} · <span className="font-mono">{p.employee_id}</span>
                     </span>
                   </span>
-                  {sel && <IconCheck size={15} className="text-primary-ink" />}
+                  {sel && <IconCheck size={14} className="text-primary-ink" />}
                 </button>
               )
             })}

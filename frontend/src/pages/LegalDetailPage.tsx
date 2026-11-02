@@ -1,20 +1,21 @@
-// 법무팀 — 확인 요청 상세 (/legal/:id)
-// 상단 헤더(확인 ID·질의자·부서·사번·요청 시각·S코드·경로 코드·수신자·국가·전송 방식·첨부 수)
-// → 사원의 질문 카드(읽기 전용, 알아들은 내용 포함) → 시스템 답변(결론 · 해야 할 일 · 근거 보고서 펼침, 사원 화면과 같은 컴포넌트)
-// → 법무팀 입력: 유사 과거 요청 · 근거 보정(원본과 분리 저장) · 법무팀 답변(승인 여부) · 판정 이력(이전 버전 보존)
+// 법무 검토함 (/legal/:id) — 왼쪽: 미처리 요청 목록(우선순위/최신순). 오른쪽: 상세 카드 하나
+// 요청 머리(S코드·CH·제목·권고) + 사실 칸 → 요청 내용·첨부(원본 열람은 감사 로그)
+// → AI 초안과 판단: 고정된 AI 초안 요약(근거 보고서 펼침) → 근거 추가·제외(접힘, 원본과 분리 저장)
+//   → 유사 과거 요청 → 승인 여부 확인 → 판정 이력(이전 버전 보존)
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useAddAdjustment, useDecide, useMeta, useRequestDetail, useSearch } from '../api/hooks'
+import { USE_MOCK, fileUrl } from '../api/client'
+import { useAddAdjustment, useDecide, useMeta, useRequestDetail, useRequestList, useSearch } from '../api/hooks'
 import type { Analysis, RequestDetail, Verdict } from '../api/types'
-import { SystemAnswer } from '../components/check/Answer'
-import { QuestionCard } from '../components/check/QuestionCard'
+import { AnalysisView } from '../components/check/Answer'
+import { realFiles } from '../components/check/model'
 import { StatusStepper } from '../components/check/StatusStepper'
 import { checkTitle } from '../components/check/ListBits'
 import { RelatedList } from '../components/check/Related'
-import { PageHead } from '../components/PageHead'
-import { Button, ChoiceChip, ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
-import { IconArrowLeft, IconCheck, IconGavel, IconHistory, IconLayers, IconPlus, IconSearch, IconX } from '../components/icons'
-import { REC_TONE, TONE_CLS, VERDICT_DEF, VERDICT_TONE, countryName, fmtDate } from '../lib/labels'
+import { Page, PageHead } from '../components/PageHead'
+import { Button, ChoiceChip, Collapsible, ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
+import { IconCheck, IconGavel, IconPlus, IconSearch, IconX } from '../components/icons'
+import { REC_TONE, SEVERITY, TONE_CLS, VERDICT_DEF, VERDICT_TONE, countryName, fmtDate } from '../lib/labels'
 import { useUser } from '../lib/user'
 
 export function LegalDetailPage() {
@@ -33,180 +34,292 @@ export function LegalDetailPage() {
 
 function LegalDetail({ d }: { d: RequestDetail }) {
   const { userId } = useUser()
+  const me = useMeta().data?.employees.find((e) => e.employee_id === userId)
   const s = d.summary
   const a = d.analysis
   const latest = d.decisions.length ? d.decisions[d.decisions.length - 1] : null
+  const [full, setFull] = useState(false)
   return (
-    <div className="mx-auto w-full max-w-page px-4 py-6 sm:px-6">
-      <Link to="/legal" className="mb-2 inline-flex items-center gap-1 text-[13px] font-medium text-muted hover:text-fg">
-        <IconArrowLeft size={14} /> 확인 요청 목록
-      </Link>
+    <Page>
       <PageHead
-        eyebrow="법무팀 · 확인 요청"
-        title={<span className="font-mono tracking-normal">{s.request_id}</span>}
-        sub={checkTitle(s)}
+        eyebrow="Legal Review Queue"
+        title="법무 검토함"
+        sub="AI 초안과 원문 근거를 분리해 확인하고 최종 판단을 기록합니다."
         right={
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusStepper status={s.status} verdict={latest?.verdict} compact audience="legal" />
-            <a
-              href="#decision"
-              className="print:hidden press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-sm font-semibold text-on-primary shadow-card hover:bg-primary-hover"
-            >
-              <IconGavel size={15} /> 답변 입력
-            </a>
+          <div className="border border-line bg-surface px-4 py-2 leading-tight">
+            <p className="text-[10.5px] font-semibold text-muted">담당자</p>
+            <p className="text-[13px] font-bold text-fg">{me ? `${me.name} · ${me.department}` : '—'}</p>
           </div>
         }
       />
-      <HeaderStrip d={d} />
 
-      <div className="mx-auto max-w-[60rem]">
-        <Divider n={1}>사원의 질문 (읽기 전용 · 첨부 열람은 감사 로그에 남음)</Divider>
-        <QuestionCard d={d} audience="legal" viewerId={userId} />
-        <Divider n={2}>시스템 답변 (수정 불가 · 확정은 아래 법무팀 답변)</Divider>
-        {a ? <SystemAnswer d={d} a={a} prev={null} audience="legal" reportDefaultOpen /> : <p className="text-[13.5px] text-muted">시스템 답변이 없습니다.</p>}
-      </div>
+      <div className="grid items-start gap-5 xl:grid-cols-[17rem_minmax(0,1fr)]">
+        <Queue current={s.request_id} />
 
-      <div className="print:hidden">
-      <Divider n={3}>법무팀 답변 · 근거 보정</Divider>
-      {/* 법무팀 답변이 주 작업이라 먼저(좁은 화면에서도 위에) — 참고·보정은 옆/아래 */}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <div className="space-y-5">
-          {a ? <DecisionPanel d={d} a={a} reviewerId={userId} /> : <Panel title="법무팀 답변 (승인 여부)">시스템 답변이 없어 판정할 수 없습니다.</Panel>}
-          <HistoryPanel d={d} />
-        </div>
-        <div className="space-y-5">
-          <SimilarPanel d={d} />
-          {a && <AdjustmentPanel d={d} a={a} reviewerId={userId} />}
-        </div>
+        <article aria-label="검토 상세" className="min-w-0 border border-line bg-surface">
+          {/* 요청 머리 */}
+          <header className="flex flex-wrap items-start gap-4 px-6 pt-6 pb-5 sm:px-8">
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-[12.5px] font-bold text-muted">
+                {[...(s.category_choice !== '모름' ? [s.category_choice] : a?.model_categories ?? []), s.channel_code, s.purpose].filter(Boolean).join(' · ') || '기술 후보 없음'}
+              </p>
+              <h2 className="mt-1 text-[1.45rem] leading-snug font-extrabold text-fg">{checkTitle(s)}</h2>
+              <p className="mt-1 text-[12px] text-muted">
+                <span className="font-mono">{s.request_id}</span> · AI 초안은 고정되며 보정 내용은 별도 저장됩니다.
+              </p>
+            </div>
+            {s.recommendation && <span className={cx('shrink-0 border px-4 py-3 text-[13px] font-bold', TONE_CLS[REC_TONE[s.recommendation]].pill)}>{s.recommendation}</span>}
+          </header>
+          <div className="px-6 pb-6 sm:px-8">
+            <FactGrid d={d} />
+            <div className="mt-3 max-w-full overflow-x-auto">
+              <StatusStepper status={s.status} verdict={latest?.verdict} compact audience="legal" />
+            </div>
+          </div>
+
+          {/* 요청 내용 · 첨부 */}
+          <Panel title="요청 내용 · 첨부 파일" sub="권한 있는 검토자만 원본을 열람하며, 열람 이력이 감사 로그에 남습니다.">
+            <p className="border-l-2 border-line-strong pl-3 text-[14px] leading-relaxed whitespace-pre-line text-fg">
+              {d.input.free_text.trim() ? `“${d.input.free_text.trim()}”` : <span className="text-muted">(설명 없이 파일만 요청)</span>}
+            </p>
+            <Attachments d={d} viewer={userId ?? ''} />
+          </Panel>
+
+          {/* AI 초안과 근거 보정 */}
+          {a ? (
+            <Panel title="AI 초안과 판단">
+              <LockedOutput a={a} open={full} onToggle={() => setFull(!full)} />
+              {full && (
+                <div id="ai-full" className="mt-4 animate-fade-in border border-line bg-surface-2/50 p-3 sm:p-4">
+                  <AnalysisView d={d} a={a} prev={null} audience="legal" stack />
+                </div>
+              )}
+              <div className="print:hidden">
+                <AdjustmentPanel d={d} a={a} reviewerId={userId} />
+                <SimilarPanel d={d} inset />
+                <DecisionPanel d={d} a={a} reviewerId={userId} inset />
+              </div>
+            </Panel>
+          ) : (
+            <Panel title="AI 초안과 판단">시스템 분석이 없어 판정할 수 없습니다.</Panel>
+          )}
+
+          <div className="print:hidden">
+            <HistoryPanel d={d} />
+          </div>
+        </article>
       </div>
-      </div>
-    </div>
+    </Page>
   )
 }
 
 /* ---------------- 공통 ---------------- */
 
-function Divider({ children, n }: { children: ReactNode; n?: number }) {
+/** 상세 카드 안의 한 구역 — 위 구분선 + 제목 */
+function Panel({ title, right, children, id, sub, inset }: { title: string; eyebrow?: string; icon?: ReactNode; right?: ReactNode; children: ReactNode; id?: string; sub?: string; /** 칸 안의 하위 구역 (좌우 여백 없음) */ inset?: boolean }) {
   return (
-    <p className="my-6 flex items-center gap-3 text-[12px] font-bold tracking-[0.06em] text-muted">
-      <span className="h-px min-w-6 flex-1 bg-line-strong" />
-      <span className="text-center">
-        {n !== undefined && <span className="mr-1.5 font-mono text-primary-ink">{n}</span>}
-        {children}
-      </span>
-      <span className="h-px min-w-6 flex-1 bg-line-strong" />
-    </p>
-  )
-}
-
-function Panel({ title, icon, right, children, id, sub }: { title: string; icon?: ReactNode; right?: ReactNode; children: ReactNode; id?: string; sub?: string }) {
-  return (
-    <section id={id} className="scroll-mt-20 rounded-card border border-line bg-surface shadow-card">
-      <header className="flex items-start gap-2 border-b border-line px-5 py-3">
-        {icon && <span className="mt-0.5 text-muted">{icon}</span>}
+    <section id={id} className={cx('scroll-mt-24 border-t border-line', inset ? 'mt-6 pt-6' : 'px-6 py-6 sm:px-8')}>
+      <header className="mb-4 flex items-end gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-[15px] font-bold tracking-tight text-fg">{title}</h2>
-          {sub && <p className="text-[12px] text-muted">{sub}</p>}
+          <h3 className="text-[16px] font-extrabold text-fg">{title}</h3>
+          {sub && <p className="mt-0.5 text-[12px] text-muted">{sub}</p>}
         </div>
         {right}
       </header>
-      <div className="px-5 py-4 text-[13.5px] text-fg-2">{children}</div>
+      <div className="text-[13.5px] text-fg-2">{children}</div>
     </section>
   )
 }
 
-/* ---------------- 상단 헤더 ---------------- */
+/* ---------------- 첨부 파일 ---------------- */
 
-function HeaderStrip({ d }: { d: RequestDetail }) {
+function Attachments({ d, viewer }: { d: RequestDetail; viewer: string }) {
+  const files = realFiles(d.analysis)
+  if (!files.length) return <p className="mt-3 text-[12.5px] text-muted">첨부 파일 없음 — 설명만으로 요청했습니다.</p>
+  return (
+    <ul className="mt-4 space-y-2">
+      {files.map((f, i) => {
+        const list = d.input.files[i]?.on_approved_list ?? f.on_approved_list
+        return (
+          <li key={f.asset_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 border border-line px-4 py-3">
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13px] font-bold text-fg" title={f.filename}>
+                {f.filename}
+              </span>
+              <span className="block font-mono text-[11px] text-muted">
+                {f.asset_id} · 원본 해시 기록됨 {f.sha256 ? `(${f.sha256.slice(0, 10)}…)` : ''}
+              </span>
+            </span>
+            <span className={cx('rounded-[2px] px-1.5 text-[11px] font-bold ring-1 ring-inset', list === '포함' ? 'bg-surface text-fg-2 ring-line' : 'bg-review-bg text-review-fg ring-review-line')}>승인도면 목록 {list}</span>
+            {USE_MOCK ? (
+              <button type="button" onClick={() => alert(`[모의 모드] ${fileUrl(f.asset_id, viewer)} 열람 — 열람 이력 기록`)} className="text-[12px] font-bold text-primary-ink hover:underline">
+                미리보기
+              </button>
+            ) : (
+              <a href={fileUrl(f.asset_id, viewer)} target="_blank" rel="noopener noreferrer" className="text-[12px] font-bold text-primary-ink hover:underline">
+                미리보기<span className="sr-only"> (새 탭, {f.filename})</span>
+              </a>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/* ---------------- 고정된 AI 초안 (요약) ---------------- */
+
+function LockedOutput({ a, open, onToggle }: { a: Analysis; open: boolean; onToggle: () => void }) {
+  const hits = a.files.flatMap((f) => f.rule_hits).filter((h) => h.outcome)
+  const seen = new Set<string>()
+  const lines = [...hits]
+    .sort((x, y) => (y.outcome ? SEVERITY[y.outcome] : 0) - (x.outcome ? SEVERITY[x.outcome] : 0))
+    .filter((h) => {
+      const k = `${h.rule_id}|${(h.reason || h.plain || '').trim()}`
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+  const laws = a.clauses.filter((c) => c.status !== '구버전').length
+  return (
+    <div className="border border-line bg-surface-2 px-5 py-4">
+      <p className="text-[10.5px] font-bold tracking-[0.12em] text-teal-ink uppercase">Locked AI Output</p>
+      <p className="mt-2 flex flex-wrap items-center gap-2">
+        <RecPill rec={a.recommendation} size="xs" />
+        <span className="text-[12px] text-muted">기술 후보 {a.model_categories.join(', ') || '없음'}</span>
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {lines.length ? (
+          lines.map((h) => (
+            <li key={`${h.rule_id}-${h.reason}`} className="text-[13px] leading-relaxed text-fg">
+              <IdTag className="mr-1.5 !text-[10.5px] !leading-4">{h.rule_id}</IdTag>
+              {h.reason || h.plain}
+            </li>
+          ))
+        ) : (
+          <li className="text-[13px] text-fg">걸린 규칙이 없습니다.</li>
+        )}
+      </ul>
+      <button type="button" aria-expanded={open} aria-controls="ai-full" onClick={onToggle} className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-bold text-primary-ink hover:underline">
+        {open ? '근거 보고서 접기' : `근거 보고서 전체 보기 · 법령 ${laws} · 판례 ${a.precedents.length}`}
+      </button>
+    </div>
+  )
+}
+
+/* ---------------- 왼쪽 — 미처리 요청 목록 ---------------- */
+
+function Queue({ current }: { current: string }) {
+  const [order, setOrder] = useState<'우선순위' | '최신순'>('우선순위')
+  const q = useRequestList({ status: 'pending' })
+  const when = (r: { submitted_at: string | null; created_at: string }) => r.submitted_at ?? r.created_at
+  const rows = [...(q.data ?? [])].sort((x, y) =>
+    order === '우선순위'
+      ? (y.recommendation ? SEVERITY[y.recommendation] : -1) - (x.recommendation ? SEVERITY[x.recommendation] : -1) || when(y).localeCompare(when(x))
+      : when(y).localeCompare(when(x)),
+  )
+  return (
+    <aside className="border border-line bg-surface max-xl:hidden xl:sticky xl:top-24">
+      <header className="flex items-center gap-2 border-b border-line px-4 py-3">
+        <h2 className="flex-1 text-[13px] font-extrabold text-fg">미처리 요청</h2>
+        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 font-mono text-[11px] font-bold text-on-primary tabular-nums">{q.data?.length ?? '·'}</span>
+      </header>
+      <div role="tablist" aria-label="정렬" className="flex gap-3 border-b border-line px-4 py-2">
+        {(['우선순위', '최신순'] as const).map((o) => (
+          <button key={o} type="button" role="tab" aria-selected={order === o} onClick={() => setOrder(o)} className={cx('text-[12px] font-bold', order === o ? 'text-fg underline underline-offset-4' : 'text-muted hover:text-fg')}>
+            {o}
+          </button>
+        ))}
+      </div>
+      {q.isLoading && <Spinner />}
+      {q.data && !rows.length && <p className="px-4 py-5 text-[12.5px] text-muted">판정을 기다리는 요청이 없습니다.</p>}
+      <ul className="thin-scroll max-h-[70vh] divide-y divide-line overflow-y-auto">
+        {rows.map((r) => {
+          const on = r.request_id === current
+          const high = r.recommendation === '반출 불가' || r.recommendation === '법무팀 검토 필요'
+          return (
+            <li key={r.request_id}>
+              <Link
+                to={`/legal/${encodeURIComponent(r.request_id)}`}
+                aria-current={on ? 'page' : undefined}
+                className={cx('block border-l-2 px-4 py-3', on ? 'border-primary bg-surface-2' : 'border-transparent hover:bg-surface-2')}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="font-mono text-[11.5px] font-bold text-primary-ink">{r.request_id}</span>
+                  <span className={cx('ml-auto text-[10.5px] font-bold', high ? 'text-review-fg' : 'text-muted')}>{high ? '높음' : '보통'}</span>
+                </span>
+                <span className="mt-1 line-clamp-2 block text-[12.5px] leading-snug font-bold text-fg">{checkTitle(r)}</span>
+                <span className="mt-0.5 block truncate text-[11px] text-muted">
+                  {r.employee.name} · {r.employee.department} · {fmtDate(when(r))}
+                </span>
+                <span className="mt-1.5 flex flex-wrap items-center gap-1">
+                  <RecPill rec={r.recommendation} size="xs" />
+                  {r.category_choice !== '모름' && <IdTag className="!text-[10.5px] !leading-4">{r.category_choice}</IdTag>}
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+      <Link to="/legal/requests?tab=done" className="block border-t border-line px-4 py-2.5 text-[12px] font-bold text-primary-ink hover:bg-surface-2">
+        처리 완료 보기 →
+      </Link>
+    </aside>
+  )
+}
+
+/* ---------------- 요청 사실 칸 ---------------- */
+
+function FactGrid({ d }: { d: RequestDetail }) {
   const s = d.summary
   const a = d.analysis
   const rv = (k: string) => a?.resolved?.[k]?.value
   const recipientType = (d.input.recipient_type ?? rv('recipient_type') ?? s.recipient) as string
   const recipientName = d.input.recipient_name || ((rv('recipient_name') as string | null) ?? '')
   const country = s.recipient_country ?? d.input.recipient_country ?? (rv('recipient_country') as string | null)
-  const cells: { k: string; v: ReactNode; mono?: boolean; wide?: boolean }[] = [
-    { k: '확인 ID', v: s.request_id, mono: true },
-    { k: '질의자', v: s.employee.name },
-    { k: '부서', v: s.employee.department },
-    { k: '사번', v: s.employee.employee_id, mono: true },
-    { k: '요청 시각', v: fmtDate(s.submitted_at ?? s.created_at), mono: true },
-    {
-      k: '선택 카테고리',
-      v: (
-        <span className="flex flex-wrap items-center gap-1">
-          {s.category_choice === '모름' ? '잘 모르겠음' : <IdTag tone="primary">{s.category_choice}</IdTag>}
-          {a?.category_mismatch && (
-            <Pill tone="review" size="xs">
-              시스템 후보 {a.model_categories.join('·')}
-            </Pill>
-          )}
-        </span>
-      ),
-    },
-    {
-      k: '목적',
-      v: (
-        <span className="flex flex-wrap items-center gap-1">
-          {s.channel_code && <IdTag>{s.channel_code}</IdTag>}
-          {s.purpose ?? '—'}
-        </span>
-      ),
-    },
-    { k: '수신자 · 국가', v: `${recipientType}${recipientName ? ` (${recipientName})` : ''} · ${countryName(country)}` },
+  const cells: { k: string; v: ReactNode; title?: string; mono?: boolean }[] = [
+    { k: '요청자', v: `${s.employee.name} · ${s.employee.department}`, title: `사번 ${s.employee.employee_id}` },
+    { k: '수신처', v: `${countryName(country)} · ${recipientType}${recipientName ? ` (${recipientName})` : ''}` },
     { k: '전송 방식', v: s.transfer_method ?? '—' },
-    { k: '첨부 파일 수', v: `${s.file_count}건`, mono: true },
+    { k: '요청 시각', v: fmtDate(s.submitted_at ?? s.created_at), mono: true },
   ]
-  const rec = s.recommendation
   return (
-    <section aria-label="확인 요청 헤더" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-nav px-5 py-3 text-nav-fg">
-        <span className="grid size-9 place-items-center rounded-field bg-white/90 text-[13px] font-bold text-primary" aria-hidden>
-          {s.employee.name.slice(-2)}
-        </span>
-        <div className="min-w-0">
-          <p className="text-[15px] font-bold text-white">
-            {s.employee.name} <span className="font-normal text-nav-muted">· {s.employee.department}</span>
-          </p>
-          <p className="text-[11.5px] text-nav-muted">질의자 — “이거 보내도 되나요?”</p>
+    <dl className="grid grid-cols-2 border-t border-l border-line sm:grid-cols-4">
+      {cells.map((c) => (
+        <div key={c.k} title={c.title} className="min-w-0 border-r border-b border-line px-4 py-3">
+          <dt className="text-[10.5px] font-semibold text-muted">{c.k}</dt>
+          <dd className={cx('mt-0.5 truncate text-[13px] font-bold text-fg', c.mono && 'font-mono tabular-nums')}>{c.v}</dd>
         </div>
-        <span className="ml-auto flex items-center gap-2">
-          <span className="text-[12px] text-nav-muted">시스템 권고</span>
-          {rec ? <span className={cx('rounded-pill px-2.5 py-0.5 text-[13px] font-bold ring-1 ring-inset', TONE_CLS[REC_TONE[rec]].pill)}>{rec}</span> : '—'}
-        </span>
-      </div>
-      <dl className="grid grid-cols-2 gap-px bg-line sm:grid-cols-3 lg:grid-cols-5">
-        {cells.map((c) => (
-          <div key={c.k} className="min-w-0 bg-surface px-4 py-2.5">
-            <dt className="text-[10.5px] font-bold tracking-[0.08em] text-muted">{c.k}</dt>
-            <dd className={cx('mt-0.5 truncate text-[13.5px] text-fg', c.mono && 'font-mono tabular-nums')}>{c.v}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+      ))}
+      {a?.category_mismatch && (
+        <p className="col-span-full border-r border-b border-line bg-review-bg/50 px-4 py-2 text-[12px] text-review-fg">
+          사원 선택 {s.category_choice} · 시스템 후보 {a.model_categories.join(', ')} — 두 값이 달라요.
+        </p>
+      )}
+    </dl>
   )
 }
 
 /* ---------------- 유사 과거 요청 ---------------- */
 
-function SimilarPanel({ d }: { d: RequestDetail }) {
+function SimilarPanel({ d, inset }: { d: RequestDetail; inset?: boolean }) {
   return (
-    <Panel title="유사 과거 요청" icon={<IconHistory size={16} />} sub="같은 S 코드 · 같은 수신자 유형으로 처리된 이전 판정 (참고용)">
+    <Panel inset={inset} title="유사 과거 요청" sub="같은 S코드 · 같은 수신자 유형으로 처리된 이전 판정 (참고용)">
       {!d.similar_past.length && <p className="text-muted">유사한 과거 판정이 없습니다.</p>}
-      <ul className="space-y-2">
+      <ul className={cx("grid gap-3", inset ? "sm:grid-cols-2" : "md:grid-cols-3")}>
         {d.similar_past.slice(0, 3).map((p) => (
-          <li key={p.request_id} className="rounded-field border border-line px-3 py-2.5">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Link to={`/legal/${encodeURIComponent(p.request_id)}`} className="font-mono text-[12.5px] font-semibold text-primary-ink hover:underline">
-                {p.request_id}
-              </Link>
-              <IdTag tone="primary">{p.category}</IdTag>
-              <span className="text-[12px] text-muted">{p.recipient_type}</span>
-              <span className="ml-auto flex items-center gap-2">
-                <span className="font-mono text-[11.5px] text-muted tabular-nums">{fmtDate(p.decided_at).slice(0, 10)}</span>
-                <VerdictPill verdict={p.verdict} size="xs" />
-              </span>
-            </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-fg-2">{p.reason}</p>
+          <li key={p.request_id} className="border border-line bg-surface-2/60 px-4 py-3">
+            <Link to={`/legal/${encodeURIComponent(p.request_id)}`} className="font-mono text-[12px] font-bold text-primary-ink hover:underline">
+              {p.request_id}
+            </Link>
+            <p className="mt-1 text-[13px] font-bold text-fg">
+              {p.category} · {p.recipient_type}
+            </p>
+            <p className="mt-1 flex items-center gap-1.5">
+              <VerdictPill verdict={p.verdict} size="xs" />
+              <span className="font-mono text-[11px] text-muted tabular-nums">{fmtDate(p.decided_at).slice(0, 10)}</span>
+            </p>
+            <p className="mt-1.5 line-clamp-3 text-[12px] leading-relaxed text-fg-2">{p.reason}</p>
           </li>
         ))}
       </ul>
@@ -258,7 +371,6 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
   const [remove, setRemove] = useState<string[]>([])
   const [add, setAdd] = useState<string[]>([])
   const [manual, setManual] = useState('')
-  const [note, setNote] = useState('')
   const [err, setErr] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const m = useAddAdjustment(d.summary.request_id)
@@ -283,13 +395,12 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
     if (!reviewerId) return setErr('오른쪽 위 계정에서 법무팀 사용자를 선택해 주세요.')
     if (!all.length && !remove.length) return setErr('추가하거나 제외할 근거를 하나 이상 지정해 주세요.')
     m.mutate(
-      { reviewer_id: reviewerId, add: [...new Set(all)], remove, note },
+      { reviewer_id: reviewerId, add: [...new Set(all)], remove, note: '' },
       {
         onSuccess: () => {
           setRemove([])
           setAdd([])
           setManual('')
-          setNote('')
           setSaved(true)
         },
       },
@@ -297,7 +408,11 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
   }
 
   return (
-    <Panel title="근거 보정" icon={<IconLayers size={16} />} sub="위 출력은 고정됩니다. 조항·판례를 추가·제외한 내역은 원본과 분리해 저장됩니다.">
+    <div className="mt-3 border border-line px-4 py-2">
+      <Collapsible
+        variant="inline"
+        label={`근거 추가·제외 (원본과 분리 저장)${add.length + remove.length ? ` · 선택 ${add.length + remove.length}` : ''}${d.adjustments.length ? ` · 보정 ${d.adjustments.length}건` : ''}`}
+      >
       <p className="mb-1 text-[12.5px] font-semibold text-fg-2">출력 근거에서 제외</p>
       <div className="thin-scroll max-h-56 overflow-y-auto rounded-field border border-line p-1">
         {items.map((it) => (
@@ -355,12 +470,8 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
           </Button>
         </div>
       </div>
-      <label className="mt-3 block">
-        <span className="mb-1 block text-[12.5px] font-semibold text-fg-2">보정 메모</span>
-        <textarea rows={2} className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />
-      </label>
       <Button variant="secondary" onClick={save} disabled={m.isPending} className="mt-3 w-full">
-        {m.isPending ? '저장 중…' : '보정 저장'}
+        {m.isPending ? '저장 중…' : '근거 보정 저장'}
       </Button>
       <ErrorBox error={err ?? m.error} className="mt-2" />
       {saved && (
@@ -399,12 +510,13 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
           ))}
         </ol>
       </div>
-    </Panel>
+      </Collapsible>
+    </div>
   )
 }
 
 /** 근거 검색 (GET /api/search) — 비어 있으면 이 건의 참고 근거(analysis.related)를 먼저 보인다 */
-function EvidenceSearch({ a, added, inOutput, onAdd }: { a: Analysis; added: string[]; inOutput: Set<string>; onAdd: (id: string) => void }) {
+function EvidenceSearch({ a, added, inOutput, onAdd, inputId = 'adj-search' }: { a: Analysis; added: string[]; inOutput: Set<string>; onAdd: (id: string) => void; inputId?: string }) {
   const [q, setQ] = useState('')
   const [dq, setDq] = useState('')
   useEffect(() => {
@@ -416,12 +528,12 @@ function EvidenceSearch({ a, added, inOutput, onAdd }: { a: Analysis; added: str
   const results = showing ? (s.data?.results ?? []) : (a.related ?? [])
   return (
     <div className="mt-3">
-      <label htmlFor="adj-search" className="mb-1 block text-[12.5px] font-semibold text-fg-2">
+      <label htmlFor={inputId} className="mb-1 block text-[12.5px] font-semibold text-fg-2">
         법령·판례 검색
       </label>
       <span className="relative block">
         <IconSearch size={15} className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted" />
-        <input id="adj-search" type="search" className={cx(inputCls, 'pl-8')} value={q} onChange={(e) => setQ(e.target.value)} placeholder="예: 수출 신고, 해외 인증 기술자료, 하도급 기술자료" />
+        <input id={inputId} type="search" className={cx(inputCls, 'pl-8')} value={q} onChange={(e) => setQ(e.target.value)} placeholder="예: 수출 신고, 해외 인증 기술자료, 하도급 기술자료" />
       </span>
       <p className="mt-1 text-[11.5px] text-muted" aria-live="polite">
         {showing
@@ -466,7 +578,7 @@ function EvidenceSearch({ a, added, inOutput, onAdd }: { a: Analysis; added: str
 
 const VERDICTS: Verdict[] = ['승인', '내부 검토 필요', '미승인']
 
-function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; reviewerId: string | null }) {
+function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analysis; reviewerId: string | null; inset?: boolean }) {
   const internalOptions = useMeta().data?.internal_review_options ?? []
   const [verdict, setVerdict] = useState<Verdict | null>(null)
   const [conditions, setConditions] = useState('')
@@ -481,6 +593,8 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
   const options = [...new Set([...internalOptions, ...suggested])]
   const conditionHints = [...new Set(a.files.flatMap((f) => f.rule_hits.flatMap((h) => h.conditions)))]
   const groups = outputEvidence(a)
+  const inOutput = new Set(groups.flatMap((g) => g.items.map((it) => it.id)))
+  const extras = checked.filter((id) => !inOutput.has(id))
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
   const condLines = conditions.split('\n').map((x) => x.trim())
   // backend main.py CONTRARY_VERDICT 와 같은 기준 (진행 가능·조건부 진행 ↔ 미승인, 반출 불가 ↔ 승인)
@@ -520,7 +634,9 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
   return (
     <Panel
       id="decision"
-      title="법무팀 답변 (승인 여부)"
+      inset={inset}
+      eyebrow="Legal Decision"
+      title="승인 여부 확인"
       sub="저장하면 사원 답변 화면 맨 위 '법무팀 답변'과 판단 축 '반출 허가 여부'에 반영됩니다"
       icon={<IconGavel size={16} />}
       right={
@@ -627,9 +743,10 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
 
       <div className="mt-4">
         <p className="mb-1 flex items-center text-[12.5px] font-semibold text-fg-2">
-          판단에 쓴 근거 (출력 항목 중 체크)
+          판단에 쓴 근거 <span className="ml-1.5 font-normal text-muted">(선택 · AI 초안 밖의 법령·판례도 넣을 수 있어요)</span>
           <span className="ml-auto text-[11.5px] font-normal text-muted tabular-nums">{checked.length}개 선택</span>
         </p>
+        <p className="mb-1 text-[11.5px] font-semibold text-muted">AI 초안의 근거</p>
         <div className="thin-scroll max-h-72 overflow-y-auto rounded-field border border-line p-1">
           {groups.map((g) => (
             <fieldset key={g.label} className="mb-1 last:mb-0">
@@ -656,6 +773,25 @@ function DecisionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; re
         </div>
       </div>
 
+      <div className="mt-3">
+        <p className="mb-1 text-[11.5px] font-semibold text-muted">직접 찾아 넣은 근거</p>
+        {extras.length > 0 ? (
+          <ul className="mb-1 flex flex-wrap gap-1.5" aria-label="직접 찾아 넣은 근거">
+            {extras.map((id) => (
+              <li key={id} className="inline-flex items-center gap-1 rounded-pill bg-primary-soft py-0.5 pr-1 pl-2.5 font-mono text-[11.5px] text-primary-ink ring-1 ring-primary-line ring-inset">
+                {id}
+                <button type="button" onClick={() => toggle(checked, setChecked, id)} aria-label={`${id} 빼기`} className="grid size-5 place-items-center rounded-full hover:bg-surface/60">
+                  <IconX size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[12px] text-muted">아래에서 검색해 ‘근거에 추가’를 누르면 여기에 들어가요.</p>
+        )}
+        <EvidenceSearch a={a} added={checked} inOutput={inOutput} onAdd={(id) => setChecked((l) => (l.includes(id) ? l : [...l, id]))} inputId="decision-search" />
+      </div>
+
       <Button size="lg" onClick={save} disabled={m.isPending} className="mt-4 w-full">
         {m.isPending ? '저장 중…' : d.decisions.length ? `판정 저장 (v${d.decisions.length + 1}, 이전 버전 보존)` : '판정 저장'}
       </Button>
@@ -677,7 +813,7 @@ function HistoryPanel({ d }: { d: RequestDetail }) {
   const who = (id: string) => people.find((e) => e.employee_id === id)?.name ?? id
   const list = [...d.decisions].sort((a, b) => b.version - a.version)
   return (
-    <Panel title="판정 이력" icon={<IconHistory size={16} />} right={<span className="font-mono text-[12px] text-muted tabular-nums">{list.length}건</span>} sub="수정하면 새 버전으로 저장되고 이전 버전은 보존됩니다">
+    <Panel eyebrow="Decision Log" title="판정 이력" right={<span className="font-mono text-[12px] text-muted tabular-nums">{list.length}건</span>} sub="수정하면 새 버전으로 저장되고 이전 버전은 보존됩니다">
       {!list.length && <p className="text-muted">아직 판정이 없습니다.</p>}
       <ol className="relative space-y-4 border-l border-line pl-4">
         {list.map((x, i) => (
