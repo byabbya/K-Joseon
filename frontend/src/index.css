@@ -52,10 +52,10 @@
 
   --focus: #1c6fd1;
   --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
-  /* 붉은 카드 유리 질감 (Liquid Glass) — 머리 띠는 벽돌빛 90~96% 라 흰 글자 4.8:1 이상 */
-  --alert-rgb: 185 58 64;
+  /* 붉은 카드 유리 질감 (Liquid Glass) — 머리 띠는 딥 버건디 (#6e1a2a) 90~96% — 흰 글자 9:1 이상 */
+  --alert-rgb: 110 26 42;
   --glass-alert-1: rgb(255 255 255 / 0.6);
-  --glass-alert-2: rgb(248 225 226 / 0.55);
+  --glass-alert-2: rgb(246 226 231 / 0.55);
   --glass-edge: rgb(255 255 255 / 0.8);
 
   /* 권고 4색 (bg / fg / line / dot) */
@@ -118,9 +118,9 @@
     --wave-3: rgb(40 80 140 / 0.07);
     --focus: #7fb6f0;
     --alert: #9b2f35;
-    --alert-rgb: 155 47 53;
-    --glass-alert-1: rgb(58 28 30 / 0.62);
-    --glass-alert-2: rgb(40 22 24 / 0.62);
+    --alert-rgb: 120 32 48;
+    --glass-alert-1: rgb(56 26 32 / 0.62);
+    --glass-alert-2: rgb(40 20 26 / 0.62);
     --glass-edge: rgb(255 255 255 / 0.14);
     --go-bg: #142a22;
     --go-fg: #92cfb4;
@@ -314,10 +314,10 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.85),
       inset 0 0 0 1px rgb(var(--alert-rgb) / 0.12),
-      0 12px 32px -14px rgb(120 30 40 / 0.32),
+      0 12px 32px -14px rgb(90 18 34 / 0.32),
       0 2px 6px rgb(15 42 79 / 0.06);
   }
-  /* 머리 띠 — 반투명 벽돌빛 유리. 빛 반사는 글자가 없는 윗가장자리 12px 안에만 */
+  /* 머리 띠 — 반투명 버건디 유리. 빛 반사는 글자가 없는 윗가장자리 12px 안에만 */
   .glass-alert-head {
     background:
       linear-gradient(to bottom, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.1) 5px, transparent 12px),
