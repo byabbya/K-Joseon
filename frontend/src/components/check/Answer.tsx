@@ -7,9 +7,9 @@ import { useMeta } from '../../api/hooks'
 import type { Analysis, FileResult, RequestDetail, RequestInput, RuleHit } from '../../api/types'
 import { REC_HEADLINE, REC_TONE, SEVERITY, TONE_CLS } from '../../lib/labels'
 import { useUser } from '../../lib/user'
-import { Button, IdTag, RecPill, cx } from '../ui'
+import { Button, ExtLink, IdTag, RecPill, cx } from '../ui'
 import { IconAlert, IconArrowLeft, IconCheck, IconChevronDown, IconFileDrawing, IconLayers, IconPaperclip, IconScale } from '../icons'
-import { Cite, CitationProvider, CitedText, type Citations } from './citations'
+import { Cite, CitationProvider, CitedText, OPEN_REPORT_EVENT, type Citations } from './citations'
 import { Panel } from '../PageHead'
 import { ApprovalLinePanel } from './Approval'
 import { MissingQuestions, type Apply } from './FollowUps'
@@ -43,7 +43,7 @@ export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 
   return (
     <CitationProvider a={p.a} catLabel={catLabel} audience={p.audience}>
       {(cit) => (
-        <div className={cx('grid gap-5 transition-opacity duration-200', p.stack ? '2xl:grid-cols-[minmax(0,1fr)_20rem]' : 'lg:grid-cols-[minmax(0,1fr)_21rem]', p.busy && 'opacity-55')} aria-busy={p.busy}>
+        <div className={cx('grid grid-cols-1 gap-5 transition-opacity duration-200', p.stack ? '2xl:grid-cols-[minmax(0,1fr)_20rem]' : 'lg:grid-cols-[minmax(0,1fr)_21rem]', p.busy && 'opacity-55')} aria-busy={p.busy}>
           <p className="sr-only" aria-live="polite">
             {p.busy ? '다시 확인 중입니다.' : `사전 권고: ${REC_HEADLINE[p.a.recommendation]}`}
           </p>
@@ -53,8 +53,8 @@ export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 
             <StatTiles a={p.a} />
             {p.a.missing.length > 0 && p.a.recommendation !== '반출 불가' && (
               <div id="missing" className="scroll-mt-24">
-                <Panel eyebrow="Missing Check" title="확인해 주세요" right={<span className="grid h-6 min-w-6 place-items-center rounded-full bg-cond-bg px-2 font-mono text-[12px] font-bold text-cond-fg ring-1 ring-cond-line">{p.a.missing.length}</span>} bodyClass="px-4 py-1">
-                  <p className="px-1 pt-2 text-[12.5px] text-muted">{p.onAnswer ? '답을 고르면 바로 다시 분석해요. 몰라도 괜찮아요.' : '사원이 아직 답하지 않은 항목입니다.'}</p>
+                <Panel tone="alert" eyebrow="Missing Check" title="확인해 주세요" right={<span className="grid h-7 min-w-7 place-items-center rounded-full bg-white px-2 font-mono text-[13px] font-bold text-stop-fg">{p.a.missing.length}</span>} bodyClass="px-4 py-1">
+                  <p className="px-1 pt-3 text-[13px] font-semibold text-stop-fg">{p.onAnswer ? '답을 고르면 바로 다시 분석해요. 몰라도 괜찮아요.' : '사원이 아직 답하지 않은 항목입니다.'}</p>
                   <MissingQuestions a={p.a} input={p.d.input} onAnswer={p.onAnswer} busy={p.busy} />
                 </Panel>
               </div>
@@ -163,22 +163,22 @@ function StatTiles({ a }: { a: Analysis }) {
         const body = (
           <>
             <span className="flex items-center gap-1.5 text-[12px] font-semibold text-muted">
-              <span aria-hidden className={cx('grid size-6 place-items-center rounded-full', t.warn ? 'bg-cond-bg text-cond-fg' : 'bg-primary-soft text-primary-ink')}>
+              <span aria-hidden className={cx('grid size-6 place-items-center rounded-full', t.warn ? 'bg-alert text-white' : 'bg-primary-soft text-primary-ink')}>
                 {t.icon}
               </span>
               {t.label}
             </span>
-            <span className={cx('mt-2 block truncate text-[1.6rem] leading-none font-extrabold tabular-nums', t.warn ? 'text-cond-fg' : 'text-fg')}>
+            <span className={cx('mt-2 block truncate text-[1.6rem] leading-none font-extrabold tabular-nums', t.warn ? 'text-stop-fg' : 'text-fg')}>
               {t.value}
               {t.unit && <span className="ml-1 text-[13px] font-bold text-fg-2">{t.unit}</span>}
             </span>
-            <span className="mt-1.5 block truncate text-[12px] text-muted">{t.sub}</span>
+            <span className={cx('mt-1.5 block truncate text-[12px]', t.warn ? 'font-semibold text-stop-fg' : 'text-muted')}>{t.sub}</span>
           </>
         )
         return (
           <li key={t.label}>
             {t.href ? (
-              <a href={t.href} className="block rounded-card border border-line bg-surface px-4 py-4 shadow-card transition-colors duration-150 hover:border-primary-line">
+              <a href={t.href} className={cx('block rounded-card border px-4 py-4 shadow-card transition-colors duration-150', t.warn ? 'border-stop-line bg-stop-bg hover:border-stop-dot' : 'border-line bg-surface hover:border-primary-line')}>
                 {body}
               </a>
             ) : (
@@ -196,16 +196,16 @@ function TodoCard({ d, a, onAttach, busy, audience, nextStep }: SystemAnswerProp
   const rec = a.recommendation
   const missing = rec === '반출 불가' ? 0 : a.missing.length
   return (
-    <section id="todo-card" aria-labelledby="todo-title" className="scroll-mt-24 overflow-hidden rounded-card border border-line bg-surface shadow-card">
-      <div className="border-b border-line px-5 pt-4 pb-3">
-        <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Next Actions</p>
-        <h2 id="todo-title" className="mt-0.5 text-[15px] font-extrabold text-fg">
+    <section id="todo-card" aria-labelledby="todo-title" className="scroll-mt-24 overflow-hidden rounded-card border border-stop-line bg-stop-bg shadow-card">
+      <div className="bg-alert px-5 pt-4 pb-3">
+        <p className="text-[11.5px] font-bold tracking-[0.12em] text-white/85 uppercase">Next Actions</p>
+        <h2 id="todo-title" className="mt-0.5 text-[16px] font-extrabold text-white">
           할 일
         </h2>
       </div>
       <div className="space-y-4 px-5 py-4">
         {missing > 0 && (
-          <a href="#missing" className="flex items-center gap-2 rounded-field bg-cond-bg px-3 py-2 text-[13px] font-semibold text-cond-fg ring-1 ring-cond-line ring-inset hover:underline">
+          <a href="#missing" className="flex items-center gap-2 rounded-field bg-surface px-3 py-2.5 text-[13px] font-bold text-stop-fg ring-1 ring-stop-line ring-inset hover:underline">
             <IconAlert size={15} className="shrink-0" />
             빠진 정보 {missing}개에 답하기
             <IconArrowLeft size={13} className="ml-auto rotate-180" />
@@ -223,8 +223,8 @@ function TodoCard({ d, a, onAttach, busy, audience, nextStep }: SystemAnswerProp
             </Button>
           </p>
         )}
-        <p className="rounded-field border border-cond-line bg-cond-bg px-3 py-2 text-[11.5px] leading-snug text-cond-fg">이 권고는 자동 승인이 아닙니다. 확인 항목을 지키고, 법무팀 확인이 필요하면 답을 받은 뒤 보내세요.</p>
-        {nextStep && <div className="border-t border-line pt-4">{nextStep}</div>}
+        <p className="rounded-field border border-stop-line bg-surface px-3 py-2 text-[11.5px] leading-snug text-fg-2">이 권고는 자동 승인이 아닙니다. 확인 항목을 지키고, 법무팀 확인이 필요하면 답을 받은 뒤 보내세요.</p>
+        {nextStep && <div className="border-t border-stop-line pt-4">{nextStep}</div>}
       </div>
     </section>
   )
@@ -273,22 +273,130 @@ function CandidatesPanel({ a }: { a: Analysis }) {
   )
 }
 
-/** 적용 검토 근거 — 근거 보고서를 펼친 채로 */
+/** 적용 검토 근거 — 보드형: 법령 층(①~④)과 판례·의결을 칸으로 나눠 카드로 보인다.
+ *  요약·판단 축·파일별 판단·출처 목록이 든 근거 보고서 전체는 아래에서 펼친다 (인용 칩을 누르면 자동으로 펼침). */
+const BOARD_LAYERS: { order: number; title: string; sub: string }[] = [
+  { order: 1, title: '고시 해당 기술', sub: '국가핵심기술 지정 고시 별표' },
+  { order: 2, title: '산업기술보호법', sub: '보호조치 · 수출 승인·신고' },
+  { order: 3, title: '산업기술보호지침', sub: '반출 통제 · 외주 · 외국인' },
+  { order: 4, title: '기타 법령', sub: '대외무역법 · 연구개발혁신법 · 하도급법' },
+]
+const CIRCLED_NO = ['', '①', '②', '③', '④', '⑤']
+
 function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis | null; d: RequestDetail; audience: Audience }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const on = () => setOpen(true)
+    document.addEventListener(OPEN_REPORT_EVENT, on)
+    return () => document.removeEventListener(OPEN_REPORT_EVENT, on)
+  }, [])
   const laws = a.clauses.filter((c) => c.status !== '구버전').length
+  // 사원 화면에는 규칙 번호([R04]) 를 보이지 않는다
+  const plain = (t: string) => (audience === 'legal' ? t : t.replace(/\[(?:R|P)\d{1,2}[a-z]?\]\s*/g, '').trim())
+  const cols = [
+    ...BOARD_LAYERS.map((l) => ({ key: `L${l.order}`, no: CIRCLED_NO[l.order], title: l.title, sub: l.sub, clauses: a.clauses.filter((c) => c.order === l.order).sort((x, y) => Number(x.status === '구버전') - Number(y.status === '구버전')), cases: [] as Analysis['precedents'] })),
+    { key: 'P', no: CIRCLED_NO[5], title: '판례 · 공정위 의결', sub: '비슷한 사건의 판단', clauses: [] as Analysis['clauses'], cases: a.precedents },
+  ].filter((c) => c.clauses.length || c.cases.length)
   return (
     <Panel
       id="evidence"
       eyebrow="Legal Evidence"
       title="적용 검토 근거"
       right={
-        <span className="text-[12px] text-muted">
+        <span className="text-[12px] font-semibold text-fg-2">
           법령·지침 {laws} · 판례·의결 {a.precedents.length}
         </span>
       }
       className="print:border-0"
     >
-      <Report a={a} prev={prev} decisions={d.decisions} audience={audience} />
+      {cols.length ? (
+        <div className="thin-scroll relative overflow-x-auto px-4 py-4">
+          <ol className="grid auto-cols-[minmax(15rem,1fr)] grid-flow-col gap-3" aria-label="근거 보드">
+            {cols.map((c) => (
+              <li key={c.key} className="flex min-w-0 flex-col rounded-field bg-surface-2 p-2.5 ring-1 ring-line ring-inset">
+                <div className="mb-2 flex items-start gap-2 px-1">
+                  <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-[12px] font-bold text-on-primary">
+                    {c.no}
+                  </span>
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block text-[13px] font-extrabold text-fg">{c.title}</span>
+                    <span className="block truncate text-[11.5px] text-muted">{c.sub}</span>
+                  </span>
+                  <span className="rounded-pill bg-surface px-2 font-mono text-[11.5px] font-bold text-fg-2 ring-1 ring-line">{c.clauses.length + c.cases.length}</span>
+                </div>
+                <ul className="space-y-2">
+                  {c.clauses.map((x) => (
+                    <li key={x.clause_id} className={cx('rounded-field border border-line bg-surface p-3 shadow-card', x.status === '구버전' && 'opacity-70')}>
+                      <p className="flex items-center gap-1.5">
+                        <Cite ids={[x.clause_id]} />
+                        <span className={cx('rounded-pill px-2 text-[11px] font-bold ring-1 ring-inset', x.status === '구버전' ? 'bg-surface-2 text-muted ring-line' : 'bg-go-bg text-go-fg ring-go-line')}>{x.status === '구버전' ? '구버전' : '현행'}</span>
+                        <span className="ml-auto font-mono text-[11px] text-muted">시행 {x.effective_date}</span>
+                      </p>
+                      <p className={cx('mt-1.5 text-[13px] leading-snug font-bold text-fg', x.status === '구버전' && 'line-through')}>
+                        {x.layer === 'notice' ? '국가핵심기술 고시' : x.law_name} {x.article_no}
+                      </p>
+                      {x.title && <p className="mt-0.5 text-[12px] leading-snug text-fg-2">{x.title}</p>}
+                      {x.why && (
+                        <p className="mt-2 rounded-[6px] bg-primary-soft/60 px-2 py-1.5 text-[12px] leading-relaxed text-fg">
+                          <span className="font-bold text-primary-ink">왜 · </span>
+                          {plain(x.why)}
+                        </p>
+                      )}
+                      {x.source_url && (
+                        <p className="mt-2 text-right text-[11.5px]">
+                          <ExtLink href={x.source_url}>원문</ExtLink>
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                  {c.cases.map((x) => (
+                    <li key={x.case_id} className="rounded-field border border-line bg-surface p-3 shadow-card">
+                      <p className="flex items-center gap-1.5">
+                        <Cite ids={[x.case_id]} />
+                        <span className="rounded-pill bg-teal-soft px-2 text-[11px] font-bold text-teal-ink ring-1 ring-teal-line ring-inset">{x.card_type === 'principle' ? '법리' : x.kind}</span>
+                        {x.review_status !== 'approved' && <span className="rounded-pill bg-surface-2 px-2 text-[11px] font-semibold text-muted ring-1 ring-line ring-inset">요약 초안</span>}
+                        <span className="ml-auto font-mono text-[11px] text-muted">{x.decision_date}</span>
+                      </p>
+                      <p className="mt-1.5 text-[13px] leading-snug font-bold text-fg">
+                        {x.court} {x.case_no}
+                      </p>
+                      {x.title && <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-fg-2">{x.title}</p>}
+                      {x.w5h1?.how_judged && (
+                        <p className="mt-2 line-clamp-4 rounded-[6px] bg-teal-soft/60 px-2 py-1.5 text-[12px] leading-relaxed text-fg">
+                          <span className="font-bold text-teal-ink">판단 · </span>
+                          {x.w5h1.how_judged}
+                        </p>
+                      )}
+                      {x.similarity && <p className="mt-1.5 line-clamp-2 text-[11.5px] text-muted">비슷한 점 · {x.similarity}</p>}
+                      {x.source_url && (
+                        <p className="mt-2 text-right text-[11.5px]">
+                          <ExtLink href={x.source_url}>원문</ExtLink>
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : (
+        <p className="px-5 py-4 text-[13px] text-muted">연결된 근거가 없습니다.</p>
+      )}
+      <div className="border-t border-line">
+        <button type="button" aria-expanded={open} aria-controls="report-body" onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-5 py-3 text-left text-[13px] font-bold text-primary-ink hover:bg-surface-2">
+          {open ? '근거 보고서 접기' : '근거 보고서 전체 보기'}
+          <span className="font-normal text-muted">요약 · 판단 축 4개 · 파일별 판단 · 출처 목록</span>
+          <IconChevronDown size={16} className={cx('ml-auto shrink-0 text-muted transition-transform duration-200', open && 'rotate-180')} />
+        </button>
+        <div id="report-body" className="collapse-grid" data-open={open} inert={!open}>
+          <div>
+            <div className="border-t border-line">
+              <Report a={a} prev={prev} decisions={d.decisions} audience={audience} />
+            </div>
+          </div>
+        </div>
+      </div>
     </Panel>
   )
 }
@@ -541,7 +649,7 @@ function Explanation({ a }: { a: Analysis }) {
   if (!body) return null
   return (
     <section aria-label="자세한 설명" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
-      <button type="button" aria-expanded={open} aria-controls="answer-body" onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 px-5 py-3.5 text-left hover:bg-surface-2 sm:px-7">
+      <button type="button" aria-expanded={open} aria-controls="answer-body" onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 bg-primary-soft/70 px-5 py-3.5 text-left hover:bg-primary-soft sm:px-7">
         <span className="flex-1 text-[15px] font-bold tracking-tight text-fg">자세한 설명</span>
         <IconChevronDown size={18} className={cx('shrink-0 text-muted transition-transform duration-200', open && 'rotate-180')} />
       </button>
@@ -567,7 +675,7 @@ function DrawingSection({ a }: { a: Analysis }) {
   if (!items.length) return null
   return (
     <section aria-labelledby="drawing-title" className="rounded-card border border-line bg-surface shadow-card print:break-inside-avoid-page">
-      <header className="border-b border-line px-5 py-3 sm:px-7">
+      <header className="border-b border-line bg-primary-soft/70 px-5 py-3 sm:px-7">
         <h2 id="drawing-title" className="flex items-center gap-1.5 text-[15px] font-bold tracking-tight text-fg">
           <IconFileDrawing size={16} className="text-muted" />
           도면 분석

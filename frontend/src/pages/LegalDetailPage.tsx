@@ -222,7 +222,7 @@ function Queue({ current }: { current: string }) {
   )
   return (
     <aside className="overflow-hidden rounded-card border border-line bg-surface shadow-card max-xl:hidden xl:sticky xl:top-24">
-      <header className="flex items-center gap-2 border-b border-line px-4 py-3">
+      <header className="flex items-center gap-2 border-b border-line bg-primary-soft/70 px-4 py-3">
         <h2 className="flex-1 text-[13px] font-extrabold text-fg">미처리 요청</h2>
         <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 font-mono text-[11px] font-bold text-on-primary tabular-nums">{q.data?.length ?? '·'}</span>
       </header>

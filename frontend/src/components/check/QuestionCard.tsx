@@ -45,7 +45,7 @@ export function QuestionCard(p: QuestionCardProps) {
 
   return (
     <section aria-labelledby="question-title" className="rounded-card border border-line bg-surface shadow-card">
-      <header className="flex flex-wrap items-end gap-x-3 gap-y-1 border-b border-line px-5 py-4 sm:px-6">
+      <header className="flex flex-wrap items-end gap-x-3 gap-y-1 border-b border-line bg-primary-soft/70 px-5 py-4 sm:px-6">
         <div>
           <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Structured Facts</p>
           <h2 id="question-title" className="mt-0.5 scroll-mt-24 text-[16px] font-extrabold text-fg">

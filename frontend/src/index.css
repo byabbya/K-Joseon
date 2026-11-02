@@ -51,6 +51,7 @@
   --wave-3: rgb(206 226 247 / 0.5);
 
   --focus: #1c6fd1;
+  --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
 
   /* 권고 4색 (bg / fg / line / dot) */
   --go-bg: #e8f3ee;
@@ -111,6 +112,7 @@
     --wave-2: rgb(74 168 214 / 0.08);
     --wave-3: rgb(40 80 140 / 0.14);
     --focus: #7fb6f0;
+    --alert: #9b2f35;
     --go-bg: #142a22;
     --go-fg: #92cfb4;
     --go-line: #2a5444;
@@ -172,6 +174,7 @@
   --color-teal-soft: var(--teal-soft);
   --color-teal-line: var(--teal-line);
   --color-focus: var(--focus);
+  --color-alert: var(--alert);
 
   --color-go-bg: var(--go-bg);
   --color-go-fg: var(--go-fg);

@@ -515,7 +515,7 @@ function Recent({ userId }: { userId: string | null }) {
   if (!userId || !rows.length) return null
   return (
     <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
-      <header className="flex items-baseline border-b border-line px-5 py-3">
+      <header className="flex items-baseline border-b border-line bg-primary-soft/70 px-5 py-3">
         <h2 className="text-[13px] font-extrabold text-fg">최근 내 요청</h2>
         <Link to="/history" className="ml-auto text-[12px] font-semibold text-primary-ink hover:underline">
           전체 보기 →

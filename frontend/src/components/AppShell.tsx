@@ -94,14 +94,14 @@ export function AppShell() {
       </a>
 
       {/* 사이드바 */}
-      <aside className="app-sidebar sticky top-0 flex h-dvh w-[13rem] shrink-0 flex-col border-r border-line bg-surface max-lg:hidden">
-        <Link to={ROLE_HOME[role]} className="flex items-center gap-3 border-b border-line px-5 py-5">
-          <span className="grid size-9 place-items-center rounded-[3px] bg-surface-2 ring-1 ring-line ring-inset">
+      <aside className="app-sidebar sticky top-0 flex h-dvh w-[13rem] shrink-0 flex-col bg-nav text-nav-fg max-lg:hidden">
+        <Link to={ROLE_HOME[role]} className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+          <span className="grid size-9 place-items-center rounded-field bg-white/95 text-primary ring-1 ring-white/20 ring-inset">
             <LogoMark size={22} />
           </span>
           <span className="leading-tight">
-            <span className="block text-[15px] font-extrabold tracking-[0.08em] text-fg">K-SHIP</span>
-            <span className="block text-[11px] font-semibold tracking-[0.2em] text-muted">GUARD AX</span>
+            <span className="block text-[15px] font-extrabold tracking-[0.08em] text-white">K-SHIP</span>
+            <span className="block text-[11px] font-semibold tracking-[0.2em] text-nav-muted">GUARD AX</span>
           </span>
           {USE_MOCK && <span className="ml-auto rounded-[2px] bg-cond-bg px-1 font-mono text-[11px] font-bold text-cond-fg ring-1 ring-cond-line">MOCK</span>}
         </Link>
@@ -116,12 +116,12 @@ export function AppShell() {
                 end
                 aria-current={active ? 'page' : undefined}
                 className={cx(
-                  'flex h-10 items-center gap-2 rounded-[3px] border-l-2 px-3 text-[13.5px] transition-colors duration-150',
-                  active ? 'border-primary bg-surface-3 font-bold text-fg' : 'border-transparent font-medium text-fg-2 hover:bg-surface-2 hover:text-fg',
+                  'flex h-10 items-center gap-2 rounded-field border-l-[3px] px-3 text-[13.5px] transition-colors duration-150',
+                  active ? 'border-teal-line bg-white/12 font-bold text-white' : 'border-transparent font-medium text-nav-muted hover:bg-white/6 hover:text-white',
                 )}
               >
                 <span className="flex-1">{n.label}</span>
-                {!!count && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-surface-3 px-1.5 font-mono text-[11px] font-bold text-fg-2 tabular-nums ring-1 ring-line">{count}</span>}
+                {!!count && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-white/15 px-1.5 font-mono text-[11px] font-bold text-white tabular-nums">{count}</span>}
               </NavLink>
             )
           })}
@@ -131,7 +131,7 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar name={name} />
         {/* 좁은 화면 탭 줄 */}
-        <nav aria-label="주 메뉴" className="app-topbar flex gap-1 overflow-x-auto border-b border-line bg-surface px-4 lg:hidden">
+        <nav aria-label="주 메뉴" className="app-topbar flex gap-1 overflow-x-auto border-t border-white/10 bg-nav px-4 lg:hidden">
           {items.map((n) => {
             const active = n.match(loc.pathname)
             return (
@@ -140,10 +140,10 @@ export function AppShell() {
                 to={n.to}
                 end
                 aria-current={active ? 'page' : undefined}
-                className={cx('relative flex h-11 shrink-0 items-center px-3 text-[13.5px]', active ? 'font-bold text-fg' : 'font-medium text-muted')}
+                className={cx('relative flex h-11 shrink-0 items-center px-3 text-[13.5px]', active ? 'font-bold text-white' : 'font-medium text-nav-muted')}
               >
                 {n.label}
-                <span aria-hidden className={cx('absolute inset-x-2 bottom-0 h-0.5 bg-primary', active ? 'opacity-100' : 'opacity-0')} />
+                <span aria-hidden className={cx('absolute inset-x-2 bottom-0 h-0.5 bg-teal-line', active ? 'opacity-100' : 'opacity-0')} />
               </NavLink>
             )
           })}
@@ -170,17 +170,17 @@ export function AppShell() {
 function TopBar({ name }: { name: string }) {
   const meta = useMeta()
   return (
-    <header className="app-topbar sticky top-0 z-40 border-b border-line bg-surface/80 backdrop-blur-md">
+    <header className="app-topbar sticky top-0 z-40 bg-nav text-nav-fg shadow-[0_1px_0_rgb(255_255_255/0.06)]">
       <div className="flex min-h-16 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 lg:px-8">
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-[16px] font-extrabold tracking-[0.02em] text-fg">K-SHIP GUARD AX</p>
-          <p className="truncate text-[11.5px] text-muted">
+          <p className="truncate text-[16px] font-extrabold tracking-[0.02em] text-white">K-SHIP GUARD AX</p>
+          <p className="truncate text-[11.5px] text-nav-muted">
             Technology Transfer Compliance{name ? ` · ${name}` : ''}
           </p>
         </div>
         <div className="flex items-center gap-4 max-md:hidden">
-          <Stat label="기준 정보" value={<>{today()} · {meta.isError ? <span className="text-stop-fg">연결 안 됨</span> : '정상'}</>} dot={meta.isError ? 'stop' : 'go'} />
-          <span aria-hidden className="h-8 w-px bg-line" />
+          <Stat label="기준 정보" value={<>{today()} · {meta.isError ? <span className="text-[#ffb4b6]">연결 안 됨</span> : '정상'}</>} dot={meta.isError ? 'stop' : 'go'} />
+          <span aria-hidden className="h-8 w-px bg-white/15" />
           <Stat label="KST" value={<Clock />} />
         </div>
         <RoleSwitch />
@@ -200,8 +200,8 @@ function Stat({ label, value, dot }: { label: string; value: React.ReactNode; do
     <div className="flex items-center gap-2">
       {dot && <span aria-hidden className={cx('size-1.5 rounded-full', dot === 'go' ? 'bg-go-dot' : 'bg-stop-dot')} />}
       <div className="leading-tight">
-        <p className="text-[11px] font-semibold tracking-[0.04em] text-muted">{label}</p>
-        <p className="font-mono text-[12.5px] font-bold text-fg tabular-nums">{value}</p>
+        <p className="text-[11px] font-semibold tracking-[0.04em] text-nav-muted">{label}</p>
+        <p className="font-mono text-[12.5px] font-bold text-white tabular-nums">{value}</p>
       </div>
     </div>
   )
@@ -225,7 +225,7 @@ function RoleSwitch() {
     { r: 'legal', label: '법무 담당' },
   ]
   return (
-    <RadioGroup label="역할" className="flex rounded-[3px] bg-surface p-0.5 ring-1 ring-line ring-inset">
+    <RadioGroup label="역할" className="flex rounded-field bg-white/8 p-0.5 ring-1 ring-white/15 ring-inset">
       {opts.map((o) => {
         const sel = role === o.r
         return (
@@ -240,8 +240,8 @@ function RoleSwitch() {
               nav(ROLE_HOME[o.r])
             }}
             className={cx(
-              'h-8 rounded-[2px] px-3 text-[12.5px] font-bold transition-colors duration-150',
-              sel ? 'bg-primary-soft text-primary-ink ring-1 ring-primary-line ring-inset' : 'text-muted hover:text-fg',
+              'h-8 rounded-[6px] px-3 text-[12.5px] font-bold transition-colors duration-150',
+              sel ? 'bg-white text-primary' : 'text-nav-muted hover:text-white',
             )}
           >
             {o.label}
@@ -280,20 +280,20 @@ function AccountChip() {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex h-10 items-center gap-2.5 border-l border-line pl-4 text-left"
+        className="flex h-10 items-center gap-2.5 border-l border-white/15 pl-4 text-left"
       >
-        <span aria-hidden className="grid size-8 place-items-center rounded-[3px] bg-primary text-[13px] font-bold text-on-primary">
+        <span aria-hidden className="grid size-8 place-items-center rounded-field bg-white text-[13px] font-bold text-primary">
           {me?.name.slice(0, 1) ?? '—'}
         </span>
         <span className="leading-tight max-sm:hidden">
-          <span className="block text-[13px] font-bold text-fg">{me?.name ?? '사용자 선택'}</span>
-          <span className="block text-[11px] text-muted">
+          <span className="block text-[13px] font-bold text-white">{me?.name ?? '사용자 선택'}</span>
+          <span className="block text-[11px] text-nav-muted">
             {me?.department ?? ''}
             {me ? ` · ${role === 'legal' ? '승인권자' : me.employee_id}` : ''}
           </span>
         </span>
         <span className="sr-only">사용자 바꾸기</span>
-        <IconChevronDown size={14} className={cx('text-muted transition-transform duration-150', open && 'rotate-180')} />
+        <IconChevronDown size={14} className={cx('text-nav-muted transition-transform duration-150', open && 'rotate-180')} />
       </button>
       {open && (
         <div role="dialog" aria-label="시연용 사용자" className="absolute top-full right-0 z-50 mt-2 w-64 animate-pop-in rounded-card border border-line bg-surface p-2 text-fg shadow-pop">

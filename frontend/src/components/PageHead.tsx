@@ -60,7 +60,7 @@ export function FlowSteps({ current, done = 0 }: { current: 1 | 2 | 3; done?: nu
 export function SectionCard({ no, title, sub, tag, children, id }: { no: string; title: ReactNode; sub?: ReactNode; tag?: ReactNode; children: ReactNode; id?: string }) {
   return (
     <section aria-labelledby={id ? `${id}-title` : undefined} id={id} className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
-      <header className="flex items-start gap-3 px-5 pt-5 pb-4 sm:px-6">
+      <header className="flex items-start gap-3 border-b border-line bg-primary-soft/70 px-5 pt-4 pb-3.5 sm:px-6">
         <div className="min-w-0 flex-1">
           <h2 id={id ? `${id}-title` : undefined} className="text-[16px] font-extrabold text-fg">
             {title}
@@ -72,20 +72,21 @@ export function SectionCard({ no, title, sub, tag, children, id }: { no: string;
           {no}
         </span>
       </header>
-      <div className="px-5 pb-5 sm:px-6">{children}</div>
+      <div className="px-5 py-5 sm:px-6">{children}</div>
     </section>
   )
 }
 
 /** 영문 머리글이 붙은 흰 패널 */
-export function Panel({ eyebrow, title, right, children, className, bodyClass, id }: { eyebrow?: string; title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string; bodyClass?: string; id?: string }) {
+export function Panel({ eyebrow, title, right, children, className, bodyClass, id, tone }: { eyebrow?: string; title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string; bodyClass?: string; id?: string; /** alert: 꼭 봐야 하는 칸 — 붉은 머리 띠와 옅은 붉은 바탕 */ tone?: 'alert' }) {
+  const alert = tone === 'alert'
   return (
-    <section id={id} className={cx('scroll-mt-24 overflow-hidden rounded-card border border-line bg-surface shadow-card', className)}>
+    <section id={id} className={cx('scroll-mt-24 overflow-hidden rounded-card border shadow-card', alert ? 'border-stop-line bg-stop-bg' : 'border-line bg-surface', className)}>
       {(eyebrow || title) && (
-        <header className="flex items-end gap-3 border-b border-line px-5 py-4">
+        <header className={cx('flex items-end gap-3 border-b px-5 py-4', alert ? 'border-transparent bg-alert' : 'border-line bg-primary-soft/70')}>
           <div className="min-w-0 flex-1">
-            {eyebrow && <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">{eyebrow}</p>}
-            {title && <h2 className="mt-0.5 text-[16px] font-extrabold text-fg">{title}</h2>}
+            {eyebrow && <p className={cx('text-[11.5px] font-bold tracking-[0.12em] uppercase', alert ? 'text-white/85' : 'text-muted')}>{eyebrow}</p>}
+            {title && <h2 className={cx('mt-0.5 text-[16px] font-extrabold', alert ? 'text-white' : 'text-fg')}>{title}</h2>}
           </div>
           {right}
         </header>
