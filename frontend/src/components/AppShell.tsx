@@ -1,5 +1,5 @@
 // 앱 틀 — 왼쪽 사이드바(제품 마크 · 역할별 탭) + 위쪽 머리줄(화면 이름 · 기준 정보 · 시각 · 역할 전환 · 사용자) + 본문.
-// 역할: 설계 사원(반출 검토 요청 · 내 요청) / 법무 담당(대시보드 · 내 요청). 머리줄의 두 칸 버튼으로 역할을 바꾼다.
+// 역할: 설계 사원(반출 검토 요청 · 내 요청) / 법무 담당(대시보드 · 검토 요청). 머리줄의 두 칸 버튼으로 역할을 바꾼다.
 // 좁은 화면(lg 미만)에서는 사이드바 대신 머리줄 아래에 탭 줄을 둔다.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -23,7 +23,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   legal: [
     { to: '/legal', label: '대시보드', match: (p) => p === '/legal' || p === '/legal/' },
-    { to: '/legal/requests', label: '내 요청', match: (p) => p.startsWith('/legal/') && p !== '/legal/', badge: 'pending' },
+    { to: '/legal/requests', label: '검토 요청', match: (p) => p.startsWith('/legal/') && p !== '/legal/', badge: 'pending' },
   ],
 }
 
@@ -33,7 +33,7 @@ function pageName(p: string): string {
   if (p.startsWith('/check')) return '사전분석 결과'
   if (p.startsWith('/history')) return '내 요청'
   if (p === '/legal' || p === '/legal/') return '대시보드'
-  if (p.startsWith('/legal/requests')) return '내 요청'
+  if (p.startsWith('/legal/requests')) return '검토 요청'
   if (p.startsWith('/legal/')) return '검토 상세'
   if (p.startsWith('/wiki')) return '용어 위키'
   return ''

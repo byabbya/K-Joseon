@@ -1,4 +1,4 @@
-// 법무팀 — 내 요청 (/legal/requests): 법무팀 확인을 요청받은 건. 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터.
+// 법무팀 — 검토 요청 (/legal/requests): 법무팀 확인을 요청받은 건. 미처리/처리 완료 탭, 권고 분류·요청일·부서로 정렬·필터.
 // 탭·필터·정렬은 URL 검색어(?tab=&rec=&dept=&sort=)에 둔다.
 import { useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -70,7 +70,7 @@ export function LegalListPage() {
 
   return (
     <Page>
-      <PageHead eyebrow="Legal Review Queue" title="내 요청" sub="사원이 사전분석 뒤 법무팀 확인을 요청한 건입니다. 사전분석 결과와 근거를 보고 판정을 기록합니다." />
+      <PageHead eyebrow="Legal Review Queue" title="검토 요청" sub="사원이 사전분석 뒤 법무팀 확인을 요청한 건입니다. 사전분석 결과와 근거를 보고 판정을 기록합니다." />
 
       <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* 탭 */}

@@ -28,7 +28,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="/check/:id" element={<AnswerPage />} />
         <Route path="/history" element={<HistoryPage />} />
-        {/* 법무 담당 — 대시보드 · 내 요청(검토할 요청) · 검토 상세 */}
+        {/* 법무 담당 — 대시보드 · 검토 요청 · 검토 상세 */}
         <Route path="/legal" element={page(<LegalDashboardPage />)} />
         <Route path="/legal/requests" element={page(<LegalListPage />)} />
         <Route path="/legal/:id" element={page(<LegalDetailPage />)} />
