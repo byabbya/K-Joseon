@@ -61,16 +61,16 @@ export function LegalDashboardPage() {
       <div className="mt-5">
         <div className="min-w-0 space-y-5">
           {/* 우선 확인 항목 */}
-          <Panel eyebrow="Review Watch" title="우선 확인 항목" right={<span className="text-[12.5px] font-bold text-fg-2 tabular-nums">{watch.length}건</span>}>
+          <Panel tone="alert" eyebrow="Review Watch" title="우선 확인 항목" right={<span className="rounded-full bg-white px-2.5 py-0.5 text-[12.5px] font-bold text-wine-ink tabular-nums">{watch.length}건</span>}>
             {loading && <Spinner />}
             {!loading && !watch.length && <p className="px-5 py-6 text-[13px] text-muted">판정을 기다리는 요청이 없습니다.</p>}
-            <ul className="divide-y divide-line">
+            <ul className="divide-y divide-stop-line">
               {watch.map((r) => {
                 const high = r.recommendation === '반출 불가' || r.recommendation === '법무팀 검토 필요'
                 return (
                   <li key={r.request_id}>
-                    <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-surface-2">
-                      <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center font-mono text-[11px] font-bold ring-1 ring-inset', high ? 'bg-review-bg text-review-fg ring-review-line' : 'bg-surface-2 text-fg-2 ring-line')}>
+                    <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/70">
+                      <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center font-mono text-[11px] font-bold ring-1 ring-inset', high ? 'bg-wine text-white ring-wine' : 'bg-surface text-wine-ink ring-stop-line')}>
                         {high ? 'HIGH' : 'REVIEW'}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -80,7 +80,7 @@ export function LegalDashboardPage() {
                         </span>
                       </span>
                       <span className="shrink-0 text-[11.5px] text-muted">{ago(when(r))}</span>
-                      <span className="shrink-0 text-[12px] font-bold text-primary-ink">검토 →</span>
+                      <span className="shrink-0 text-[12px] font-bold text-wine-ink">검토 →</span>
                     </Link>
                   </li>
                 )
