@@ -104,7 +104,7 @@ export function HistoryPage() {
                       {checkTitle(r)}
                     </span>
                     <span className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
-                      {r.category_choice !== '모름' && <IdTag className="!text-[10.5px] !leading-4">{r.category_choice}</IdTag>}
+                      {r.category_choice !== '모름' && <IdTag className="!text-[11.5px] !leading-4">{r.category_choice}</IdTag>}
                       {r.file_count ? `파일 ${r.file_count}개` : '설명만'}
                     </span>
                   </Cell>
@@ -132,7 +132,7 @@ export function HistoryPage() {
 function Cell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 text-[10px] font-semibold text-muted">{label}</p>
+      <p className="mb-0.5 text-[11px] font-semibold text-muted">{label}</p>
       {children}
     </div>
   )

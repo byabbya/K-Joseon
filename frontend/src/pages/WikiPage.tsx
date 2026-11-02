@@ -319,8 +319,8 @@ function TermRow({
           <Pill tone={src.tone} size="xs" title={src.title}>
             {src.label}
           </Pill>
-          {t.s_code && <IdTag className="!text-[10.5px] !leading-4">{t.s_code}</IdTag>}
-          {showId && <span className="font-mono text-[10.5px] text-muted">{t.term_id}</span>}
+          {t.s_code && <IdTag className="!text-[11.5px] !leading-4">{t.s_code}</IdTag>}
+          {showId && <span className="font-mono text-[11.5px] text-muted">{t.term_id}</span>}
         </p>
         {t.context && <p className="mt-0.5 line-clamp-2 text-[12px] text-muted">{t.context}</p>}
       </div>
@@ -593,11 +593,11 @@ function SymbolCard({ g, d, legal }: { g: SymbolGroup; d: WikiSymbolsOut; legal:
                     <p className="mt-1 text-[12px] leading-snug text-fg-2">{h.rationale}</p>
                     <p className="mt-1 flex flex-wrap gap-1">
                       {h.context.slice(0, 8).map((c) => (
-                        <span key={c} className="rounded-[4px] bg-surface px-1.5 font-mono text-[10.5px] leading-5 text-muted ring-1 ring-line ring-inset">
+                        <span key={c} className="rounded-[4px] bg-surface px-1.5 font-mono text-[11.5px] leading-5 text-muted ring-1 ring-line ring-inset">
                           {c}
                         </span>
                       ))}
-                      {h.context.length > 8 && <span className="text-[10.5px] text-muted">외 {h.context.length - 8}</span>}
+                      {h.context.length > 8 && <span className="text-[11.5px] text-muted">외 {h.context.length - 8}</span>}
                     </p>
                   </li>
                 ))}

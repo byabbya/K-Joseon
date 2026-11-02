@@ -10,7 +10,7 @@ export function Page({ children, className, narrow }: { children: ReactNode; cla
 export function PageHead({ title, sub, right, eyebrow }: { title: ReactNode; sub?: ReactNode; right?: ReactNode; eyebrow?: ReactNode }) {
   return (
     <div className="mb-6 flex flex-wrap items-end gap-x-4 gap-y-3">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-[18rem]">
         {eyebrow && <p className="mb-1.5 text-[11px] font-bold tracking-[0.12em] text-muted uppercase">{eyebrow}</p>}
         <h1 className="text-[1.6rem] leading-tight font-extrabold tracking-[-0.01em] text-fg sm:text-[1.75rem]">{title}</h1>
         {sub && <p className="mt-1.5 text-[13px] text-muted">{sub}</p>}
@@ -67,7 +67,7 @@ export function SectionCard({ no, title, sub, tag, children, id }: { no: string;
           </h2>
           {sub && <p className="mt-0.5 text-[12.5px] text-muted">{sub}</p>}
         </div>
-        {tag && <span className="mt-1 shrink-0 rounded-[2px] bg-surface px-1.5 text-[10.5px] leading-5 font-bold text-fg-2 ring-1 ring-line ring-inset">{tag}</span>}
+        {tag && <span className="mt-1 shrink-0 rounded-[2px] bg-surface px-1.5 text-[11.5px] leading-5 font-bold text-fg-2 ring-1 ring-line ring-inset">{tag}</span>}
         <span aria-hidden className="-mt-1 shrink-0 font-mono text-[2.2rem] leading-none font-extrabold text-surface-3 select-none">
           {no}
         </span>
@@ -84,7 +84,7 @@ export function Panel({ eyebrow, title, right, children, className, bodyClass }:
       {(eyebrow || title) && (
         <header className="flex items-end gap-3 border-b border-line px-5 py-4">
           <div className="min-w-0 flex-1">
-            {eyebrow && <p className="text-[10.5px] font-bold tracking-[0.12em] text-muted uppercase">{eyebrow}</p>}
+            {eyebrow && <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">{eyebrow}</p>}
             {title && <h2 className="mt-0.5 text-[16px] font-extrabold text-fg">{title}</h2>}
           </div>
           {right}

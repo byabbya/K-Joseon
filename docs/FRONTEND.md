@@ -19,6 +19,8 @@ Vite 6 + React 19 + TypeScript, Tailwind CSS v4, React Router 7, TanStack Query 
 - 법무 담당 탭: **대시보드**(기본, `/legal`) · **검토 요청**(`/legal/requests`, 배지 = 미처리)
 - 톤: 옅은 회청 바탕 · 흰 면 · 짙은 남청 주 동작 · 청록 링크, 모서리 2~4px, 그림자 없이 선으로 나눔(`index.css` 토큰). 페이지 공용 틀은 `components/PageHead.tsx`(`Page` · `PageHead` · `FlowSteps` · `SectionCard` · `Panel`).
 
+- 접근성 기준 (ui-ux-pro-max 점검 반영): 글자 대비 4.5:1 이상(`--muted` #56666f — 가장 짙은 회색 면에서도 5.1:1), 입력·체크 칸 테두리 3:1 이상(`--field-line`), 11px 미만 글자 없음, 실제로 필수인 칸에만 `*`(반출 검토 요청은 상황 설명 또는 첨부 중 하나), 오류는 해당 칸 바로 아래에 `aria-describedby` 로 연결, 화면이 바뀌면 초점을 본문(`#main`)으로 옮김, 375px 에서 가로 스크롤 없음(넓은 표는 표 안에서만 스크롤).
+
 ## 사원 흐름 — ① 요청 정보 → ② AI 사전분석 → ③ 법무 검토(필요할 때만)
 
 ```

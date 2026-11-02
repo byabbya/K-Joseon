@@ -90,7 +90,7 @@ export function ApprovalStamps({ d, className }: { d: RequestDetail; className?:
     { label: '승인', steps: steps.filter((x) => x.group === '승인') },
   ]
   return (
-    <div className={cx('flex shrink-0 gap-1.5', className)} aria-label="결재칸">
+    <div className={cx('flex max-w-full shrink-0 gap-1.5 overflow-x-auto', className)} aria-label="결재칸">
       {groups.map((g) => (
         <table key={g.label} className="border-collapse border border-fg-2/70 bg-surface text-center text-[12px]">
           <tbody>
@@ -120,7 +120,7 @@ export function ApprovalStamps({ d, className }: { d: RequestDetail; className?:
             </tr>
             <tr>
               {g.steps.map((x) => (
-                <td key={x.title} className="h-6 border border-fg-2/70 px-1 font-mono text-[10.5px] text-fg-2 tabular-nums">
+                <td key={x.title} className="h-6 border border-fg-2/70 px-1 font-mono text-[11.5px] text-fg-2 tabular-nums">
                   {x.state === 'skipped' ? '생략' : ymd(x.date)}
                 </td>
               ))}
@@ -138,7 +138,7 @@ export function ApprovalLinePanel({ d }: { d: RequestDetail }) {
   return (
     <section aria-labelledby="approval-title" className="border border-line bg-surface">
       <div className="border-b border-line px-5 pt-4 pb-3">
-        <p className="text-[10.5px] font-bold tracking-[0.12em] text-muted uppercase">Approval Line</p>
+        <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Approval Line</p>
         <h2 id="approval-title" className="mt-0.5 text-[15px] font-extrabold text-fg">
           결재선
         </h2>

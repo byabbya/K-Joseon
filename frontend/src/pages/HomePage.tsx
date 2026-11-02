@@ -63,6 +63,7 @@ export function HomePage() {
   const [fields, setFields] = useState<DraftFields>(draft?.fields ?? {})
   const [savedAt, setSavedAt] = useState<string | null>(draft?.saved_at ?? null)
   const [err, setErr] = useState<string | null>(null)
+  const [textErr, setTextErr] = useState(false)
   const [finished, setFinished] = useState(false)
   const ta = useRef<HTMLTextAreaElement>(null)
   const create = useCreateRequest()
@@ -94,8 +95,9 @@ export function HomePage() {
     setErr(null)
     if (!userId) return setErr('오른쪽 위에서 사용자를 선택해 주세요.')
     if (!ready) {
+      setTextErr(true)
       ta.current?.focus()
-      return setErr('외부 제공 상황을 적거나 파일을 첨부해 주세요.')
+      return
     }
     // 직접 고른 값만 명시 필드로 보낸다 (문장에서 읽은 값은 서버가 다시 읽는다)
     const input: RequestInput = {
@@ -211,7 +213,9 @@ export function HomePage() {
               ref={ta}
               rows={4}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => (setText(e.target.value), e.target.value.trim() && setTextErr(false))}
+              aria-invalid={textErr || undefined}
+              aria-describedby={textErr ? 'situation-error situation-help' : 'situation-help'}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault()
@@ -220,8 +224,16 @@ export function HomePage() {
               }}
               placeholder={PLACEHOLDER}
               disabled={busy}
-              className={cx(inputCls, 'resize-y text-[14px] leading-relaxed')}
+              className={cx(inputCls, 'resize-y text-[14px] leading-relaxed', textErr && 'border-stop-dot')}
             />
+            {textErr && (
+              <p id="situation-error" role="alert" className="mt-1.5 text-[12.5px] font-semibold text-stop-fg">
+                무엇을 누구에게 어떻게 보내는지 적어 주세요. 파일만 첨부해도 됩니다.
+              </p>
+            )}
+            <p id="situation-help" className="mt-1.5 text-[12px] text-muted">
+              <span className="text-stop-fg">*</span> 상황 설명이나 첨부 파일 중 하나는 있어야 해요. 아래 칸은 비워 두면 설명에서 읽은 값을 쓰고, 그래도 모르면 결과 화면에서 물어봐요.
+            </p>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span className="rounded-[2px] bg-surface-2 px-1.5 text-[11px] font-bold text-muted ring-1 ring-line ring-inset">예시</span>
               {EXAMPLES.map((x) => (
@@ -324,14 +336,14 @@ function AnalysisLoading({ done: allDone }: { done: boolean }) {
               className={cx(
                 'transition-colors duration-300',
                 i === 0 ? 'text-left' : i === STAGES.length - 1 ? 'text-right' : 'text-center',
-                allDone || i < step ? 'text-white/80' : i === step ? 'font-bold text-white' : 'text-white/35',
+                allDone || i < step ? 'text-white/80' : i === step ? 'font-bold text-white' : 'text-white/60',
               )}
             >
               {x.t}
             </li>
           ))}
         </ol>
-        <p className="mt-10 text-[11px] text-white/40">사내 서버에서만 처리합니다 · 외부 호출 없음</p>
+        <p className="mt-10 text-[11.5px] text-white/65">사내 서버에서만 처리합니다 · 외부 호출 없음</p>
       </div>
     </div>
   )
@@ -349,7 +361,7 @@ function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoi
       disabled && 'opacity-60',
     )
   return (
-    <SectionCard no="01" id="category" title="어떤 기술 자료인가요?" sub="직접 고르거나, 확실하지 않으면 '잘 모르겠음'을 두세요. 문서와 설명에서 후보를 찾습니다." tag="필수">
+    <SectionCard no="01" id="category" title="어떤 기술 자료인가요?" sub="직접 고르거나, 확실하지 않으면 '잘 모르겠음'을 두세요. 문서와 설명에서 후보를 찾습니다." tag="선택">
       <div role="radiogroup" aria-labelledby="category-title" className="grid grid-cols-1 border-t border-l border-line sm:grid-cols-2 xl:grid-cols-3">
         {cats.map((c) => {
           const sel = value === c.code
@@ -360,7 +372,7 @@ function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoi
                 <span className="font-mono text-[11px] font-bold text-muted">{c.code}</span>
                 <span className={cx('text-[13px] leading-snug font-bold', sel ? 'text-primary-ink' : 'text-fg')}>{c.label}</span>
                 <span className="text-[11.5px] text-muted">{CAT_SUB[c.code] ?? ''}</span>
-                {h && <span className={cx('absolute top-2.5 right-2.5 rounded-[2px] px-1 text-[10px] font-bold ring-1 ring-inset', h === '약한 단서' ? 'bg-surface text-muted ring-line' : 'bg-teal-soft text-teal-ink ring-teal-line')}>{h}</span>}
+                {h && <span className={cx('absolute top-2.5 right-2.5 rounded-[2px] px-1 text-[11px] font-bold ring-1 ring-inset', h === '약한 단서' ? 'bg-surface text-muted ring-line' : 'bg-teal-soft text-teal-ink ring-teal-line')}>{h}</span>}
               </button>
             </Tooltip>
           )
@@ -405,7 +417,7 @@ function StructuredFields({ p, fields, set, disabled }: { p?: PreviewOut; fields
           return (
             <label key={k} className="block min-w-0">
               <span className="mb-1 block text-[12px] font-bold text-fg-2">
-                {label} <span className="text-stop-fg">*</span>
+                {label}
               </span>
               <select
                 className={cx(inputCls, 'h-9 py-0', fromText && 'border-teal-line bg-teal-soft/40')}
@@ -464,7 +476,7 @@ function PurposeSection({ p, value, onChange, disabled }: { p?: PreviewOut; valu
   const read = r?.value ? String(r.value) : null
   const current = value ?? read
   return (
-    <SectionCard no="04" id="purpose" title="반출 목적을 선택해 주세요" sub="목적은 반출 경로(CH-01~09)로 바뀌어 규칙 판단의 첫 기준이 됩니다." tag="필수">
+    <SectionCard no="04" id="purpose" title="반출 목적을 선택해 주세요" sub="목적은 반출 경로(CH-01~09)로 바뀌어 규칙 판단의 첫 기준이 됩니다. 비워 두면 설명에서 읽습니다." tag="선택">
       <div role="radiogroup" aria-labelledby="purpose-title" className="grid grid-cols-2 border-t border-l border-line sm:grid-cols-3 xl:grid-cols-4">
         {opts.map((o) => {
           const sel = current === o.value
@@ -483,7 +495,7 @@ function PurposeSection({ p, value, onChange, disabled }: { p?: PreviewOut; valu
               )}
             >
               {o.label}
-              {fromText && <span className="text-[10px] font-semibold text-teal-ink">설명에서 읽음</span>}
+              {fromText && <span className="text-[11px] font-semibold text-teal-ink">설명에서 읽음</span>}
             </button>
           )
         })}

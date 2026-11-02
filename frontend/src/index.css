@@ -22,7 +22,8 @@
   /* 글자 */
   --fg: #21313a;
   --fg-2: #3c4f5a;
-  --muted: #627480; /* surface 대비 4.9:1 */
+  --muted: #56666f; /* 흰 면 6.0:1 · 가장 짙은 회색 면(surface-3) 5.1:1 */
+  --field-line: #7f8f99; /* 입력·체크 칸 테두리 — 흰 면 3.3:1 (WCAG 1.4.11) */
 
   /* 주색 (남청) */
   --primary: #233640;
@@ -82,6 +83,7 @@
     --surface-3: #1f2d34;
     --line: #26353d;
     --line-strong: #364952;
+    --field-line: #62767f;
     --grid: rgb(170 200 210 / 0.06);
     --fg: #e3eaed;
     --fg-2: #c0ccd2;
@@ -136,6 +138,7 @@
   --color-surface-3: var(--surface-3);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-field-line: var(--field-line);
   --color-fg: var(--fg);
   --color-fg-2: var(--fg-2);
   --color-muted: var(--muted);

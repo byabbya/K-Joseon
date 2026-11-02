@@ -78,7 +78,7 @@ export function LegalDashboardPage() {
                 return (
                   <li key={r.request_id}>
                     <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-surface-2">
-                      <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center font-mono text-[10px] font-bold ring-1 ring-inset', high ? 'bg-review-bg text-review-fg ring-review-line' : 'bg-surface-2 text-fg-2 ring-line')}>
+                      <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center font-mono text-[11px] font-bold ring-1 ring-inset', high ? 'bg-review-bg text-review-fg ring-review-line' : 'bg-surface-2 text-fg-2 ring-line')}>
                         {high ? 'HIGH' : 'REVIEW'}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -150,12 +150,12 @@ export function LegalDashboardPage() {
                         <Link to={`/legal/${encodeURIComponent(r.request_id)}`} onClick={(e) => e.stopPropagation()} className="font-mono text-[12px] font-bold whitespace-nowrap text-primary-ink hover:underline">
                           {r.request_id}
                         </Link>
-                        <p className="font-mono text-[10.5px] text-muted">{fmtDate(when(r))}</p>
+                        <p className="font-mono text-[11.5px] text-muted">{fmtDate(when(r))}</p>
                       </td>
                       <td className="max-w-[18rem] px-3 py-3">
                         <p className="truncate font-bold text-fg">{checkTitle(r)}</p>
                         <p className="flex items-center gap-1 text-[11px] text-muted">
-                          {r.category_choice !== '모름' && <IdTag className="!text-[10.5px] !leading-4">{r.category_choice}</IdTag>}
+                          {r.category_choice !== '모름' && <IdTag className="!text-[11.5px] !leading-4">{r.category_choice}</IdTag>}
                           {r.channel_code ?? ''}
                         </p>
                       </td>
@@ -214,7 +214,7 @@ export function LegalDashboardPage() {
 function Stat({ label, value, text, sub, accent }: { label: string; value?: number; text?: string; sub: string; accent?: boolean }) {
   return (
     <div className="border-line px-5 py-4 not-last:border-b sm:[&:nth-child(odd)]:border-r xl:not-last:border-r xl:border-b-0">
-      <p className="text-[10.5px] font-bold tracking-[0.06em] text-muted">{label}</p>
+      <p className="text-[11.5px] font-bold tracking-[0.06em] text-muted">{label}</p>
       <p className={cx('mt-1 text-[1.6rem] leading-none font-extrabold tabular-nums', accent ? 'text-review-fg' : text ? 'text-go-fg' : 'text-fg')}>{text ?? (value === undefined ? '·' : String(value).padStart(2, '0'))}</p>
       <p className="mt-1.5 text-[11.5px] text-muted">{sub}</p>
     </div>

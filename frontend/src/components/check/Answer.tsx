@@ -80,7 +80,7 @@ function DecisionCard({ d, a, prev, onAttach, busy, audience, nextStep, cit }: S
   return (
     <section aria-labelledby="conclusion-title" className="border border-line bg-surface">
       <div className="border-b border-line px-5 pt-4 pb-3">
-        <p className="text-[10.5px] font-bold tracking-[0.12em] text-muted uppercase">Rule Engine</p>
+        <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Rule Engine</p>
         <h2 className="mt-0.5 text-[15px] font-extrabold text-fg">사전 권고</h2>
       </div>
       <div className="space-y-4 px-5 py-4">
@@ -114,7 +114,7 @@ function DecisionCard({ d, a, prev, onAttach, busy, audience, nextStep, cit }: S
           <p className="flex flex-wrap items-center gap-1.5 border-t border-line pt-3 text-[12px] text-muted">
             적용 규칙
             {rules.map((r) => (
-              <IdTag key={r} className="!text-[10.5px] !leading-4">
+              <IdTag key={r} className="!text-[11.5px] !leading-4">
                 {r}
               </IdTag>
             ))}
@@ -161,7 +161,7 @@ function CandidatesPanel({ a }: { a: Analysis }) {
     }
   const list = [...merged.values()].sort((x, y) => Number(y.confident) - Number(x.confident) || x.code.localeCompare(y.code))
   return (
-    <Panel eyebrow="Technology Candidates" title="관련 기술 후보" right={<span className="rounded-[2px] bg-surface-2 px-1.5 text-[10.5px] font-bold text-muted ring-1 ring-line ring-inset">내 선택 ≠ 시스템 후보</span>} bodyClass="px-5 py-4">
+    <Panel eyebrow="Technology Candidates" title="관련 기술 후보" right={<span className="rounded-[2px] bg-surface-2 px-1.5 text-[11.5px] font-bold text-muted ring-1 ring-line ring-inset">내 선택 ≠ 시스템 후보</span>} bodyClass="px-5 py-4">
       <p className="text-[12.5px] text-fg-2">
         내가 고른 기술 · <b className="text-fg">{choice === '모름' ? '잘 모르겠음' : `${choice} ${cats.find((c) => c.code === choice)?.label ?? ''}`}</b>
         {a.category_mismatch && <span className="ml-2 text-review-fg">시스템 후보와 달라요 — 둘 다 법무팀에 보여요</span>}
@@ -173,7 +173,7 @@ function CandidatesPanel({ a }: { a: Analysis }) {
               <p className="flex items-center gap-2">
                 <IdTag tone={c.confident ? 'teal' : 'plain'}>{c.code}</IdTag>
                 <span className="min-w-0 truncate text-[13px] font-bold text-fg">{c.label || cats.find((x) => x.code === c.code)?.label}</span>
-                {!c.confident && <span className="ml-auto shrink-0 text-[10.5px] font-semibold text-muted">약한 단서</span>}
+                {!c.confident && <span className="ml-auto shrink-0 text-[11.5px] font-semibold text-muted">약한 단서</span>}
               </p>
               <p className="mt-1.5 text-[12px] leading-snug text-fg-2">
                 찾은 단서 · {c.terms.slice(0, 5).map((x) => `‘${x}’`).join(', ') || '—'}
@@ -281,7 +281,7 @@ function WhyItem({ w, legal, ok, compact }: { w: Why; legal: boolean; ok?: boole
         {legal && (w.rules.length > 0 || w.formal.length > 0) && (
           <span className="mt-0.5 block text-[12.5px] leading-relaxed text-muted">
             {w.rules.map((r) => (
-              <IdTag key={r} className="mr-1 !text-[10.5px] !leading-4">
+              <IdTag key={r} className="mr-1 !text-[11.5px] !leading-4">
                 {r}
               </IdTag>
             ))}
@@ -312,7 +312,7 @@ function FileList({ files, cit, legal }: { files: FileResult[]; cit: Citations; 
               </p>
               <p className="mt-1 max-w-[65ch] text-[14px] leading-6 text-fg-2">
                 {top ? plainOf(top) : '걸리는 점이 없어요.'} {top && <Cite ids={legal ? cit.forRule(top.rule_id) : cit.forRule(top.rule_id).slice(0, 3)} />}
-                {legal && top && <IdTag className="ml-1 !text-[10.5px] !leading-4">{top.rule_id}</IdTag>}
+                {legal && top && <IdTag className="ml-1 !text-[11.5px] !leading-4">{top.rule_id}</IdTag>}
               </p>
             </li>
           )
@@ -417,7 +417,7 @@ function TodoList({ a, requestId, interactive, compact }: { a: Analysis; request
                       aria-hidden
                       className={cx(
                         'grid size-5 place-items-center rounded-[5px] border transition-colors duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus',
-                        checked ? 'border-primary bg-primary text-on-primary' : t.dont ? 'border-stop-line bg-surface' : 'border-line-strong bg-surface',
+                        checked ? 'border-primary bg-primary text-on-primary' : t.dont ? 'border-stop-dot bg-surface' : 'border-field-line bg-surface',
                       )}
                     >
                       {checked && <IconCheck size={13} strokeWidth={3} />}

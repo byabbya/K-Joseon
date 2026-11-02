@@ -47,7 +47,7 @@ export function QuestionCard(p: QuestionCardProps) {
     <section aria-labelledby="question-title" className="rounded-card border border-line bg-surface shadow-card">
       <header className="flex flex-wrap items-end gap-x-3 gap-y-1 border-b border-line px-5 py-4 sm:px-6">
         <div>
-          <p className="text-[10.5px] font-bold tracking-[0.12em] text-muted uppercase">Structured Facts</p>
+          <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Structured Facts</p>
           <h2 id="question-title" className="mt-0.5 scroll-mt-24 text-[16px] font-extrabold text-fg">
             {audience === 'legal' ? `${d.summary.employee.name}의 요청` : 'AI가 정리한 요청'}
           </h2>
@@ -137,7 +137,7 @@ function ListTag({ v }: { v: ListInclusion }) {
   return (
     <span
       title={`승인도면 목록 ${v}`}
-      className={cx('shrink-0 rounded-[4px] px-1 text-[10.5px] leading-4 font-semibold ring-1 ring-inset', v === '포함' ? 'bg-surface text-fg-2 ring-line' : 'bg-review-bg text-review-fg ring-review-line')}
+      className={cx('shrink-0 rounded-[4px] px-1 text-[11.5px] leading-4 font-semibold ring-1 ring-inset', v === '포함' ? 'bg-surface text-fg-2 ring-line' : 'bg-review-bg text-review-fg ring-review-line')}
     >
       목록 {v}
     </span>
@@ -378,7 +378,7 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
                     <span className="mb-1 block font-semibold text-fg">
                       {o.value} {o.label}
                     </span>
-                    <span className="mb-1 block text-[10.5px] font-bold tracking-[0.06em] text-muted">고시 별표 원문</span>
+                    <span className="mb-1 block text-[11.5px] font-bold tracking-[0.06em] text-muted">고시 별표 원문</span>
                     {c?.text}
                   </>
                 )
@@ -461,7 +461,7 @@ function Item({
   const content = (
     <>
       <span className={cx('flex min-w-0 items-center gap-1.5 text-[14px] font-semibold', value ? (warn ? 'text-review-fg' : 'text-fg') : 'text-muted')}>
-        {badge && value && <IdTag className="!text-[10.5px]">{badge}</IdTag>}
+        {badge && value && <IdTag className="!text-[11.5px]">{badge}</IdTag>}
         <span className="min-w-0 truncate">{value ?? empty}</span>
       </span>
       <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">

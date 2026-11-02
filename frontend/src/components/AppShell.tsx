@@ -65,9 +65,15 @@ export function AppShell() {
     if (role === 'employee' && onLegal) nav('/', { replace: true })
   }, [role, loc.pathname, nav])
 
-  // 화면이 바뀌면 맨 위에서 시작
+  // 화면이 바뀌면 맨 위에서 시작하고, 초점을 본문으로 옮긴다 (첫 화면은 그대로)
+  const firstRoute = useRef(true)
   useEffect(() => {
     if (!loc.hash) window.scrollTo(0, 0)
+    if (firstRoute.current) {
+      firstRoute.current = false
+      return
+    }
+    document.getElementById('main')?.focus({ preventScroll: true })
   }, [loc.pathname, loc.hash])
 
   // 탭 배지 — 사원: 법무팀이 확인 중인 내 요청, 법무: 미처리 요청
@@ -95,9 +101,9 @@ export function AppShell() {
           </span>
           <span className="leading-tight">
             <span className="block text-[15px] font-extrabold tracking-[0.08em] text-fg">K-SHIP</span>
-            <span className="block text-[10px] font-semibold tracking-[0.2em] text-muted">GUARD AX</span>
+            <span className="block text-[11px] font-semibold tracking-[0.2em] text-muted">GUARD AX</span>
           </span>
-          {USE_MOCK && <span className="ml-auto rounded-[2px] bg-cond-bg px-1 font-mono text-[9.5px] font-bold text-cond-fg ring-1 ring-cond-line">MOCK</span>}
+          {USE_MOCK && <span className="ml-auto rounded-[2px] bg-cond-bg px-1 font-mono text-[11px] font-bold text-cond-fg ring-1 ring-cond-line">MOCK</span>}
         </Link>
         <nav aria-label="주 메뉴" className="flex-1 space-y-0.5 px-2 py-4">
           {items.map((n) => {
@@ -151,7 +157,7 @@ export function AppShell() {
           </div>
         )}
 
-        <main id="main" className="flex min-w-0 flex-1 flex-col">
+        <main id="main" tabIndex={-1} className="flex min-w-0 flex-1 flex-col focus:outline-none">
           <Outlet />
         </main>
       </div>
@@ -194,7 +200,7 @@ function Stat({ label, value, dot }: { label: string; value: React.ReactNode; do
     <div className="flex items-center gap-2">
       {dot && <span aria-hidden className={cx('size-1.5 rounded-full', dot === 'go' ? 'bg-go-dot' : 'bg-stop-dot')} />}
       <div className="leading-tight">
-        <p className="text-[10px] font-semibold tracking-[0.04em] text-muted">{label}</p>
+        <p className="text-[11px] font-semibold tracking-[0.04em] text-muted">{label}</p>
         <p className="font-mono text-[12.5px] font-bold text-fg tabular-nums">{value}</p>
       </div>
     </div>

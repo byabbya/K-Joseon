@@ -48,7 +48,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
         sub="AI 초안과 원문 근거를 분리해 확인하고 최종 판단을 기록합니다."
         right={
           <div className="border border-line bg-surface px-4 py-2 leading-tight">
-            <p className="text-[10.5px] font-semibold text-muted">담당자</p>
+            <p className="text-[11.5px] font-semibold text-muted">담당자</p>
             <p className="text-[13px] font-bold text-fg">{me ? `${me.name} · ${me.department}` : '—'}</p>
           </div>
         }
@@ -185,7 +185,7 @@ function LockedOutput({ a, open, onToggle }: { a: Analysis; open: boolean; onTog
   const laws = a.clauses.filter((c) => c.status !== '구버전').length
   return (
     <div className="border border-line bg-surface-2 px-5 py-4">
-      <p className="text-[10.5px] font-bold tracking-[0.12em] text-teal-ink uppercase">Locked AI Output</p>
+      <p className="text-[11.5px] font-bold tracking-[0.12em] text-teal-ink uppercase">Locked AI Output</p>
       <p className="mt-2 flex flex-wrap items-center gap-2">
         <RecPill rec={a.recommendation} size="xs" />
         <span className="text-[12px] text-muted">기술 후보 {a.model_categories.join(', ') || '없음'}</span>
@@ -194,7 +194,7 @@ function LockedOutput({ a, open, onToggle }: { a: Analysis; open: boolean; onTog
         {lines.length ? (
           lines.map((h) => (
             <li key={`${h.rule_id}-${h.reason}`} className="text-[13px] leading-relaxed text-fg">
-              <IdTag className="mr-1.5 !text-[10.5px] !leading-4">{h.rule_id}</IdTag>
+              <IdTag className="mr-1.5 !text-[11.5px] !leading-4">{h.rule_id}</IdTag>
               {h.reason || h.plain}
             </li>
           ))
@@ -248,7 +248,7 @@ function Queue({ current }: { current: string }) {
               >
                 <span className="flex items-center gap-2">
                   <span className="font-mono text-[11.5px] font-bold text-primary-ink">{r.request_id}</span>
-                  <span className={cx('ml-auto text-[10.5px] font-bold', high ? 'text-review-fg' : 'text-muted')}>{high ? '높음' : '보통'}</span>
+                  <span className={cx('ml-auto text-[11.5px] font-bold', high ? 'text-review-fg' : 'text-muted')}>{high ? '높음' : '보통'}</span>
                 </span>
                 <span className="mt-1 line-clamp-2 block text-[12.5px] leading-snug font-bold text-fg">{checkTitle(r)}</span>
                 <span className="mt-0.5 block truncate text-[11px] text-muted">
@@ -256,7 +256,7 @@ function Queue({ current }: { current: string }) {
                 </span>
                 <span className="mt-1.5 flex flex-wrap items-center gap-1">
                   <RecPill rec={r.recommendation} size="xs" />
-                  {r.category_choice !== '모름' && <IdTag className="!text-[10.5px] !leading-4">{r.category_choice}</IdTag>}
+                  {r.category_choice !== '모름' && <IdTag className="!text-[11.5px] !leading-4">{r.category_choice}</IdTag>}
                 </span>
               </Link>
             </li>
@@ -289,7 +289,7 @@ function FactGrid({ d }: { d: RequestDetail }) {
     <dl className="grid grid-cols-2 border-t border-l border-line sm:grid-cols-4">
       {cells.map((c) => (
         <div key={c.k} title={c.title} className="min-w-0 border-r border-b border-line px-4 py-3">
-          <dt className="text-[10.5px] font-semibold text-muted">{c.k}</dt>
+          <dt className="text-[11.5px] font-semibold text-muted">{c.k}</dt>
           <dd className={cx('mt-0.5 truncate text-[13px] font-bold text-fg', c.mono && 'font-mono tabular-nums')}>{c.v}</dd>
         </div>
       ))}
@@ -354,7 +354,7 @@ function CheckRow({ checked, onChange, children, sub, strike }: { checked: boole
         aria-hidden
         className={cx(
           'mt-0.5 grid size-4 shrink-0 place-items-center rounded-[4px] border transition-colors duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus',
-          checked ? 'border-primary bg-primary text-on-primary' : 'border-line-strong bg-surface',
+          checked ? 'border-primary bg-primary text-on-primary' : 'border-field-line bg-surface',
         )}
       >
         {checked && <IconCheck size={11} strokeWidth={3} />}
@@ -441,7 +441,7 @@ function AdjustmentPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; 
             {add.map((id) => (
               <li key={id} className="inline-flex items-center gap-1 rounded-pill bg-go-bg py-0.5 pr-1 pl-2.5 font-mono text-[11.5px] text-go-fg ring-1 ring-go-line ring-inset">
                 + {id}
-                <button type="button" onClick={() => setAdd((l) => l.filter((x) => x !== id))} aria-label={`${id} 빼기`} className="grid size-5 place-items-center rounded-full hover:bg-surface/60">
+                <button type="button" onClick={() => setAdd((l) => l.filter((x) => x !== id))} aria-label={`${id} 빼기`} className="grid size-6 place-items-center rounded-full hover:bg-surface/60">
                   <IconX size={12} />
                 </button>
               </li>
@@ -729,7 +729,7 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
             {options.map((o) => (
               <ChoiceChip key={o} mode="toggle" size="sm" selected={subs.includes(o)} onClick={() => toggle(subs, setSubs, o)}>
                 {o}
-                {suggested.has(o) && <span className="text-[10.5px] font-normal text-teal-ink">규칙 제안</span>}
+                {suggested.has(o) && <span className="text-[11.5px] font-normal text-teal-ink">규칙 제안</span>}
               </ChoiceChip>
             ))}
           </div>
@@ -782,7 +782,7 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
             {extras.map((id) => (
               <li key={id} className="inline-flex items-center gap-1 rounded-pill bg-primary-soft py-0.5 pr-1 pl-2.5 font-mono text-[11.5px] text-primary-ink ring-1 ring-primary-line ring-inset">
                 {id}
-                <button type="button" onClick={() => toggle(checked, setChecked, id)} aria-label={`${id} 빼기`} className="grid size-5 place-items-center rounded-full hover:bg-surface/60">
+                <button type="button" onClick={() => toggle(checked, setChecked, id)} aria-label={`${id} 빼기`} className="grid size-6 place-items-center rounded-full hover:bg-surface/60">
                   <IconX size={12} />
                 </button>
               </li>
@@ -844,7 +844,7 @@ function HistoryPanel({ d }: { d: RequestDetail }) {
             {x.checked_evidence.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
                 {x.checked_evidence.map((e) => (
-                  <IdTag key={e} className="!text-[10.5px]">
+                  <IdTag key={e} className="!text-[11.5px]">
                     {e}
                   </IdTag>
                 ))}

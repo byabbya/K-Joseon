@@ -256,7 +256,7 @@ export function Combobox({
                 {!filtered.length && <p className="px-3 py-6 text-center text-[13px] text-muted">일치하는 항목이 없습니다</p>}
                 {groups.map((g, gi) => (
                   <div key={`${g.name ?? ''}-${gi}`} role={g.name ? 'group' : undefined} aria-label={g.name}>
-                    {g.name && <p className="px-2.5 pt-2 pb-1 text-[10.5px] font-bold tracking-[0.08em] text-muted">{g.name}</p>}
+                    {g.name && <p className="px-2.5 pt-2 pb-1 text-[11.5px] font-bold tracking-[0.08em] text-muted">{g.name}</p>}
                     {g.items.map(({ o, i }) => {
                       const sel = o.value === value
                       const act = i === active
@@ -291,7 +291,7 @@ export function Combobox({
                 </div>
               )}
             </div>
-            <p className="hidden border-t border-line bg-surface-2 px-3 py-1.5 font-mono text-[10.5px] text-muted sm:block">↑↓ 이동 · Enter 선택 · Esc 닫기{canSearch ? ' · 입력해서 찾기' : ''}</p>
+            <p className="hidden border-t border-line bg-surface-2 px-3 py-1.5 font-mono text-[11.5px] text-muted sm:block">↑↓ 이동 · Enter 선택 · Esc 닫기{canSearch ? ' · 입력해서 찾기' : ''}</p>
           </div>
         </>
       )}

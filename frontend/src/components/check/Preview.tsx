@@ -220,7 +220,7 @@ function Chip({ label, text, mark, warn, muted, disabled, children }: { label: s
         >
           <span className="shrink-0 text-[11.5px] text-muted">{label}</span>
           <span className={cx('min-w-0 truncate font-semibold', warn ? 'text-review-fg' : muted ? 'text-muted' : 'text-fg')}>{text}</span>
-          {mark && <span className="shrink-0 text-[10.5px]">{mark}</span>}
+          {mark && <span className="shrink-0 text-[11.5px]">{mark}</span>}
           <IconPencil size={12} className="shrink-0 text-muted opacity-60 group-hover:opacity-100" />
         </button>
       )}

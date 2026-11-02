@@ -448,7 +448,7 @@ export function ExtLink({ href, children, className }: { href: string; children:
 }
 
 export const inputCls =
-  'block w-full rounded-field border border-line-strong bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted/80 focus:border-primary-ink focus:outline-2 focus:outline-offset-0 focus:outline-focus/35 disabled:bg-surface-2 disabled:text-muted read-only:bg-surface-2'
+  'block w-full rounded-field border border-field-line bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted/80 focus:border-primary-ink focus:outline-2 focus:outline-offset-0 focus:outline-focus/35 disabled:bg-surface-2 disabled:text-muted read-only:bg-surface-2'
 
 export function FieldLabel({ children, htmlFor, id, extra }: { children: ReactNode; htmlFor?: string; id?: string; extra?: ReactNode }) {
   return (

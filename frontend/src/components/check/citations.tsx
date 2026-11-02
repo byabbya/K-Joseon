@@ -198,7 +198,7 @@ export function Cite({ ids, className }: { ids: string[]; className?: string }) 
             type="button"
             aria-label={`출처 ${n}: ${shortTitle(s)}`}
             onClick={() => jump(ctx.prefix, n)}
-            className="cite-chip press rounded-[4px] bg-primary-soft px-1 font-mono text-[10.5px] leading-4 font-bold text-primary-ink ring-1 ring-primary-line ring-inset hover:bg-primary hover:text-on-primary"
+            className="cite-chip press rounded-[4px] bg-primary-soft px-1 font-mono text-[11.5px] leading-4 font-bold text-primary-ink ring-1 ring-primary-line ring-inset hover:bg-primary hover:text-on-primary"
           >
             {n}
           </button>
@@ -215,7 +215,7 @@ export function CitedSentence({ s }: { s: Sentence }) {
   if (s.memo)
     return (
       <p className="flex gap-2 rounded-[6px] bg-surface-2 px-2.5 py-1.5 text-[12.5px] leading-relaxed text-muted ring-1 ring-line ring-inset">
-        <span className="shrink-0 text-[10.5px] font-bold tracking-[0.05em]">시스템 메모</span>
+        <span className="shrink-0 text-[11.5px] font-bold tracking-[0.05em]">시스템 메모</span>
         <span className="min-w-0">{text}</span>
       </p>
     )
@@ -336,7 +336,7 @@ export function References() {
                 <span>{s.kind === 'clause' ? s.c.title : s.p.title.slice(0, 60) + (s.p.title.length > 60 ? '…' : '')}</span>
                 <span className="tabular-nums">{s.kind === 'clause' ? `시행 ${s.c.effective_date}` : `선고 ${s.p.decision_date}`}</span>
                 <ExtLink href={s.kind === 'clause' ? s.c.source_url : s.p.source_url}>국가법령정보센터</ExtLink>
-                {ctx.audience === 'legal' && <span className="font-mono text-[10.5px]">{s.id}</span>}
+                {ctx.audience === 'legal' && <span className="font-mono text-[11.5px]">{s.id}</span>}
               </span>
             </span>
           </li>

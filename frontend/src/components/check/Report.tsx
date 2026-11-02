@@ -155,7 +155,7 @@ function SummaryTable({ a, changed }: { a: Analysis; changed: Set<string> }) {
                 <span className="flex flex-col gap-1">
                   {f.rule_hits.map((h, i) => (
                     <span key={`${h.rule_id}-${i}`} className="inline-flex flex-wrap items-baseline gap-1" title={h.reason || h.name}>
-                      {cit?.audience === 'legal' ? <IdTag className="!text-[10.5px] !leading-4">{h.rule_id}</IdTag> : <span className="text-fg-2">{h.name}</span>}
+                      {cit?.audience === 'legal' ? <IdTag className="!text-[11.5px] !leading-4">{h.rule_id}</IdTag> : <span className="text-fg-2">{h.name}</span>}
                       <Cite ids={cit?.forRule(h.rule_id) ?? []} />
                     </span>
                   ))}
@@ -197,7 +197,7 @@ function CandTag({ c }: { c: FileResult['model_candidates'][number] }) {
         )}
       >
         {c.code}
-        {!c.confident && <span className="font-sans text-[10px]">미확정</span>}
+        {!c.confident && <span className="font-sans text-[11px]">미확정</span>}
       </span>
     </Tooltip>
   )
@@ -230,7 +230,7 @@ function FileReasons({ a }: { a: Analysis }) {
                   const legal = cit?.audience === 'legal'
                   return (
                     <p key={`${h.rule_id}-${i}`} className={cx('text-[12.5px] leading-snug', ids.length ? 'text-fg-2' : 'text-muted')}>
-                      {legal && <IdTag className="mr-1 !text-[10.5px] !leading-4">{h.rule_id}</IdTag>}
+                      {legal && <IdTag className="mr-1 !text-[11.5px] !leading-4">{h.rule_id}</IdTag>}
                       {legal ? h.reason || h.name : plainOfHit(h)} {ids.length ? <Cite ids={ids} /> : legal && <span className="text-[11px]">(시스템 메모 · 연결된 출처 없음)</span>}
                     </p>
                   )
@@ -307,7 +307,7 @@ export function AxesStrip({ a, decisions }: { a: Analysis; decisions: DecisionOu
                   <Pill tone={tone} size="xs">
                     {ax.status}
                   </Pill>
-                  <span className="text-[10.5px] text-muted">{ax.status === '판정됨' ? `판정 · ${ax.decided_by}` : `정하는 쪽 · ${who}`}</span>
+                  <span className="text-[11.5px] text-muted">{ax.status === '판정됨' ? `판정 · ${ax.decided_by}` : `정하는 쪽 · ${who}`}</span>
                 </span>
                 {isOpen && ax.note && <span className="mt-1 block animate-pop-in border-t border-line pt-1.5 text-[11.5px] leading-relaxed text-fg-2">{ax.note}</span>}
               </button>
@@ -436,7 +436,7 @@ function MissingList({ a }: { a: Analysis }) {
     )
   return (
     <div className="rounded-[6px] bg-surface-2 px-3 py-2 text-[13px] ring-1 ring-line ring-inset">
-      <p className="mb-1.5 text-[10.5px] font-bold tracking-[0.05em] text-muted">
+      <p className="mb-1.5 text-[11.5px] font-bold tracking-[0.05em] text-muted">
         시스템 메모 · 답하면 판단이 더 정확해집니다
       </p>
       <ul className="space-y-1">
@@ -445,7 +445,7 @@ function MissingList({ a }: { a: Analysis }) {
             <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-cond-dot" />
             <span className="min-w-0">
               <span className="font-semibold text-fg">{FIELD_LABEL[m.field] ?? m.field}</span> — {m.question}
-              {legal && m.rule_id && <IdTag className="ml-1.5 !text-[10.5px] !leading-4">{m.rule_id}</IdTag>}
+              {legal && m.rule_id && <IdTag className="ml-1.5 !text-[11.5px] !leading-4">{m.rule_id}</IdTag>}
             </span>
           </li>
         ))}
@@ -589,7 +589,7 @@ function ClauseItem({ c }: { c: ClauseRef }) {
           </Collapsible>
         </div>
       )}
-      {legal && <p className="mt-1 font-mono text-[10.5px] text-muted/90">{c.clause_id}</p>}
+      {legal && <p className="mt-1 font-mono text-[11.5px] text-muted/90">{c.clause_id}</p>}
     </li>
   )
 }
