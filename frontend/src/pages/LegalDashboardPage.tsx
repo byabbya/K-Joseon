@@ -1,5 +1,5 @@
 // 법무팀 — 대시보드 (/legal): 반출 검토 현황. 숫자는 모두 실제 요청 목록에서 센다 (꾸민 지표 없음).
-// 위: 현황 4칸 → 우선 확인 항목(미처리 중 엄격한 권고 순) → 권고 분포 → 최근 요청 표 / 오른쪽: 검토 흐름 · 용어 위키
+// 위: 현황 4칸 → 우선 확인 항목(미처리 중 엄격한 권고 순) → 권고 분포 → 최근 요청 표 (전체 폭)
 import { Link, useNavigate } from 'react-router-dom'
 import { useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
@@ -11,13 +11,6 @@ import { REC_TONE, SEVERITY, TONE_CLS, countryName, fmtDate } from '../lib/label
 
 const RECS: Recommendation[] = ['진행 가능', '조건부 진행', '법무팀 검토 필요', '반출 불가']
 const when = (r: RequestSummary) => r.submitted_at ?? r.created_at
-
-const FLOW = [
-  { t: '자료 입력', s: '도면·문서와 반출 맥락 등록' },
-  { t: 'AI 사전분석', s: '기술 후보·근거·빠진 정보' },
-  { t: '규칙 검증', s: 'R01~R10으로 권고 분류' },
-  { t: '사람의 판단', s: '법무 판정과 사유 기록' },
-]
 
 function ago(iso: string): string {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
@@ -65,7 +58,7 @@ export function LegalDashboardPage() {
         <Stat label="처리 완료" value={done.data?.length} sub="판정 기록" />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
+      <div className="mt-5">
         <div className="min-w-0 space-y-5">
           {/* 우선 확인 항목 */}
           <Panel eyebrow="Review Watch" title="우선 확인 항목" right={<span className="text-[12.5px] font-bold text-fg-2 tabular-nums">{watch.length}건</span>}>
@@ -179,22 +172,6 @@ export function LegalDashboardPage() {
             </div>
           </Panel>
         </div>
-
-        <aside className="space-y-5">
-          <Panel eyebrow="How It Works" title="검토 흐름" bodyClass="px-5 py-4">
-            <ol className="space-y-3">
-              {FLOW.map((f, i) => (
-                <li key={f.t} className="flex items-start gap-3">
-                  <span className="grid size-7 shrink-0 place-items-center rounded-[2px] bg-surface-2 font-mono text-[11px] font-bold text-fg-2 ring-1 ring-line ring-inset">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="leading-tight">
-                    <span className="block text-[13px] font-bold text-fg">{f.t}</span>
-                    <span className="block text-[11.5px] text-muted">{f.s}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </Panel>
-        </aside>
       </div>
     </Page>
   )

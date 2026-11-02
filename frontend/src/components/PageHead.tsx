@@ -81,9 +81,9 @@ export function SectionCard({ no, title, sub, tag, children, id }: { no: string;
 export function Panel({ eyebrow, title, right, children, className, bodyClass, id, tone }: { eyebrow?: string; title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string; bodyClass?: string; id?: string; /** alert: 꼭 봐야 하는 칸 — 붉은 머리 띠와 옅은 붉은 바탕 */ tone?: 'alert' }) {
   const alert = tone === 'alert'
   return (
-    <section id={id} className={cx('scroll-mt-24 overflow-hidden rounded-card border', alert ? 'glass-alert' : 'border-line bg-surface shadow-card', className)}>
+    <section id={id} className={cx('scroll-mt-24 overflow-hidden rounded-card border shadow-card', alert ? 'border-stop-line bg-alert-body' : 'border-line bg-surface', className)}>
       {(eyebrow || title) && (
-        <header className={cx('flex items-end gap-3 border-b px-5 py-4', alert ? 'glass-alert-head' : 'border-line bg-primary-soft/70')}>
+        <header className={cx('flex items-end gap-3 border-b px-5 py-4', alert ? 'border-transparent bg-wine' : 'border-line bg-primary-soft/70')}>
           <div className="min-w-0 flex-1">
             {eyebrow && <p className={cx('text-[11.5px] font-bold tracking-[0.12em] uppercase', alert ? 'text-white' : 'text-muted')}>{eyebrow}</p>}
             {title && <h2 className={cx('mt-0.5 text-[16px] font-extrabold', alert ? 'text-white' : 'text-fg')}>{title}</h2>}

@@ -5,7 +5,7 @@ export const SYMBOL_GROUPS: Record<string, { ko: string; color: string }> = {
   'Piping Accessories': { ko: '배관 부속', color: '#0b7a84' },
   Instruments: { ko: '계기', color: '#2a5c9c' },
   Equipments: { ko: '장비·기타', color: '#76348f' },
-  Pumps: { ko: '펌프', color: '#8a2238' },
+  Pumps: { ko: '펌프', color: '#8f1515' },
   Motors: { ko: '전동기', color: '#2f6b54' },
 }
 

@@ -51,13 +51,11 @@
   --wave-3: rgb(206 226 247 / 0.12);
 
   --focus: #1c6fd1;
-  --alert: #6e1a2a; /* 붉은 강조 — 사이트 전체 붉은색은 딥 버건디 하나로 (흰 글자 11.4:1) */
-  /* 붉은 카드 유리 질감 (Liquid Glass) — 머리 띠는 딥 버건디 (#6e1a2a) 90~96% — 흰 글자 9:1 이상 */
-  --alert-rgb: 110 26 42;
-  --wine-ink: #6e1a2a; /* 붉은 카드 안 강조 글자 */
-  --glass-alert-1: rgb(255 255 255 / 0.6);
-  --glass-alert-2: rgb(246 226 231 / 0.55);
-  --glass-edge: rgb(255 255 255 / 0.8);
+  --alert: #760c0c; /* 붉은 강조 — 사이트 전체 붉은색은 딥 버건디 하나로 (흰 글자 11:1 이상) */
+  /* 붉은 카드 머리 띠 — 딥 버건디 (#760c0c) */
+  --alert-rgb: 118 12 12;
+  --wine-ink: #760c0c; /* 붉은 카드 안 강조 글자 */
+  --alert-body: #fcf5f5; /* 붉은 카드 본문 — 아주 옅은 붉은 기 */
 
   /* 권고 4색 (bg / fg / line / dot) — 딥 톤: 숲 초록 · 황토 · 녹 주황 · 버건디. 글자/바탕 8:1 이상, 점 위 흰 글자 4.8:1 이상 */
   --go-bg: #e5eee8;
@@ -72,10 +70,10 @@
   --review-fg: #682f14;
   --review-line: #d9bcaa;
   --review-dot: #94461f;
-  --stop-bg: #f5e5e9;
-  --stop-fg: #6e1a2a;
-  --stop-line: #dbb2bd;
-  --stop-dot: #8a2238;
+  --stop-bg: #f6e5e5;
+  --stop-fg: #760c0c;
+  --stop-line: #ddb3b3;
+  --stop-dot: #8f1515;
   --info-bg: #e8f0fa;
   --info-fg: #1f4a78;
   --info-line: #c2d4ea;
@@ -118,12 +116,10 @@
     --wave-2: rgb(74 168 214 / 0.08);
     --wave-3: rgb(40 80 140 / 0.07);
     --focus: #7fb6f0;
-    --alert: #8a2a3c;
-    --alert-rgb: 120 32 48;
-    --wine-ink: #f0a5b4;
-    --glass-alert-1: rgb(56 26 32 / 0.62);
-    --glass-alert-2: rgb(40 20 26 / 0.62);
-    --glass-edge: rgb(255 255 255 / 0.14);
+    --alert: #8f1a1a;
+    --alert-rgb: 130 24 24;
+    --wine-ink: #f0a8a8;
+    --alert-body: #261414;
     --go-bg: #142a22;
     --go-fg: #92cfb4;
     --go-line: #2a5444;
@@ -136,10 +132,10 @@
     --review-fg: #eeb08e;
     --review-line: #5f3b28;
     --review-dot: #d9824f;
-    --stop-bg: #2e161c;
-    --stop-fg: #f0a5b4;
-    --stop-line: #5c2a36;
-    --stop-dot: #b04a62;
+    --stop-bg: #2e1515;
+    --stop-fg: #f0a8a8;
+    --stop-line: #5c2828;
+    --stop-dot: #b04545;
     --info-bg: #142a48;
     --info-fg: #a9c8ea;
     --info-line: #2c4a72;
@@ -188,6 +184,7 @@
   --color-alert: var(--alert);
   --color-wine: rgb(var(--alert-rgb));
   --color-wine-ink: var(--wine-ink);
+  --color-alert-body: var(--alert-body);
 
   --color-go-bg: var(--go-bg);
   --color-go-fg: var(--go-fg);
@@ -309,26 +306,6 @@
 }
 
 @layer components {
-  /* 붉은 카드 — 뒤의 물결이 흐리게 비치는 유리판, 윗면 빛 반사와 안쪽 테두리 광택 */
-  .glass-alert {
-    background: linear-gradient(160deg, var(--glass-alert-1), var(--glass-alert-2));
-    -webkit-backdrop-filter: blur(18px) saturate(170%);
-    backdrop-filter: blur(18px) saturate(170%);
-    border-color: var(--glass-edge);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.85),
-      inset 0 0 0 1px rgb(var(--alert-rgb) / 0.12),
-      0 12px 32px -14px rgb(90 18 34 / 0.32),
-      0 2px 6px rgb(15 42 79 / 0.06);
-  }
-  /* 머리 띠 — 반투명 버건디 유리. 빛 반사는 글자가 없는 윗가장자리 12px 안에만 */
-  .glass-alert-head {
-    background:
-      linear-gradient(to bottom, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.1) 5px, transparent 12px),
-      linear-gradient(to bottom, rgb(var(--alert-rgb) / 0.9), rgb(var(--alert-rgb) / 0.96));
-    border-color: transparent;
-    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.3), inset 0 -12px 18px -14px rgb(60 0 10 / 0.35);
-  }
   /* 펼침 영역 높이 애니메이션: grid-template-rows 0fr → 1fr */
   .collapse-grid {
     display: grid;
