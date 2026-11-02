@@ -51,7 +51,12 @@
   --wave-3: rgb(206 226 247 / 0.12);
 
   --focus: #1c6fd1;
-  --alert: #be123c; /* 꼭 할 일 · 빠진 정보 머리 띠 — 로즈 레드, 80% 로 써도 흰 글자 4.7:1 */
+  --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
+  /* 붉은 카드 유리 질감 (Liquid Glass) — 머리 띠는 벽돌빛 90~96% 라 흰 글자 4.8:1 이상 */
+  --alert-rgb: 185 58 64;
+  --glass-alert-1: rgb(255 255 255 / 0.6);
+  --glass-alert-2: rgb(248 225 226 / 0.55);
+  --glass-edge: rgb(255 255 255 / 0.8);
 
   /* 권고 4색 (bg / fg / line / dot) */
   --go-bg: #e8f3ee;
@@ -66,10 +71,10 @@
   --review-fg: #8c4320;
   --review-line: #e8c6b1;
   --review-dot: #c96a3a;
-  --stop-bg: #fff1f2;
-  --stop-fg: #9f1239;
-  --stop-line: #fecdd3;
-  --stop-dot: #f43f5e;
+  --stop-bg: #f8e7e7;
+  --stop-fg: #962f33;
+  --stop-line: #e5bcbe;
+  --stop-dot: #c2474c;
   --info-bg: #e8f0fa;
   --info-fg: #1f4a78;
   --info-line: #c2d4ea;
@@ -112,7 +117,11 @@
     --wave-2: rgb(74 168 214 / 0.08);
     --wave-3: rgb(40 80 140 / 0.07);
     --focus: #7fb6f0;
-    --alert: #be123c;
+    --alert: #9b2f35;
+    --alert-rgb: 155 47 53;
+    --glass-alert-1: rgb(58 28 30 / 0.62);
+    --glass-alert-2: rgb(40 22 24 / 0.62);
+    --glass-edge: rgb(255 255 255 / 0.14);
     --go-bg: #142a22;
     --go-fg: #92cfb4;
     --go-line: #2a5444;
@@ -125,10 +134,10 @@
     --review-fg: #eeb08e;
     --review-line: #5f3b28;
     --review-dot: #d9824f;
-    --stop-bg: #3a1220;
-    --stop-fg: #fda4af;
-    --stop-line: #7a2340;
-    --stop-dot: #fb7185;
+    --stop-bg: #311a1b;
+    --stop-fg: #eea3a5;
+    --stop-line: #633234;
+    --stop-dot: #d6595e;
     --info-bg: #142a48;
     --info-fg: #a9c8ea;
     --info-line: #2c4a72;
@@ -296,6 +305,26 @@
 }
 
 @layer components {
+  /* 붉은 카드 — 뒤의 물결이 흐리게 비치는 유리판, 윗면 빛 반사와 안쪽 테두리 광택 */
+  .glass-alert {
+    background: linear-gradient(160deg, var(--glass-alert-1), var(--glass-alert-2));
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+    border-color: var(--glass-edge);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      inset 0 0 0 1px rgb(var(--alert-rgb) / 0.12),
+      0 12px 32px -14px rgb(120 30 40 / 0.32),
+      0 2px 6px rgb(15 42 79 / 0.06);
+  }
+  /* 머리 띠 — 반투명 벽돌빛 유리. 빛 반사는 글자가 없는 윗가장자리 12px 안에만 */
+  .glass-alert-head {
+    background:
+      linear-gradient(to bottom, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0.1) 5px, transparent 12px),
+      linear-gradient(to bottom, rgb(var(--alert-rgb) / 0.9), rgb(var(--alert-rgb) / 0.96));
+    border-color: transparent;
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.3), inset 0 -12px 18px -14px rgb(60 0 10 / 0.35);
+  }
   /* 펼침 영역 높이 애니메이션: grid-template-rows 0fr → 1fr */
   .collapse-grid {
     display: grid;
