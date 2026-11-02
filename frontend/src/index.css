@@ -54,6 +54,7 @@
   --alert: #b93a40; /* 꼭 할 일 · 빠진 정보 머리 띠 — 흰 글자 5.6:1 */
   /* 붉은 카드 유리 질감 (Liquid Glass) — 머리 띠는 딥 버건디 (#6e1a2a) 90~96% — 흰 글자 9:1 이상 */
   --alert-rgb: 110 26 42;
+  --wine-ink: #6e1a2a; /* 붉은 카드 안 강조 글자 */
   --glass-alert-1: rgb(255 255 255 / 0.6);
   --glass-alert-2: rgb(246 226 231 / 0.55);
   --glass-edge: rgb(255 255 255 / 0.8);
@@ -119,6 +120,7 @@
     --focus: #7fb6f0;
     --alert: #9b2f35;
     --alert-rgb: 120 32 48;
+    --wine-ink: #f0a5b4;
     --glass-alert-1: rgb(56 26 32 / 0.62);
     --glass-alert-2: rgb(40 20 26 / 0.62);
     --glass-edge: rgb(255 255 255 / 0.14);
@@ -184,6 +186,8 @@
   --color-teal-line: var(--teal-line);
   --color-focus: var(--focus);
   --color-alert: var(--alert);
+  --color-wine: rgb(var(--alert-rgb));
+  --color-wine-ink: var(--wine-ink);
 
   --color-go-bg: var(--go-bg);
   --color-go-fg: var(--go-fg);

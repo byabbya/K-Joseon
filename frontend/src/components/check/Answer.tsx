@@ -163,16 +163,16 @@ function StatTiles({ a }: { a: Analysis }) {
         const body = (
           <>
             <span className="flex items-center gap-1.5 text-[12px] font-semibold text-muted">
-              <span aria-hidden className={cx('grid size-6 place-items-center rounded-full', t.warn ? 'bg-alert text-white' : 'bg-primary-soft text-primary-ink')}>
+              <span aria-hidden className={cx('grid size-6 place-items-center rounded-full', t.warn ? 'bg-wine text-white' : 'bg-primary-soft text-primary-ink')}>
                 {t.icon}
               </span>
               {t.label}
             </span>
-            <span className={cx('mt-2 block truncate text-[1.6rem] leading-none font-extrabold tabular-nums', t.warn ? 'text-stop-fg' : 'text-fg')}>
+            <span className={cx('mt-2 block truncate text-[1.6rem] leading-none font-extrabold tabular-nums', t.warn ? 'text-wine-ink' : 'text-fg')}>
               {t.value}
               {t.unit && <span className="ml-1 text-[13px] font-bold text-fg-2">{t.unit}</span>}
             </span>
-            <span className={cx('mt-1.5 block truncate text-[12px]', t.warn ? 'font-semibold text-stop-fg' : 'text-muted')}>{t.sub}</span>
+            <span className={cx('mt-1.5 block truncate text-[12px]', t.warn ? 'font-semibold text-wine-ink' : 'text-muted')}>{t.sub}</span>
           </>
         )
         return (

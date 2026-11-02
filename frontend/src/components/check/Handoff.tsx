@@ -69,14 +69,14 @@ export function NextStep({
         ))}
       {s.status === '법무 검토 중' && (
         <div className="space-y-1.5">
-          <p className="flex items-center gap-2 rounded-field bg-info-bg px-3 py-2.5 text-[14px] text-info-fg ring-1 ring-info-line ring-inset">
-            <IconClock size={16} className="shrink-0" />
+          <p className="flex items-center gap-2 rounded-field bg-surface/75 px-3 py-2.5 text-[14px] text-fg ring-1 ring-wine/25 ring-inset">
+            <IconClock size={16} className="shrink-0 text-wine-ink" />
             <span className="min-w-0 flex-1">
               법무팀 답변을 기다리고 있어요.
               <br />
               답이 오면 이 화면 맨 위에 보여요.
             </span>
-            <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-info-fg" aria-hidden />
+            <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-wine" aria-hidden />
           </p>
           <p className="text-[12px] text-muted">요청 {fmtDate(s.submitted_at)}</p>
         </div>
