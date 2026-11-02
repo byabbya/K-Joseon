@@ -43,6 +43,14 @@ export function LegalDashboardPage() {
   const byRec = RECS.map((r) => ({ r, n: all.filter((x) => x.recommendation === r).length }))
   const maxRec = Math.max(1, ...byRec.map((x) => x.n))
   const loading = pending.isLoading || done.isLoading
+  // 로컬 분석 구성요소 상태 (/api/status) — LLM · 의미 검색 · 도면 YOLO · OCR. 외부 호출은 구조상 없음(테스트로 확인)
+  const parts = st ? [st.llm.available, st.embedding === 'ready', !/가중치 없음/.test(st.yolo), !!st.ocr] : []
+  const ready = parts.filter(Boolean).length
+  const sys = !st
+    ? { text: '확인 중', tone: 'muted' as const, sub: '상태를 불러오는 중' }
+    : ready === parts.length
+      ? { text: '정상', tone: 'go' as const, sub: `로컬 구성요소 ${ready}/${parts.length} 준비 · 외부 호출 없음` }
+      : { text: '일부 제한', tone: 'cond' as const, sub: `${[!parts[0] && 'LLM 꺼짐(템플릿 문장)', !parts[1] && (st.embedding === 'loading' ? '의미 검색 준비 중' : '의미 검색 꺼짐'), !parts[2] && 'YOLO 없음', !parts[3] && 'OCR 없음'].filter(Boolean).join(' · ')} · 판정은 그대로` }
 
   return (
     <Page>
@@ -63,7 +71,7 @@ export function LegalDashboardPage() {
         <Stat label="미처리 요청" value={pending.data?.length} sub="법무 판정 대기" accent />
         <Stat label="오늘 들어온 요청" value={todayCount} sub={today.replace(/-/g, '.')} />
         <Stat label="처리 완료" value={done.data?.length} sub="판정 기록" />
-        <Stat label="데이터 상태" text="정상" sub={st ? `외부 호출 0건 · ${st.llm.available ? 'LLM 연결' : 'LLM 꺼짐'}` : '외부 호출 0건'} />
+        <Stat label="분석 시스템" text={sys.text} tone={sys.tone} sub={sys.sub} />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
@@ -211,11 +219,11 @@ export function LegalDashboardPage() {
   )
 }
 
-function Stat({ label, value, text, sub, accent }: { label: string; value?: number; text?: string; sub: string; accent?: boolean }) {
+function Stat({ label, value, text, sub, accent, tone }: { label: string; value?: number; text?: string; sub: string; accent?: boolean; tone?: 'go' | 'cond' | 'muted' }) {
   return (
     <div className="border-line px-5 py-4 not-last:border-b sm:[&:nth-child(odd)]:border-r xl:not-last:border-r xl:border-b-0">
       <p className="text-[11.5px] font-bold tracking-[0.06em] text-muted">{label}</p>
-      <p className={cx('mt-1 text-[1.6rem] leading-none font-extrabold tabular-nums', accent ? 'text-review-fg' : text ? 'text-go-fg' : 'text-fg')}>{text ?? (value === undefined ? '·' : String(value).padStart(2, '0'))}</p>
+      <p className={cx('mt-1 text-[1.6rem] leading-none font-extrabold tabular-nums', accent ? 'text-review-fg' : tone === 'cond' ? 'text-cond-fg' : tone === 'muted' ? 'text-muted' : text ? 'text-go-fg' : 'text-fg')}>{text ?? (value === undefined ? '·' : String(value).padStart(2, '0'))}</p>
       <p className="mt-1.5 text-[11.5px] text-muted">{sub}</p>
     </div>
   )

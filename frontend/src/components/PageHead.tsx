@@ -68,7 +68,7 @@ export function SectionCard({ no, title, sub, tag, children, id }: { no: string;
           {sub && <p className="mt-0.5 text-[12.5px] text-muted">{sub}</p>}
         </div>
         {tag && <span className="mt-1 shrink-0 rounded-[2px] bg-surface px-1.5 text-[11.5px] leading-5 font-bold text-fg-2 ring-1 ring-line ring-inset">{tag}</span>}
-        <span aria-hidden className="-mt-1 shrink-0 font-mono text-[2.2rem] leading-none font-extrabold text-surface-3 select-none">
+        <span aria-hidden className="-mt-1 shrink-0 font-mono text-[2.2rem] leading-none font-extrabold text-primary/30 select-none">
           {no}
         </span>
       </header>

@@ -240,12 +240,20 @@ export const IconGavel = (p: P) => (
   </Svg>
 )
 /** 제품 마크 — 방패 안의 선체 단면(용골선) */
+/** 제품 마크 — 정면에서 본 배(마스트 · 선교 창 3개 · 선체 가운데 선 · 현창 3개)와 물결. 선체는 currentColor, 물결은 바다색 */
 export const LogoMark = ({ size = 26 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-    <path d="M16 2.5 4.5 6.8v8.4c0 7 4.8 12.4 11.5 14.3 6.7-1.9 11.5-7.3 11.5-14.3V6.8z" fill="currentColor" opacity="0.14" />
-    <path d="M16 2.5 4.5 6.8v8.4c0 7 4.8 12.4 11.5 14.3 6.7-1.9 11.5-7.3 11.5-14.3V6.8z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-    <path d="M9 14.5h14l-2.4 5.2a2 2 0 0 1-1.8 1.2h-5.6a2 2 0 0 1-1.8-1.2z" fill="currentColor" />
-    <path d="M16 8.5v6M16 8.5l4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    <rect x="15.2" y="1.5" width="1.6" height="4" rx="0.5" fill="currentColor" />
+    <rect x="11.2" y="4.6" width="9.6" height="2.4" rx="0.4" fill="currentColor" />
+    <path d="M7.6 7.2h16.8v1.3l-1 1v3.6H8.6V9.5l-1-1z" fill="currentColor" />
+    <rect x="10" y="9.4" width="2.6" height="1.6" rx="0.3" fill="#fff" />
+    <rect x="14.7" y="9.4" width="2.6" height="1.6" rx="0.3" fill="#fff" />
+    <rect x="19.4" y="9.4" width="2.6" height="1.6" rx="0.3" fill="#fff" />
+    <path d="M4.6 15.4c3.6-2.1 7.4-3.2 11.4-3.2s7.8 1.1 11.4 3.2l-3.6 9.8c-.3.7-.9 1.1-1.6 1.1h-3.4L16 18.4l-2.8 7.9H9.8c-.7 0-1.3-.4-1.6-1.1z" fill="currentColor" />
+    <circle cx="20.6" cy="16.9" r="1.25" fill="#fff" />
+    <circle cx="22.9" cy="17.6" r="0.85" fill="#fff" />
+    <circle cx="24.5" cy="18.3" r="0.55" fill="#fff" />
+    <path d="M2.2 29.2c1.6-1.5 3.4-1.5 5 0s3.4 1.5 5 0 3.4-1.5 5 0 3.4 1.5 5 0 3.4-1.5 5 0 2.3 1 3.6.6" fill="none" stroke="#1d7fae" strokeWidth="1.7" strokeLinecap="round" />
   </svg>
 )
 export const IconSearch = (p: P) => (

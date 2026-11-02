@@ -97,7 +97,7 @@ export function AppShell() {
       <aside className="app-sidebar sticky top-0 flex h-dvh w-[13rem] shrink-0 flex-col bg-nav text-nav-fg max-lg:hidden">
         <Link to={ROLE_HOME[role]} className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
           <span className="grid size-9 place-items-center rounded-field bg-white/95 text-primary ring-1 ring-white/20 ring-inset">
-            <LogoMark size={22} />
+            <LogoMark size={26} />
           </span>
           <span className="leading-tight">
             <span className="block text-[15px] font-extrabold tracking-[0.08em] text-white">K-SHIP</span>

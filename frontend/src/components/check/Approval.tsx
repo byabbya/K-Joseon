@@ -148,13 +148,13 @@ export function ApprovalLinePanel({ d }: { d: RequestDetail }) {
           <li
             key={x.title}
             aria-current={x.state === 'current' ? 'step' : undefined}
-            className={cx('flex items-center gap-3 border-l-[3px] px-5 py-3', i > 0 && 'border-t border-t-line', x.state === 'current' ? 'border-l-teal bg-teal-soft/50' : 'border-l-transparent')}
+            className={cx('flex items-center gap-3 border-l-[3px] px-5 py-3', i > 0 && 'border-t border-t-line', x.state === 'current' ? 'border-l-nav bg-surface' : 'border-l-transparent')}
           >
             <span
               aria-hidden
               className={cx(
                 'grid size-10 shrink-0 place-items-center rounded-full text-[14px] font-bold',
-                x.state === 'done' ? 'bg-primary text-on-primary' : x.state === 'current' ? 'bg-teal text-white' : 'bg-surface-3 text-muted',
+                x.state === 'done' ? 'bg-primary text-on-primary' : x.state === 'current' ? 'bg-nav text-white ring-2 ring-nav/25 ring-offset-2 ring-offset-surface' : 'bg-surface-3 text-muted',
               )}
             >
               {x.person?.name.slice(0, 1) ?? '?'}
@@ -162,9 +162,10 @@ export function ApprovalLinePanel({ d }: { d: RequestDetail }) {
             <span className="min-w-0 flex-1 leading-tight">
               <span className={cx('block text-[13.5px] font-bold', x.state === 'skipped' ? 'text-muted' : 'text-fg')}>
                 {x.person?.name ?? '미지정'} <span className="font-semibold text-fg-2">{x.group === '신청' ? '신청자' : x.title === '법무팀' ? '승인권자' : '담당'}</span>
+                {x.state === 'current' && <span className="ml-1.5 rounded-pill bg-nav px-2 py-px align-middle text-[11px] font-bold text-white">지금 차례</span>}
               </span>
               <span className="block truncate text-[11.5px] text-muted">{x.person?.department ?? x.title}</span>
-              <span className={cx('mt-0.5 block text-[11.5px]', x.state === 'current' ? 'font-semibold text-teal-ink' : 'text-fg-2')}>
+              <span className={cx('mt-0.5 block text-[11.5px]', x.state === 'current' ? 'font-bold text-primary' : 'text-fg-2')}>
                 {x.action}
                 {x.date && <span className="font-mono text-muted"> | {ymd(x.date)}</span>}
               </span>

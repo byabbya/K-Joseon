@@ -273,15 +273,14 @@ function CandidatesPanel({ a }: { a: Analysis }) {
   )
 }
 
-/** 적용 검토 근거 — 보드형: 법령 층(①~④)과 판례·의결을 칸으로 나눠 카드로 보인다.
+/** 적용 검토 근거 — 4사분면 보드: ① 고시 해당 기술 · ② 법률(산업기술보호법·기타 법령) · ③ 산업기술보호지침 · ④ 판례·공정위 의결.
  *  요약·판단 축·파일별 판단·출처 목록이 든 근거 보고서 전체는 아래에서 펼친다 (인용 칩을 누르면 자동으로 펼침). */
-const BOARD_LAYERS: { order: number; title: string; sub: string }[] = [
-  { order: 1, title: '고시 해당 기술', sub: '국가핵심기술 지정 고시 별표' },
-  { order: 2, title: '산업기술보호법', sub: '보호조치 · 수출 승인·신고' },
-  { order: 3, title: '산업기술보호지침', sub: '반출 통제 · 외주 · 외국인' },
-  { order: 4, title: '기타 법령', sub: '대외무역법 · 연구개발혁신법 · 하도급법' },
+const QUADRANTS: { no: string; title: string; sub: string; orders: number[]; cases?: boolean }[] = [
+  { no: '①', title: '고시 해당 기술', sub: '국가핵심기술 지정 고시 별표', orders: [1] },
+  { no: '②', title: '법률', sub: '산업기술보호법 · 대외무역법 · 연구개발혁신법 · 하도급법', orders: [2, 4] },
+  { no: '③', title: '산업기술보호지침', sub: '반출 통제 · 외주 · 외국인 관리', orders: [3] },
+  { no: '④', title: '판례 · 공정위 의결', sub: '비슷한 사건의 판단', orders: [], cases: true },
 ]
-const CIRCLED_NO = ['', '①', '②', '③', '④', '⑤']
 
 function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis | null; d: RequestDetail; audience: Audience }) {
   const [open, setOpen] = useState(false)
@@ -293,10 +292,15 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
   const laws = a.clauses.filter((c) => c.status !== '구버전').length
   // 사원 화면에는 규칙 번호([R04]) 를 보이지 않는다
   const plain = (t: string) => (audience === 'legal' ? t : t.replace(/\[(?:R|P)\d{1,2}[a-z]?\]\s*/g, '').trim())
-  const cols = [
-    ...BOARD_LAYERS.map((l) => ({ key: `L${l.order}`, no: CIRCLED_NO[l.order], title: l.title, sub: l.sub, clauses: a.clauses.filter((c) => c.order === l.order).sort((x, y) => Number(x.status === '구버전') - Number(y.status === '구버전')), cases: [] as Analysis['precedents'] })),
-    { key: 'P', no: CIRCLED_NO[5], title: '판례 · 공정위 의결', sub: '비슷한 사건의 판단', clauses: [] as Analysis['clauses'], cases: a.precedents },
-  ].filter((c) => c.clauses.length || c.cases.length)
+  const cols = QUADRANTS.map((q) => ({
+    key: q.no,
+    no: q.no,
+    title: q.title,
+    sub: q.sub,
+    clauses: a.clauses.filter((c) => q.orders.includes(c.order)).sort((x, y) => Number(x.status === '구버전') - Number(y.status === '구버전') || x.order - y.order),
+    cases: q.cases ? a.precedents : ([] as Analysis['precedents']),
+  }))
+  const any = cols.some((c) => c.clauses.length || c.cases.length)
   return (
     <Panel
       id="evidence"
@@ -309,9 +313,9 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
       }
       className="print:border-0"
     >
-      {cols.length ? (
-        <div className="thin-scroll relative overflow-x-auto px-4 py-4">
-          <ol className="grid auto-cols-[minmax(15rem,1fr)] grid-flow-col gap-3" aria-label="근거 보드">
+      {any ? (
+        <div className="relative px-4 py-4">
+          <ol className="grid gap-3 md:grid-cols-2" aria-label="근거 4사분면">
             {cols.map((c) => (
               <li key={c.key} className="flex min-w-0 flex-col rounded-field bg-surface-2 p-2.5 ring-1 ring-line ring-inset">
                 <div className="mb-2 flex items-start gap-2 px-1">
@@ -324,7 +328,8 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
                   </span>
                   <span className="rounded-pill bg-surface px-2 font-mono text-[11.5px] font-bold text-fg-2 ring-1 ring-line">{c.clauses.length + c.cases.length}</span>
                 </div>
-                <ul className="space-y-2">
+                {!c.clauses.length && !c.cases.length && <p className="rounded-field border border-dashed border-line-strong px-3 py-4 text-center text-[12px] text-muted">이 건에 해당하는 근거가 없어요</p>}
+                <ul className="grid gap-2">
                   {c.clauses.map((x) => (
                     <li key={x.clause_id} className={cx('rounded-field border border-line bg-surface p-3 shadow-card', x.status === '구버전' && 'opacity-70')}>
                       <p className="flex items-center gap-1.5">
