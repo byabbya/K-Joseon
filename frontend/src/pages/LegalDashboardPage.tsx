@@ -212,9 +212,9 @@ export function LegalDashboardPage() {
 
 function Stat({ label, value, sub, accent }: { label: string; value?: number; sub: string; accent?: boolean }) {
   return (
-    <div className="border-line px-5 py-4 not-last:border-b sm:border-b-0 sm:not-last:border-r">
+    <div className={cx('border-line px-5 py-4 not-last:border-b sm:border-b-0 sm:not-last:border-r', accent && 'bg-stop-bg')}>
       <p className="text-[11.5px] font-bold tracking-[0.06em] text-muted">{label}</p>
-      <p className={cx('mt-1 text-[1.6rem] leading-none font-extrabold tabular-nums', accent ? 'text-review-fg' : 'text-fg')}>{value === undefined ? '·' : String(value).padStart(2, '0')}</p>
+      <p className={cx('mt-1 text-[1.6rem] leading-none font-extrabold tabular-nums', accent ? 'text-alert' : 'text-fg')}>{value === undefined ? '·' : String(value).padStart(2, '0')}</p>
       <p className="mt-1.5 text-[11.5px] text-muted">{sub}</p>
     </div>
   )
