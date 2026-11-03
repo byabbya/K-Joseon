@@ -1,0 +1,2 @@
+# 국가법령정보센터에서 받은 법령·판례 원문(데이터)은 GitHub 언어 통계에서 뺀다 — 화면 코드는 React/TypeScript
+data/legal/raw/** linguist-vendored
