@@ -38,3 +38,7 @@ data/app.db
 data/storage/
 # 도면 분석 결과 캐시 (sha256 기준)
 data/runtime_cache/
+
+# 시연 테스트 키트 (AI-Hub 도면 포함 — 공개 저장소에 올리지 않음)
+/시연_테스트_데이터/
+/시연_테스트_데이터.zip

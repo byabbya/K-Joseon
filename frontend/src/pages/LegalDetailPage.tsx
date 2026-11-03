@@ -517,7 +517,6 @@ const VERDICTS: Verdict[] = ['승인', '내부 검토 필요', '미승인']
 function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analysis; reviewerId: string | null; inset?: boolean }) {
   const internalOptions = useMeta().data?.internal_review_options ?? []
   const [verdict, setVerdict] = useState<Verdict | null>(null)
-  const [conditions, setConditions] = useState('')
   const [subs, setSubs] = useState<string[]>([])
   const [reason, setReason] = useState('')
   const [err, setErr] = useState<string | null>(null)
@@ -526,9 +525,7 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
 
   const suggested = new Set(a.files.flatMap((f) => f.rule_hits.flatMap((h) => h.internal_review_options)))
   const options = [...new Set([...internalOptions, ...suggested])]
-  const conditionHints = [...new Set(a.files.flatMap((f) => f.rule_hits.flatMap((h) => h.conditions)))]
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
-  const condLines = conditions.split('\n').map((x) => x.trim())
   // backend main.py CONTRARY_VERDICT 와 같은 기준 (진행 가능·조건부 진행 ↔ 미승인, 반출 불가 ↔ 승인)
   const CONTRARY: Partial<Record<string, Verdict[]>> = { '진행 가능': ['미승인'], '조건부 진행': ['미승인'], '반출 불가': ['승인'] }
   const differs = verdict !== null && !!CONTRARY[a.recommendation]?.includes(verdict)
@@ -546,7 +543,7 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
         reviewer_id: reviewerId,
         verdict,
         sub_options: verdict === '내부 검토 필요' ? subs : [],
-        conditions: verdict === '승인' ? conditions.trim() : '',
+        conditions: '',
         reason: reason.trim(),
         checked_evidence: [],
       },
@@ -554,7 +551,6 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
         onSuccess: () => {
           setSaved(`${verdict} 판정을 저장했습니다 · v${d.decisions.length + 1}`)
           setVerdict(null)
-          setConditions('')
           setSubs([])
           setReason('')
         },
@@ -619,36 +615,6 @@ function DecisionPanel({ d, a, reviewerId, inset }: { d: RequestDetail; a: Analy
           </Pill>
           시스템 권고({a.recommendation})와 다른 판정은 규칙 개선용으로 자동 기록됩니다.
         </p>
-      )}
-
-      {verdict === '승인' && (
-        <div className="mt-4 animate-pop-in">
-          <label className="mb-1.5 block text-[12.5px] font-semibold text-fg-2" htmlFor="cond">
-            승인 조건
-          </label>
-          <textarea id="cond" rows={3} className={inputCls} value={conditions} onChange={(e) => setConditions(e.target.value)} placeholder="승인도면 목록 내 파일만 전송, 시공 절차서 제외" />
-          {conditionHints.length > 0 && (
-            <div className="mt-2">
-              <p className="mb-1.5 text-[11.5px] text-muted">규칙이 낸 조건 넣기</p>
-              <div className="flex flex-wrap gap-1.5">
-                {conditionHints.map((c) => {
-                  const on = condLines.includes(c)
-                  return (
-                    <ChoiceChip
-                      key={c}
-                      mode="toggle"
-                      size="sm"
-                      selected={on}
-                      onClick={() => setConditions((x) => (on ? x.split('\n').filter((l) => l.trim() !== c).join('\n') : x.trim() ? `${x.trim()}\n${c}` : c))}
-                    >
-                      {c}
-                    </ChoiceChip>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
       )}
 
       {verdict === '내부 검토 필요' && (
