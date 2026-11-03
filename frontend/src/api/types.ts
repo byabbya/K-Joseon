@@ -134,6 +134,44 @@ export interface DrawingDetail extends DrawingSummary {
   symbols: DrawingSymbol[]
 }
 
+/** 도면 분석 진행 상황 (GET /api/files/{id}/drawing/progress) — 좌표는 모두 원본 이미지 좌표 */
+export type DrawingStage = 'load' | 'tiles' | 'detect' | 'merge' | 'ocr' | 'done'
+export type Box = [number, number, number, number]
+export interface DrawingProgress {
+  /** queued: 아직 차례가 아님 · running · done · failed */
+  state: 'queued' | 'running' | 'done' | 'failed'
+  stage?: DrawingStage
+  seq?: number
+  elapsed?: number
+  image?: { width: number; height: number }
+  yolo?: string
+  /** [x1, y1, x2, y2, 여백(1)이면 탐지 건너뜀] */
+  tiles?: [number, number, number, number, number][]
+  tile_total?: number
+  tile_done?: number
+  /** 지금 처리 중인 타일·글자 영역 */
+  current?: Box[]
+  /** 한 번에 YOLO 에 넣는 타일 수 */
+  batch?: number
+  /** 타일별로 나온 탐지 (합치기 전). k = 몇 번째 묶음에서 나왔는지 (다시 보기용) */
+  raw?: { group: string; bbox: Box; k?: number }[]
+  raw_count?: number
+  /** 중복을 합친 뒤 */
+  symbols?: { group: string; bbox: Box; status: '확정' | '미확정' }[]
+  ocr_phase?: 'coarse' | 'title'
+  ocr_done?: number
+  ocr_total?: number
+  /** 글자를 읽은 영역 순서 (다시 보기용) */
+  ocr_regions?: { phase: 'coarse' | 'title'; box: Box }[]
+  /** k = 몇 번째 글자 영역에서 읽었는지 */
+  lines?: { text: string; bbox: Box; k?: number }[]
+  /** 단계별 시작 시각 (분석 시작부터 초) */
+  marks?: Partial<Record<DrawingStage, number>>
+  tags?: string[]
+  title?: string
+  error?: string
+}
+
 // ---- 검색 (BM25 + bge-m3) — 판단에는 쓰지 않는 참고 근거 ----
 export interface RelatedEvidence {
   id: string

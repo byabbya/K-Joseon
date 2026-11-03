@@ -3,6 +3,7 @@ import type {
   AdjustmentInput,
   DecisionInput,
   DrawingDetail,
+  DrawingProgress,
   Meta,
   PreviewOut,
   RequestDetail,
@@ -121,6 +122,10 @@ const realApi = {
   /** 도면 분석 전체 (심볼 박스 좌표 — 원본 이미지 좌표). 열람 이력이 남는다 */
   getDrawing: (assetId: string, viewer: string) =>
     http<DrawingDetail>(`/api/files/${encodeURIComponent(assetId)}/drawing?viewer=${encodeURIComponent(viewer)}`),
+
+  /** 도면 분석 진행 상황 (단계·타일·지금까지의 상자와 글자). 열람 이력은 남기지 않는다 */
+  getDrawingProgress: (assetId: string, viewer: string) =>
+    http<DrawingProgress>(`/api/files/${encodeURIComponent(assetId)}/drawing/progress?viewer=${encodeURIComponent(viewer)}`),
 
   /** 도면 미리보기 이미지 주소 (축소 PNG) */
   drawingPreviewUrl: (assetId: string, viewer: string, width = 1600) =>

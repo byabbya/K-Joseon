@@ -673,6 +673,7 @@ function Explanation({ a }: { a: Analysis }) {
 
 // 확대 보기·오버레이는 무거워서 따로 불러온다 (React.lazy — 첫 화면 번들에서 뺀다)
 const DrawingCard = lazy(() => import('./Drawing'))
+const DrawingProgressCard = lazy(() => import('./DrawingProgress'))
 
 function DrawingSection({ a }: { a: Analysis }) {
   const { userId } = useUser()
@@ -693,7 +694,9 @@ function DrawingSection({ a }: { a: Analysis }) {
               <DrawingCard f={f} viewer={userId} />
             </Suspense>
           ) : (
-            <DrawingPending key={f.asset_id} f={f} />
+            <Suspense key={f.asset_id} fallback={<DrawingPending f={f} />}>
+              <DrawingProgressCard f={f} viewer={userId} />
+            </Suspense>
           ),
         )}
       </div>

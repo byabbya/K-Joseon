@@ -16,6 +16,7 @@
 | POST | `/api/requests/{id}/decision` | 법무 판정 (`DecisionInput`) — 새 버전으로 저장, 권고와 다르면 플래그 |
 | POST | `/api/requests/{id}/resubmit` | 미승인 건 재신청 → 입력을 복사한 새 요청 (`RequestDetail`, `parent_request_id` 연결) |
 | GET | `/api/files/{asset_id}?viewer=[&download=1]` | 첨부 원본 — 기본은 브라우저 안 미리보기(inline), `download=1` 이면 내려받기(attachment). 둘 다 열람 이력 기록 (`view_file` / `download_file`) |
+| GET | `/api/files/{asset_id}/drawing/progress?viewer=` | 도면 분석 진행 상황 (`DrawingProgress`) — `state`(queued·running·done·failed), `stage`(load→tiles→detect→merge→ocr→done), 타일 격자, 지금 처리 중인 곳, 타일별 탐지(`raw`, 묶음 번호 `k`), 합친 기호(`symbols`), 읽은 글자(`lines`, 영역 번호 `k`), 단계 시작 시각(`marks`). 좌표는 원본 기준. 진행 중엔 메모리, 끝나면 `<sha>.progress.json` 으로 남아 '과정 다시 보기'에 쓴다. 열람 권한만 확인하고 이력은 남기지 않음 |
 | GET | `/api/requests/{id}/audit` | 감사 로그 |
 
 ## 파일 없이 질문하기

@@ -3,11 +3,12 @@
 // 심볼 좌표는 원본 이미지 좌표라서, SVG viewBox 를 원본 크기로 두면 축소 미리보기에 그대로 맞는다.
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent, type ReactNode } from 'react'
 import { api } from '../../api/client'
-import { useDrawing } from '../../api/hooks'
+import { useDrawing, useDrawingProgress } from '../../api/hooks'
 import type { DrawingSymbol, FileResult } from '../../api/types'
 import { SYMBOL_GROUPS, groupColor, groupKo } from '../../lib/symbols'
 import { Button, cx } from '../ui'
-import { IconFileDrawing, IconPlus, IconX } from '../icons'
+import { IconFileDrawing, IconPlay, IconPlus, IconX } from '../icons'
+import { DrawingReplay } from './DrawingProgress'
 
 interface View {
   hidden: string[]
@@ -21,6 +22,9 @@ export default function DrawingCard({ f, viewer }: { f: FileResult; viewer: stri
   const [view, setView] = useState<View>({ hidden: [], showUncertain: true })
   const [open, setOpen] = useState(false)
   const [imgErr, setImgErr] = useState(false)
+  // 분석 과정 기록 — 있으면 '과정 다시 보기' (화면 녹화용)
+  const prog = useDrawingProgress(f.asset_id, viewer)
+  const [replay, setReplay] = useState(false)
   const W = d.image?.width || 1
   const H = d.image?.height || 1
   const src = viewer ? api.drawingPreviewUrl(f.asset_id, viewer, 1600) : ''
@@ -43,6 +47,8 @@ export default function DrawingCard({ f, viewer }: { f: FileResult; viewer: stri
   const visible = (symbols ?? []).filter((s) => !view.hidden.includes(s.group) && (view.showUncertain || s.status === '확정'))
   const alt = `${f.filename} 도면 미리보기${d.title ? ` (표제: ${d.title})` : ''} — 심볼 ${visible.length}개 표시`
 
+  if (replay && prog.data?.tiles) return <DrawingReplay f={f} viewer={viewer} fin={prog.data} onClose={() => setReplay(false)} />
+
   return (
     <article id={`drawing-${f.asset_id}`} aria-labelledby={`drawing-${f.asset_id}-name`} className="scroll-mt-20 px-5 py-4">
       <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -55,8 +61,15 @@ export default function DrawingCard({ f, viewer }: { f: FileResult; viewer: stri
             표제 <b className="font-mono font-semibold text-fg">{d.title}</b>
           </span>
         )}
-        <span className="ml-auto text-[12px] text-muted tabular-nums">
-          기호 {confirmed + (d.uncertain ?? 0)}개 · 태그 {d.tags?.length ?? 0}
+        <span className="ml-auto flex items-center gap-2">
+          <span className="text-[12px] text-muted tabular-nums">
+            기호 {confirmed + (d.uncertain ?? 0)}개 · 태그 {d.tags?.length ?? 0}
+          </span>
+          {prog.data?.tiles && (
+            <Button size="sm" variant="secondary" onClick={() => setReplay(true)}>
+              <IconPlay size={13} /> 과정 다시 보기
+            </Button>
+          )}
         </span>
       </header>
 
@@ -89,7 +102,7 @@ export default function DrawingCard({ f, viewer }: { f: FileResult; viewer: stri
                 ? '기호 위치를 불러오는 중…'
                 : q.isError
                   ? '기호 위치를 불러오지 못했어요'
-                  : '실선 = 확실 · 점선 = 불확실'}
+                  : '실선 = 확실 (AI 확신도 50% 이상) · 점선 = 불확실 (50% 미만, 틀렸을 수 있음)'}
           </p>
         </div>
 
@@ -183,8 +196,8 @@ function GroupToggles({
               <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: on ? groupColor(g) : 'transparent', boxShadow: `inset 0 0 0 1.5px ${groupColor(g)}` }} />
               {groupKo(g)}
               <span className="font-mono text-[11.5px] text-muted tabular-nums">
-                {n.sure}
-                {n.unsure ? <span title="불확실"> +{n.unsure}</span> : null}
+                확실 {n.sure}
+                {n.unsure ? <span> · 불확실 {n.unsure}</span> : null}
               </span>
             </button>
           )

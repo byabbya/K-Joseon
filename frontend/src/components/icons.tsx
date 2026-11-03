@@ -28,6 +28,12 @@ export const IconPlus = (p: P) => (
     <path d="M12 5v14M5 12h14" />
   </Svg>
 )
+
+export const IconPlay = (p: P) => (
+  <Svg {...p}>
+    <path d="M8 5.5v13l10.5-6.5z" />
+  </Svg>
+)
 export const IconSidebar = (p: P) => (
   <Svg {...p}>
     <rect x="3" y="4" width="18" height="16" rx="2.5" />

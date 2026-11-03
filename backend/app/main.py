@@ -543,6 +543,28 @@ def drawing_result(asset_id: str, viewer: str):
         return {k: r[k] for k in ("yolo", "symbols", "counts_by_group", "ocr_lines", "tags", "title", "image", "version", "elapsed") if k in r}
 
 
+@app.get("/api/files/{asset_id}/drawing/progress")
+def drawing_progress(asset_id: str, viewer: str):
+    """도면 분석 진행 상황 — 단계·타일·지금까지의 상자와 글자 (원본 좌표). 화면이 짧은 간격으로 묻는다.
+
+    state: queued(아직 차례 아님) | running | done | failed. 미리보기처럼 열람 권한만 보고 이력은 남기지 않는다
+    (끝난 결과 전체는 /drawing 이 이력을 남긴다)."""
+    with Session(engine) as s:
+        a = s.get(Asset, asset_id)
+        if not a:
+            raise HTTPException(404, "파일 없음")
+        v = _employee(s, viewer)
+        if v.role != "legal" and v.employee_id != a.uploaded_by:
+            raise HTTPException(403, "열람 권한이 없습니다")
+        sha = a.sha256
+    p = dwg.progress(sha)
+    if p is not None:
+        return p
+    if dwg.cached_result(sha) is not None:
+        return {"state": "done", "stage": "done"}
+    return {"state": "queued"}
+
+
 @app.get("/api/files/{asset_id}/preview")
 def drawing_preview(asset_id: str, viewer: str, width: int = 1600):
     """도면 미리보기 이미지(축소 PNG). 원본 대신 화면 표시용."""

@@ -161,4 +161,18 @@ def test_file_view_permission(client):
     detail, _ = _upload(client)
     aid = detail["analysis"]["files"][0]["asset_id"]
     assert client.get(f"/api/files/{aid}", params={"viewer": "E1002"}).status_code == 403
-    assert client.get(f"/api/files/{aid}", params={"viewer": "L2001"}).status_code == 200
+    r = client.get(f"/api/files/{aid}", params={"viewer": "L2001"})
+    assert r.status_code == 200 and r.headers["content-disposition"].startswith("inline")
+    r = client.get(f"/api/files/{aid}", params={"viewer": "L2001", "download": 1})
+    assert r.headers["content-disposition"].startswith("attachment")
+
+
+def test_drawing_progress(client, monkeypatch):
+    from app.pipelines import drawing as dwg
+    detail, _ = _upload(client)
+    aid = detail["analysis"]["files"][0]["asset_id"]
+    url = f"/api/files/{aid}/drawing/progress"
+    assert client.get(url, params={"viewer": "E1002"}).status_code == 403
+    assert client.get(url, params={"viewer": "E1001"}).json() == {"state": "queued"}
+    monkeypatch.setattr(dwg, "progress", lambda sha: {"state": "running", "stage": "detect", "tile_done": 3})
+    assert client.get(url, params={"viewer": "L2001"}).json()["tile_done"] == 3

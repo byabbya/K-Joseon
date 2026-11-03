@@ -31,6 +31,7 @@ import {
   MOCK_SYMBOLS,
   mockDrawing,
   mockDrawingDetail,
+  mockDrawingProgress,
   mockLlmText,
   mockPreviewSvg,
   mockRelated,
@@ -659,6 +660,9 @@ interface Stored {
   llmAt?: number
 }
 
+/** 모의 도면 분석 시간 — 진행 화면이 단계를 하나씩 보여 줄 만큼 */
+const ENRICH_MS = 12000
+
 /** 백엔드 _schedule_polish 흉내: 도면이 남았으면 도면 분석부터, 아니면 LLM 다듬기 */
 function startPipeline(s: Stored, enrich: boolean) {
   const a = s.detail.analysis
@@ -667,7 +671,7 @@ function startPipeline(s: Stored, enrich: boolean) {
     a.enrichment_pending = true
     a.explanation_pending = false
     for (const f of a.files) if (isPng(f.filename)) Object.assign(f, { drawing: null, enrich_status: 'pending' })
-    s.enrichAt = Date.now() + 5000
+    s.enrichAt = Date.now() + ENRICH_MS
     s.llmAt = undefined
   } else {
     a.explanation_pending = true
@@ -972,6 +976,14 @@ export const mockApi = {
     const fn = findAsset(assetId)
     if (!fn || !isPng(fn)) return Promise.reject(new Error('도면 분석이 아직 끝나지 않았습니다'))
     return delay(mockDrawingDetail(seedOf(fn)), 200)
+  },
+
+  getDrawingProgress: (assetId: string, _viewer: string) => {
+    const fn = findAsset(assetId)
+    const s = [...store.values()].find((x) => x.detail.analysis?.files.some((f) => f.asset_id === assetId))
+    if (!fn || !s) return Promise.reject(new Error('파일 없음'))
+    const frac = s.enrichAt ? 1 - (s.enrichAt - Date.now()) / ENRICH_MS : 1
+    return delay(mockDrawingProgress(seedOf(fn), Math.max(0, frac)), 60)
   },
 
   drawingPreviewUrl: (assetId: string, _viewer: string, _width = 1600) => mockPreviewSvg(seedOf(findAsset(assetId) ?? assetId)),

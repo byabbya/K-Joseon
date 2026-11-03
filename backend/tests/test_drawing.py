@@ -143,7 +143,7 @@ def test_analyze_without_weights_and_cache(tmp_path, monkeypatch):
     monkeypatch.setattr(D, "CACHE_DIR", tmp_path / "cache")
     calls = []
 
-    def fake_ocr(gray):
+    def fake_ocr(gray, report=None):
         calls.append(gray.shape)
         return {"ocr_lines": [{"text": "XV-101", "score": 0.9, "bbox": [1, 1, 50, 20]}], "tags": ["XV-101"],
                 "title": "", "title_source": "none", "elapsed": {}}
@@ -156,6 +156,74 @@ def test_analyze_without_weights_and_cache(tmp_path, monkeypatch):
     assert (tmp_path / "cache" / f"{r['image']['sha256']}.json").exists()
     r2 = D.analyze_drawing(p)
     assert r2["cached"] is True and len(calls) == 1
+    pr = D.progress(r["image"]["sha256"])
+    assert pr["state"] == "done" and pr["yolo"] == "unavailable" and "tiles" not in pr
+
+
+# ── 진행 상황 (화면의 단계별 표시) ─────────────────────────────────────────────
+class _Arr:
+    def __init__(self, a):
+        self.a = np.asarray(a, float)
+
+    def cpu(self):
+        return self
+
+    def numpy(self):
+        return self.a
+
+
+class _Boxes:
+    def __init__(self, xyxy, conf, cls):
+        self.xyxy, self.conf, self.cls = _Arr(xyxy), _Arr(conf), _Arr(cls)
+
+    def __len__(self):
+        return len(self.xyxy.a)
+
+
+class _FakeYolo:
+    names = {0: "Valves"}
+
+    def predict(self, ims, **kw):
+        return [type("R", (), {"boxes": _Boxes([[10, 10, 50, 50]], [0.9], [0])})() for _ in ims]
+
+
+def test_progress_records_each_stage(tmp_path, monkeypatch):
+    import cv2
+    img = np.full((1500, 3000), 255, np.uint8)
+    cv2.line(img, (10, 200), (1000, 200), 0, 3)          # 왼쪽 위 타일에만 선 → 나머지는 여백
+    p = tmp_path / "progress.png"
+    cv2.imencode(".png", img)[1].tofile(str(p))
+    weights = tmp_path / "pid_groups.pt"
+    weights.write_bytes(b"fake")
+    monkeypatch.setattr(D, "WEIGHTS", weights)
+    monkeypatch.setattr(D, "CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(D, "_yolo", lambda path, mtime: _FakeYolo())
+
+    def fake_ocr(gray, report=None):
+        report(stage="ocr", ocr_phase="coarse", ocr_done=0, ocr_total=1, current=[[0, 0, 3000, 1500]],
+               ocr_regions=[{"phase": "coarse", "box": [0, 0, 3000, 1500]}])
+        report(ocr_done=1, lines=[{"text": "XV-101", "bbox": [1, 1, 50, 20]}])
+        return {"ocr_lines": [], "tags": ["XV-101"], "title": "", "title_source": "none", "elapsed": {}}
+    monkeypatch.setattr(D, "ocr_drawing", fake_ocr)
+
+    r = D.analyze_drawing(p)
+    pr = D.progress(r["image"]["sha256"])
+    grid = D.tile_grid(3000, 1500)
+    busy = [t for t in pr["tiles"] if not t[4]]
+    assert pr["state"] == "done" and pr["stage"] == "done" and pr["image"] == {"width": 3000, "height": 1500}
+    assert len(pr["tiles"]) == len(grid) and 0 < len(busy) < len(grid)          # 여백 타일은 표시만, 탐지 안 함
+    assert pr["tile_total"] == pr["tile_done"] == len(busy)
+    assert len(pr["raw"]) == pr["raw_count"] == len(busy)                       # 묶음마다 새 탐지가 덧붙음
+    assert len(pr["symbols"]) == len(r["symbols"]) and pr["symbols"][0]["group"] == "Valves"
+    assert pr["lines"] == [{"text": "XV-101", "bbox": [1, 1, 50, 20], "k": 0}] and pr["tags"] == ["XV-101"]
+    assert pr["current"] == [] and pr["elapsed"] >= 0 and pr["seq"] > 5 and pr["batch"] == 8
+    assert [d["k"] for d in pr["raw"]] == [i // 8 for i in range(len(busy))]          # 재생용 묶음 번호
+    assert list(pr["marks"]) == ["load", "tiles", "detect", "merge", "ocr", "done"]
+    # 끝난 기록은 파일로 남아, 서버를 다시 켜도 과정을 다시 볼 수 있다
+    D._progress.clear()
+    assert D.progress(r["image"]["sha256"]) == pr
+    again = D.analyze_drawing(p, force=True)
+    assert again["cached"] is False
 
 
 # ── 끝까지: 시연 P&ID (원심펌프 4개) ──────────────────────────────────────────

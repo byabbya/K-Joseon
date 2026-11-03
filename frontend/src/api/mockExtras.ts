@@ -2,7 +2,9 @@
 // 모양은 백엔드(main.py · graph.py · wiki.py · pipelines/drawing.py)와 같다. 수치는 models/yolo/pid_groups_metrics.json 의 실측값을 옮겼다.
 import type {
   Analysis,
+  Box,
   DrawingDetail,
+  DrawingProgress,
   DrawingSummary,
   DrawingSymbol,
   RelatedEvidence,
@@ -14,6 +16,7 @@ import type {
   WikiTermsOut,
   WikiTermsParams,
 } from './types'
+import { frameAt, timeline } from '../lib/drawingReplay'
 
 /* ---------------- 도면 분석 ---------------- */
 
@@ -82,6 +85,53 @@ export function mockDrawing(seed: number): DrawingSummary {
 
 export function mockDrawingDetail(seed: number): DrawingDetail {
   return { ...mockDrawing(seed), symbols: makeSymbols(seed) }
+}
+
+/** 모의 진행 기록(끝난 상태) — 백엔드 <sha>.progress.json 모양. 작은 모의 도면이라 타일도 작게 */
+function mockProgressFinal(seed: number): DrawingProgress {
+  const syms = makeSymbols(seed)
+  const T = 400
+  const BATCH = 4
+  const starts = (len: number) => {
+    const xs: number[] = []
+    for (let x = 0; x < len - T; x += T - 50) xs.push(x)
+    return [...xs, len - T]
+  }
+  const touches = (b: Box, t: number[]) => b[2] > t[0] && b[0] < t[2] && b[3] > t[1] && b[1] < t[3]
+  const tiles = starts(IMG.height).flatMap((y) =>
+    starts(IMG.width).map((x) => {
+      const t = [x, y, x + T, y + T]
+      const edge = (x === 0 || x + T === IMG.width) && (y === 0 || y + T === IMG.height)
+      return [x, y, x + T, y + T, edge && !syms.some((s) => touches(s.bbox, t)) ? 1 : 0] as [number, number, number, number, number]
+    }),
+  )
+  const busy = tiles.filter((t) => !t[4])
+  // 겹치는 타일 경계에 걸친 심볼은 두 타일에서 한 번씩 나온다 — 합치기 단계에서 줄어드는 모습
+  const raw = busy.flatMap((t, i) => syms.filter((s) => touches(s.bbox, t)).map((s) => ({ group: s.group, bbox: s.bbox, k: Math.floor(i / BATCH) })))
+  const ocr_regions: { phase: 'coarse' | 'title'; box: Box }[] = [
+    { phase: 'coarse', box: [0, 0, 1000, 700] },
+    { phase: 'coarse', box: [1000, 0, 2000, 700] },
+    { phase: 'coarse', box: [0, 700, 1000, 1400] },
+    { phase: 'coarse', box: [1000, 700, 2000, 1400] },
+    { phase: 'title', box: [1200, 1050, 2000, 1400] },
+  ]
+  const lines = TAGS.map((text, i) => {
+    const b = syms[i % syms.length].bbox
+    return { text, bbox: [b[0], b[3] + 12, b[0] + 18 * text.length, b[3] + 40] as Box, k: Math.floor((i * ocr_regions.length) / TAGS.length) }
+  })
+  return {
+    state: 'done', stage: 'done', elapsed: 9, image: { ...IMG }, yolo: 'ok', batch: BATCH,
+    tiles, tile_total: busy.length, tile_done: busy.length, raw, raw_count: raw.length,
+    symbols: syms.map((s) => ({ group: s.group, bbox: s.bbox, status: s.status })),
+    ocr_regions, lines, tags: TAGS, title: 'MIXING HEADER',
+    marks: { load: 0, tiles: 0.4, detect: 0.6, merge: 3.9, ocr: 4, done: 9 },
+  }
+}
+
+/** 모의 진행 상황 — frac(0~1) 만큼 지난 분석. 다시 보기와 같은 계산(lib/drawingReplay)으로 흉내 낸다 */
+export function mockDrawingProgress(seed: number, frac: number): DrawingProgress {
+  const fin = mockProgressFinal(seed)
+  return frac >= 1 ? fin : frameAt(fin, frac * timeline(fin).done)
 }
 
 /** 모의 도면 미리보기 — 배관 줄과 심볼 모양을 그린 SVG (심볼 좌표와 맞춘다) */

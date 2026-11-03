@@ -133,6 +133,17 @@ export function useDrawing(assetId: string | undefined, viewer: string | null, e
   })
 }
 
+/** 도면 분석 진행 상황 — 끝나거나 실패할 때까지 0.7초마다 다시 묻는다 */
+export function useDrawingProgress(assetId: string | undefined, viewer: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['drawing-progress', assetId, viewer],
+    queryFn: () => api.getDrawingProgress(assetId!, viewer!),
+    enabled: !!assetId && !!viewer && enabled,
+    refetchInterval: (q) => (q.state.data?.state === 'done' || q.state.data?.state === 'failed' ? false : 700),
+    retry: 0,
+  })
+}
+
 export function useSearch(q: string, k = 8) {
   return useQuery({
     queryKey: ['search', q, k],

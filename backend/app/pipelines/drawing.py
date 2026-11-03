@@ -4,6 +4,7 @@
   타일 결과를 원본 좌표로 옮겨 NMS로 합친다. 학습(scripts/prepare_yolo.py)과 같은 타일링을 쓴다.
 - OCR: 원본을 줄여(글자 높이 약 20px 수준) 몇 개 타일로 나눠 읽고, 오른쪽 아래(표제란 후보)는 덜 줄여 한 번 더 읽는다.
 - 결과는 파일 sha256 기준으로 data/runtime_cache/drawings/<sha256>.json 에 캐시한다.
+- 분석 중에는 단계·타일·지금까지의 상자와 글자를 메모리에 적어 화면이 과정을 그대로 그리게 한다 (progress()).
 - 추론 중 외부 네트워크 호출 없음 (모델은 로컬 파일만 사용).
 
 탐지 결과는 심볼 위치·종류만 알려줄 뿐 국가핵심기술 여부를 알려주지 않는다. S 코드 후보는
@@ -197,6 +198,72 @@ def version() -> dict:
             "tile": TILE, "overlap": OVERLAP, "net": NET, "conf_confirmed": CONF_CONFIRMED}
 
 
+# ── 진행 상황 (화면의 단계별 표시용) ─────────────────────────────────────────────
+# 분석 스레드가 sha256 별로 단계·타일·지금까지의 상자와 글자를 적고, API 가 그대로 읽어 화면에 그린다.
+# 진행 중에는 메모리에만 두고, 끝나면 <sha>.progress.json 으로 남겨 화면이 과정을 다시 재생할 수 있게 한다.
+# 재생용으로 탐지 상자에는 묶음 번호(k), 읽은 글자에는 글자 영역 번호(k), 단계마다 시작 시각(marks)을 함께 적는다.
+STAGES = ("load", "tiles", "detect", "merge", "ocr", "done")
+_progress: dict[str, dict] = {}
+_progress_lock = threading.Lock()
+_PROGRESS_KEEP = 16
+_CUMULATIVE = ("raw", "lines", "ocr_regions")      # 덧붙이는 목록
+
+
+def _progress_file(sha: str) -> Path:
+    return CACHE_DIR / f"{sha}.progress.json"
+
+
+def _report(sha: str, **fields) -> None:
+    with _progress_lock:
+        p = _progress.setdefault(sha, {"state": "running", "started": time.time()})
+        if fields.get("stage") and fields["stage"] != p.get("stage"):
+            p.setdefault("marks", {})[fields["stage"]] = round(time.time() - p["started"], 1)
+        for k, v in fields.items():
+            if k in _CUMULATIVE and isinstance(v, list):
+                if k == "lines":                                   # 글자 줄 ← 지금 읽는 영역 번호
+                    for ln in v:
+                        ln.setdefault("k", len(p.get("ocr_regions", [])) - 1)
+                p.setdefault(k, []).extend(v)
+            else:
+                p[k] = v
+        p["seq"] = p.get("seq", 0) + 1
+        if fields.get("state") == "done":
+            p["elapsed"] = round(time.time() - p["started"], 1)
+        if len(_progress) > _PROGRESS_KEEP:                          # 오래된 것부터 정리
+            for old in sorted(_progress, key=lambda s: _progress[s]["started"])[:len(_progress) - _PROGRESS_KEEP]:
+                if old != sha:
+                    del _progress[old]
+
+
+def progress(sha: str) -> dict | None:
+    """진행 상황 사본. 메모리에 없으면 끝난 분석이 남긴 파일, 그것도 없으면 None."""
+    with _progress_lock:
+        p = _progress.get(sha)
+        if p is not None:
+            out = {k: (list(v) if isinstance(v, list) else v) for k, v in p.items()}
+    if p is None:
+        try:
+            return json.loads(_progress_file(sha).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+    started = out.pop("started")
+    if out.get("state") != "done":
+        out["elapsed"] = round(time.time() - started, 1)
+    return out
+
+
+def _save_progress(sha: str) -> None:
+    p = progress(sha)
+    if p:
+        tmp = _progress_file(sha).with_suffix(".tmp")
+        tmp.write_text(json.dumps(p, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(_progress_file(sha))
+
+
+def _ibox(b) -> list[int]:
+    return [int(round(v)) for v in b]
+
+
 # ── YOLO ──────────────────────────────────────────────────────────────────────
 _model_lock = threading.Lock()
 _ocr_lock = threading.Lock()
@@ -208,21 +275,26 @@ def _yolo(path: str, mtime: float):
     return YOLO(path)
 
 
-def detect_symbols(gray: np.ndarray, batch: int = 8) -> list[dict]:
-    """타일 추론 → 원본 좌표 → NMS 병합. 반환: [{group, conf, bbox, status}] (conf ≥ CONF_MIN)."""
+def detect_symbols(gray: np.ndarray, batch: int = 8, report=None) -> list[dict]:
+    """타일 추론 → 원본 좌표 → NMS 병합. 반환: [{group, conf, bbox, status}] (conf ≥ CONF_MIN).
+
+    report 가 있으면 타일 계획 → 묶음마다(지금 보는 타일·새 탐지) → 병합 결과를 알린다 (_report 형식)."""
     import cv2
     model = _yolo(str(WEIGHTS), WEIGHTS.stat().st_mtime)
     names = model.names
     h, w = gray.shape[:2]
-    tiles = []
+    plan = []
     for t in tile_grid(w, h):
         x1, y1, x2, y2 = t
-        if gray[y1:y2:2, x1:x2:2].min() > 200:      # 선·글자가 전혀 없는 여백 타일은 건너뜀
-            continue
-        tiles.append(t)
+        plan.append((t, bool(gray[y1:y2:2, x1:x2:2].min() > 200)))   # 선·글자가 전혀 없는 여백 타일은 건너뜀
+    tiles = [t for t, blank in plan if not blank]
+    if report:
+        report(stage="tiles", tiles=[[*t, int(blank)] for t, blank in plan], tile_total=len(tiles), tile_done=0, batch=batch)
     dets: list[dict] = []
     for i in range(0, len(tiles), batch):
         chunk = tiles[i:i + batch]
+        if report:
+            report(stage="detect", current=[list(t) for t in chunk])
         ims, scales = [], []
         for t in chunk:
             crop, s = tile_image(gray, t)
@@ -230,6 +302,7 @@ def detect_symbols(gray: np.ndarray, batch: int = 8) -> list[dict]:
             scales.append(s)
         with _model_lock:
             res = model.predict(ims, imgsz=NET, conf=CONF_MIN, iou=NMS_IOU, device="cpu", verbose=False)
+        new: list[dict] = []
         for t, s, r in zip(chunk, scales, res):
             if r.boxes is None or len(r.boxes) == 0:
                 continue
@@ -237,12 +310,18 @@ def detect_symbols(gray: np.ndarray, batch: int = 8) -> list[dict]:
             xyxy[:, [0, 2]] += t[0]
             xyxy[:, [1, 3]] += t[1]
             for b, c, k in zip(xyxy, r.boxes.conf.cpu().numpy(), r.boxes.cls.cpu().numpy()):
-                dets.append({"group": names[int(k)], "conf": float(c),
-                             "bbox": [round(float(v), 1) for v in b]})
+                new.append({"group": names[int(k)], "conf": float(c),
+                            "bbox": [round(float(v), 1) for v in b]})
+        dets += new
+        if report:
+            report(tile_done=i + len(chunk), raw=[{"group": d["group"], "bbox": _ibox(d["bbox"]), "k": i // batch} for d in new])
     merged = merge_detections(dets)
     for d in merged:
         d["conf"] = round(d["conf"], 3)
         d["status"] = "확정" if d["conf"] >= CONF_CONFIRMED else "미확정"
+    if report:
+        report(stage="merge", current=[], raw_count=len(dets),
+               symbols=[{"group": d["group"], "bbox": _ibox(d["bbox"]), "status": d["status"]} for d in merged])
     return merged
 
 
@@ -309,8 +388,10 @@ def _read_vertical(sub: np.ndarray, lines: list[dict]) -> None:
 
 
 def _ocr_region(gray: np.ndarray, region: tuple[int, int, int, int], scale: float, tile: int = OCR_TILE,
-                overlap: int = 120) -> list[dict]:
-    """원본의 region 을 scale 로 줄여 tile 이하 크기로 고르게 나눠 OCR 하고 원본 좌표로 되돌린다."""
+                overlap: int = 120, report=None, phase: str = "") -> list[dict]:
+    """원본의 region 을 scale 로 줄여 tile 이하 크기로 고르게 나눠 OCR 하고 원본 좌표로 되돌린다.
+
+    report 가 있으면 조각마다(지금 읽는 영역 · 새로 읽은 줄) 알린다."""
     import cv2
     x0, y0, x1, y1 = region
     sub = gray[y0:y1, x0:x1]
@@ -318,11 +399,16 @@ def _ocr_region(gray: np.ndarray, region: tuple[int, int, int, int], scale: floa
         sub = cv2.resize(sub, (max(1, round(sub.shape[1] * scale)), max(1, round(sub.shape[0] * scale))),
                          interpolation=cv2.INTER_AREA)
     sh, sw = sub.shape
+    grid = even_grid(sw, sh, tile, overlap)
+    to_orig = lambda t: [round(t[0] / scale + x0), round(t[1] / scale + y0), round(t[2] / scale + x0), round(t[3] / scale + y0)]
     lines = []
-    for t in even_grid(sw, sh, tile, overlap):
+    for n, t in enumerate(grid):
         crop = sub[t[1]:t[3], t[0]:t[2]]
         if crop.min() > 200:            # 빈 여백
             continue
+        if report:
+            report(stage="ocr", ocr_phase=phase, ocr_done=n, ocr_total=len(grid), current=[to_orig(t)],
+                   ocr_regions=[{"phase": phase, "box": to_orig(t)}])
         got = _ocr_image(crop, max(crop.shape))
         _read_vertical(crop, got)
         for ln in got:
@@ -330,6 +416,8 @@ def _ocr_region(gray: np.ndarray, region: tuple[int, int, int, int], scale: floa
             ln["bbox"] = [round((b[0] + t[0]) / scale + x0, 1), round((b[1] + t[1]) / scale + y0, 1),
                           round((b[2] + t[0]) / scale + x0, 1), round((b[3] + t[1]) / scale + y0, 1)]
             lines.append(ln)
+        if report:
+            report(ocr_done=n + 1, lines=[{"text": ln["text"], "bbox": _ibox(ln["bbox"])} for ln in got])
     return lines
 
 
@@ -380,14 +468,14 @@ def _guess_title(lines: list[dict], w: int, h: int) -> tuple[str, str]:
     return "", "none"
 
 
-def ocr_drawing(gray: np.ndarray) -> dict:
+def ocr_drawing(gray: np.ndarray, report=None) -> dict:
     """도면 전체를 줄여 한 번, 표제란 후보(오른쪽 아래)를 덜 줄여 한 번 읽는다."""
     h, w = gray.shape
     t0 = time.time()
-    coarse = _ocr_region(gray, (0, 0, w, h), OCR_SCALE)
+    coarse = _ocr_region(gray, (0, 0, w, h), OCR_SCALE, report=report, phase="coarse")
     t1 = time.time()
     rx, ry = OCR_TITLE_REGION
-    title_lines = _ocr_region(gray, (int(w * rx), int(h * ry), w, h), OCR_TITLE_SCALE)
+    title_lines = _ocr_region(gray, (int(w * rx), int(h * ry), w, h), OCR_TITLE_SCALE, report=report, phase="title")
     t2 = time.time()
     lines = _dedupe_lines(coarse + title_lines)
     for ln in lines:
@@ -427,8 +515,9 @@ def ocr_pdf_pages(pdf_path: Path, pages: list[int]) -> dict[int, str]:
 
 
 # ── 진입점 ────────────────────────────────────────────────────────────────────
-def analyze_drawing(path: Path) -> dict:
+def analyze_drawing(path: Path, force: bool = False) -> dict:
     """도면(PNG/JPG) 분석. 결과는 sha256 기준으로 캐시하며, 가중치·파이프라인 버전이 바뀌면 다시 계산한다.
+    force=True 면 캐시를 무시하고 다시 계산한다 (과정 다시 보기 기록을 새로 만들 때).
 
     반환 키:
       yolo            "ok" | "unavailable" (가중치 파일 없음 — 이때 symbols 는 빈 목록, OCR 은 그대로 수행)
@@ -448,7 +537,7 @@ def analyze_drawing(path: Path) -> dict:
     sha = file_sha256(path)
     ver = version()
     cache = CACHE_DIR / f"{sha}.json"
-    if cache.exists():
+    if cache.exists() and not force:
         try:
             hit = json.loads(cache.read_text(encoding="utf-8"))
             if hit.get("version") == ver:
@@ -458,28 +547,42 @@ def analyze_drawing(path: Path) -> dict:
         except (OSError, ValueError):
             pass
 
-    gray = load_gray(path)
+    with _progress_lock:                    # 같은 도면을 다시 분석하면 진행 상황을 새로 쓴다
+        _progress.pop(sha, None)
+    report = lambda **kw: _report(sha, **kw)
+    report(stage="load")
+    try:
+        gray = load_gray(path)
+    except Exception as e:
+        report(state="failed", error=f"{type(e).__name__}: {e}")
+        raise
     h, w = gray.shape
     t1 = time.time()
+    report(image={"width": w, "height": h})
     result: dict = {"image": {"width": w, "height": h, "sha256": sha}}
     elapsed = {"load": round(t1 - t0, 2)}
 
-    if WEIGHTS.exists():
-        syms = detect_symbols(gray)
-        result["yolo"] = "ok"
-    else:
-        syms = []
-        result["yolo"] = "unavailable"
-    t2 = time.time()
-    elapsed["yolo"] = round(t2 - t1, 2)
-    counts: dict[str, int] = {}
-    for s in syms:
-        if s["status"] == "확정":
-            counts[s["group"]] = counts.get(s["group"], 0) + 1
-    result.update(symbols=syms, counts_by_group=counts,
-                  uncertain=[s for s in syms if s["status"] == "미확정"])
+    try:
+        if WEIGHTS.exists():
+            syms = detect_symbols(gray, report=report)
+            result["yolo"] = "ok"
+        else:
+            syms = []
+            result["yolo"] = "unavailable"
+        report(yolo=result["yolo"])
+        t2 = time.time()
+        elapsed["yolo"] = round(t2 - t1, 2)
+        counts: dict[str, int] = {}
+        for s in syms:
+            if s["status"] == "확정":
+                counts[s["group"]] = counts.get(s["group"], 0) + 1
+        result.update(symbols=syms, counts_by_group=counts,
+                      uncertain=[s for s in syms if s["status"] == "미확정"])
 
-    ocr = ocr_drawing(gray)
+        ocr = ocr_drawing(gray, report=report)
+    except Exception as e:
+        report(state="failed", error=f"{type(e).__name__}: {e}")
+        raise
     del gray
     elapsed.update(ocr.pop("elapsed"))
     elapsed["ocr"] = round(time.time() - t2, 2)
@@ -493,6 +596,8 @@ def analyze_drawing(path: Path) -> dict:
     tmp = cache.with_suffix(".tmp")
     tmp.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
     tmp.replace(cache)
+    report(state="done", stage="done", current=[], tags=result["tags"], title=result["title"])
+    _save_progress(sha)
     return result
 
 
