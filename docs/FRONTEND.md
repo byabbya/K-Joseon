@@ -53,6 +53,8 @@ Vite 6 + React 19 + TypeScript, Tailwind CSS v4, React Router 7, TanStack Query 
 
 ### 도면 분석 카드 (`components/check/Drawing.tsx`, React.lazy)
 
+> **현재 화면에서 숨김** — `lib/features.ts` 의 `SHOW_DRAWING_ANALYSIS = false`. 도면 YOLO·OCR 분석은 백엔드에서 그대로 돌고 판단(기술 후보·근거)에 쓰이며, 결과 카드·진행 화면·파일 옆 '도면 보기'·보고서 표의 도면 줄만 화면에서 뺐습니다. 분석 중 문구는 "첨부 파일을 마저 읽는 중이에요". `true` 로 바꾸면 아래 내용이 그대로 다시 보입니다.
+
 - 분석 중(`files[].enrich_status == "pending"`, `analysis.enrichment_pending`)이면 그 파일 자리에 **진행 화면**(`DrawingProgress.tsx`)을 보입니다. `GET /api/files/{id}/drawing/progress` 를 0.7초마다 받아 5단계(원본 불러오기 · 타일 나누기 · 심볼 탐지 · 중복 합치기 · 글자 읽기)와 경과 시간, 미리보기 위의 타일 격자(여백 칸은 회색) · 지금 처리 중인 타일 · 타일별 탐지 상자 · 합친 기호(불확실은 점선) · 읽은 글자 영역을 그리고, 오른쪽에 지금 보는 타일을 크게 보여 줍니다. 숫자 칸: 타일별 탐지(중복 포함) · 최종 기호(확실/불확실) · 읽은 글자 · 태그, 아래에 '중복 합치기'와 '확실/불확실(AI 확신도 50% 기준)' 설명. 앞 파일을 분석 중이면 '대기'. 끝나면 백엔드가 다시 분석하므로, 화면은 새 답변을 "답변이 바뀌었어요" 줄과 "도면을 읽고 다시 확인했어요" 알림으로 보여 줍니다.
 - 끝나면(`files[].drawing`): 미리보기 `GET /api/files/{id}/preview?viewer=&width=1600` 위에 `GET /api/files/{id}/drawing?viewer=` 의 `symbols[].bbox`(원본 좌표)를 SVG 로 겹칩니다 — SVG `viewBox` 를 원본 크기(`image.width/height`)로 두어 축소 미리보기에 그대로 맞습니다. 확실(AI 확신도 50% 이상) = 실선, **불확실(50% 미만) = 점선** — 미리보기 아래에 같은 설명.
 - 끝난 카드 머리줄의 **과정 다시 보기**(진행 기록이 있을 때만): 같은 진행 화면을 실제 시간 표시와 함께 약 20~30초로 줄여 재생(`lib/drawingReplay.ts`), "처음부터" · "닫기". 화면 녹화용.

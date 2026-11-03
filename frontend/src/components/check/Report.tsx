@@ -11,6 +11,7 @@ import { IconAlert, IconArrowLeft, IconBook, IconCheckCircle, IconFileText, Icon
 import { changedParts, isTextOnly } from './model'
 import { Cite, CitedSentence, References, useCitations } from './citations'
 import { RelatedList } from './Related'
+import { SHOW_DRAWING_ANALYSIS } from '../../lib/features'
 
 export type Audience = 'employee' | 'legal'
 
@@ -117,8 +118,8 @@ function SummaryTable({ a, changed }: { a: Analysis; changed: Set<string> }) {
                   {f.filename}
                 </span>
                 {f.contains_supplier_data !== '아니오' && <span className="mt-0.5 block text-[11px] font-semibold text-review-fg">협력사 자료 {f.contains_supplier_data}</span>}
-                {f.enrich_status === 'pending' && <span className="mt-0.5 block shimmer-text text-[11px] font-medium">도면 분석 중…</span>}
-                {f.drawing?.yolo === 'ok' && (
+                {SHOW_DRAWING_ANALYSIS && f.enrich_status === 'pending' && <span className="mt-0.5 block shimmer-text text-[11px] font-medium">도면 분석 중…</span>}
+                {SHOW_DRAWING_ANALYSIS && f.drawing?.yolo === 'ok' && (
                   <a href={`#drawing-${f.asset_id}`} className="mt-0.5 block text-[11px] font-medium text-teal-ink hover:underline">
                     도면 분석 · 심볼 {Object.values(f.drawing.counts_by_group ?? {}).reduce((x, n) => x + n, 0)} · 태그 {f.drawing.tags?.length ?? 0}
                   </a>

@@ -15,6 +15,7 @@ import { ApprovalLinePanel } from './Approval'
 import { MissingQuestions, type Apply } from './FollowUps'
 import { fieldView, isTextOnly, realFiles } from './model'
 import { DeltaLine, Report, type Audience } from './Report'
+import { SHOW_DRAWING_ANALYSIS } from '../../lib/features'
 
 export interface SystemAnswerProps {
   d: RequestDetail
@@ -62,7 +63,7 @@ export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 
             {p.question}
             <CandidatesPanel a={p.a} />
             <Explanation a={p.a} />
-            <DrawingSection a={p.a} />
+            {SHOW_DRAWING_ANALYSIS && <DrawingSection a={p.a} />}
             <EvidencePanel a={p.a} prev={p.prev} d={p.d} audience={p.audience} />
           </div>
           <aside className={cx('space-y-5', p.stack ? '2xl:sticky 2xl:top-24 2xl:self-start' : 'thin-scroll lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto')}>
@@ -106,7 +107,7 @@ function HeroCard({ d, a, audience, nextStep, cit }: SystemAnswerProps & { cit: 
         {a.enrichment_pending && (
           <p role="status" className="mt-2 flex items-center gap-2 text-[13px] text-white/85">
             <span aria-hidden className="size-1.5 shrink-0 animate-pulse rounded-full bg-teal-line" />
-            도면을 읽는 중이에요. 끝나면 다시 확인해요.
+            첨부 파일을 마저 읽는 중이에요. 끝나면 다시 확인해요.
           </p>
         )}
         <div className="mt-4 max-w-[62ch]">
@@ -521,6 +522,7 @@ function FileList({ files, cit, legal }: { files: FileResult[]; cit: Citations; 
 
 /** 파일 목록 옆 도면 분석 상태 */
 function DrawingStatus({ f }: { f: FileResult }) {
+  if (!SHOW_DRAWING_ANALYSIS) return null
   if (f.enrich_status === 'pending') return <span className="ml-auto shrink-0 shimmer-text text-[11.5px] font-medium">도면 읽는 중…</span>
   if (f.drawing?.yolo === 'ok')
     return (

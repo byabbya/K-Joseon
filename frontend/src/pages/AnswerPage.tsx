@@ -15,6 +15,7 @@ import { StatusStepper } from '../components/check/StatusStepper'
 import { ErrorBox, RecPill, Spinner } from '../components/ui'
 import { IconRefresh } from '../components/icons'
 import { REC_HEADLINE, fmtDate } from '../lib/labels'
+import { SHOW_DRAWING_ANALYSIS } from '../lib/features'
 
 export function AnswerPage() {
   const { id } = useParams()
@@ -193,7 +194,7 @@ function Updated({ n, rec, why }: { n: number; rec: Analysis['recommendation']; 
   return (
     <Toast>
       <IconRefresh size={15} />
-      <span className="max-sm:hidden">{why === 'drawing' ? '도면을 읽고 다시 확인했어요 ·' : '다시 확인했어요 ·'}</span>
+      <span className="max-sm:hidden">{why === 'drawing' ? (SHOW_DRAWING_ANALYSIS ? '도면을 읽고 다시 확인했어요 ·' : '첨부 파일을 마저 읽고 다시 확인했어요 ·') : '다시 확인했어요 ·'}</span>
       <RecPill rec={rec} size="xs" />
       <span className="max-w-[12rem] truncate font-normal text-white/85 max-sm:hidden">{REC_HEADLINE[rec]}</span>
       <a href="#conclusion-title" onClick={() => setShow(false)} className="ml-1 underline underline-offset-2">
