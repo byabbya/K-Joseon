@@ -74,8 +74,8 @@ function PreviewDialog({ assetId, filename, viewer, onClose }: { assetId: string
         </header>
         <div className="min-h-0 flex-1 bg-surface-2">
           {kind === 'image' ? (
-            <div className="thin-scroll grid h-full place-items-center overflow-auto p-4">
-              <img src={src} alt={`${filename} 원본`} className="max-h-full max-w-full rounded-field bg-white shadow-card" />
+            <div className="thin-scroll flex h-full items-center justify-center overflow-auto p-4">
+              <img src={src} alt={`${filename} 원본`} className="h-full w-full rounded-field bg-white object-contain shadow-card" />
             </div>
           ) : kind === 'pdf' ? (
             <iframe src={src} title={`${filename} 미리보기`} className="h-full w-full border-0 bg-white" />

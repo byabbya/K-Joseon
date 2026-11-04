@@ -6,6 +6,7 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNod
 import { useMeta } from '../../api/hooks'
 import type { Analysis, FileResult, RequestDetail, RequestInput, RuleHit } from '../../api/types'
 import { REC_HEADLINE, REC_TONE, SEVERITY, TONE_CLS, catShort, noCodes } from '../../lib/labels'
+import { useStickyTop } from '../../lib/useStickyTop'
 import { useUser } from '../../lib/user'
 import { Button, ExtLink, RecPill, cx } from '../ui'
 import { IconAlert, IconArrowLeft, IconCheck, IconChevronDown, IconFileDrawing, IconLayers, IconPaperclip, IconScale } from '../icons'
@@ -41,6 +42,7 @@ export interface SystemAnswerProps {
 export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 좁은 칸(법무 검토함): 아주 넓은 화면에서만 두 단 */ stack?: boolean }) {
   const cats = useMeta().data?.categories
   const catLabel = useCallback((c: string) => cats?.find((x) => x.code === c)?.label ?? '', [cats])
+  const [asideRef, asideTop] = useStickyTop(96)
   return (
     <CitationProvider a={p.a} catLabel={catLabel} audience={p.audience}>
       {(cit) => (
@@ -66,7 +68,7 @@ export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 
             {SHOW_DRAWING_ANALYSIS && <DrawingSection a={p.a} />}
             <EvidencePanel a={p.a} prev={p.prev} d={p.d} audience={p.audience} />
           </div>
-          <aside className={cx('space-y-5', p.stack ? '2xl:sticky 2xl:top-24 2xl:self-start' : 'thin-scroll lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto')}>
+          <aside ref={asideRef} style={{ top: asideTop }} className={cx('space-y-5', p.stack ? '2xl:sticky 2xl:self-start' : 'lg:sticky lg:self-start')}>
             <TodoCard {...p} />
             <ApprovalLinePanel d={p.d} />
           </aside>
@@ -207,7 +209,7 @@ function TodoCard({ d, a, onAttach, busy, audience, nextStep }: SystemAnswerProp
           </a>
         )}
         <div>
-          <h3 className="text-[12px] font-bold text-fg-2">확인 항목</h3>
+          <h3 className="text-[12px] font-bold text-fg-2">{rec === '반출 불가' ? '준비할 것' : '확인 항목'}</h3>
           <TodoList a={a} requestId={d.summary.request_id} interactive={audience === 'employee'} compact />
         </div>
         {isTextOnly(a) && onAttach && rec !== '반출 불가' && (
@@ -218,7 +220,9 @@ function TodoCard({ d, a, onAttach, busy, audience, nextStep }: SystemAnswerProp
             </Button>
           </p>
         )}
-        <p className="rounded-field border border-stop-line bg-surface px-3 py-2 text-[11.5px] leading-snug text-fg-2">이 권고는 자동 승인이 아닙니다. 확인 항목을 지키고, 법무팀 확인이 필요하면 답을 받은 뒤 보내세요.</p>
+        <p className="rounded-field border border-stop-line bg-surface px-3 py-2 text-[11.5px] leading-snug text-fg-2">
+          {rec === '반출 불가' ? '지금은 보낼 수 없어요. 위 준비를 마치고 승인을 받은 뒤 다시 요청하세요.' : '이 권고는 자동 승인이 아니에요. 확인 항목을 지키고, 법무팀 확인이 필요하면 답을 받은 뒤 보내세요.'}
+        </p>
         {nextStep && <div className="border-t border-stop-line pt-4">{nextStep}</div>}
       </div>
     </section>

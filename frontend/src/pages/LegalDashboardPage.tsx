@@ -53,9 +53,9 @@ export function LegalDashboardPage() {
 
       {/* 현황 4칸 */}
       <div className="grid sm:grid-cols-3 overflow-hidden rounded-card border border-line bg-surface shadow-card">
-        <Stat label="미처리 요청" value={pending.data?.length} sub="법무 판정 대기" accent />
-        <Stat label="오늘 들어온 요청" value={todayCount} sub={today.replace(/-/g, '.')} />
-        <Stat label="처리 완료" value={done.data?.length} sub="판정 기록" />
+        <Stat label="미처리 요청" value={pending.data?.length} accent />
+        <Stat label="오늘 들어온 요청" value={todayCount} />
+        <Stat label="처리 완료" value={done.data?.length} />
       </div>
 
       <div className="mt-5">
@@ -70,7 +70,7 @@ export function LegalDashboardPage() {
                 return (
                   <li key={r.request_id}>
                     <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/70">
-                      <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center font-mono text-[11px] font-bold ring-1 ring-inset', high ? 'bg-wine text-white ring-wine' : 'bg-surface text-wine-ink ring-stop-line')}>
+                      <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center text-[12px] font-bold ring-1 ring-inset', high ? 'bg-wine text-white ring-wine' : 'bg-surface text-wine-ink ring-stop-line')}>
                         {high ? '우선' : '확인'}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -181,12 +181,11 @@ export function LegalDashboardPage() {
   )
 }
 
-function Stat({ label, value, sub, accent }: { label: string; value?: number; sub: string; accent?: boolean }) {
+function Stat({ label, value, accent }: { label: string; value?: number; accent?: boolean }) {
   return (
-    <div className="border-line px-5 py-4 not-last:border-b sm:border-b-0 sm:not-last:border-r">
-      <p className="text-[11.5px] font-bold tracking-[0.06em] text-muted">{label}</p>
-      <p className={cx('mt-1 text-[1.6rem] leading-none font-extrabold tabular-nums', accent ? 'text-alert' : 'text-fg')}>{value === undefined ? '·' : String(value).padStart(2, '0')}</p>
-      <p className="mt-1.5 text-[11.5px] text-muted">{sub}</p>
+    <div className="border-line px-6 py-4 max-sm:not-last:border-b sm:not-last:border-r">
+      <p className="text-[14px] font-bold text-fg-2">{label}</p>
+      <p className={cx('mt-1.5 text-[38px] leading-none font-extrabold tabular-nums', accent ? 'text-alert' : 'text-fg')}>{value === undefined ? '·' : String(value).padStart(2, '0')}</p>
     </div>
   )
 }

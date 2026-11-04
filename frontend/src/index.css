@@ -148,7 +148,7 @@
 
 @theme inline {
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "D2Coding", Consolas, monospace;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Pretendard Variable", Pretendard, monospace; /* 한글은 Pretendard 로 */
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);

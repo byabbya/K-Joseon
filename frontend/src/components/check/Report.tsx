@@ -182,7 +182,7 @@ function CandTag({ c }: { c: FileResult['model_candidates'][number] }) {
       <span
         tabIndex={0}
         className={cx(
-          'inline-flex items-center gap-1 rounded-[4px] px-1.5 font-mono text-[11px] leading-5',
+          'inline-flex items-center gap-1 rounded-[4px] px-1.5 text-[11px] leading-5 whitespace-nowrap',
           c.confident ? 'bg-teal-soft text-teal-ink ring-1 ring-teal-line ring-inset' : 'border border-dashed border-line-strong text-muted',
         )}
       >
@@ -489,7 +489,7 @@ export function DeltaLine({ prev, next }: { prev: Analysis; next: Analysis }) {
 function CatTag({ code, tone }: { code: string; tone: 'primary' | 'teal' }) {
   const cats = useMeta().data?.categories ?? []
   const c = cats.find((x) => x.code === code)
-  const tag = <IdTag tone={tone}>{catShort(code)}</IdTag>
+  const tag = <IdTag tone={tone} className="!font-sans">{catShort(code)}</IdTag>
   if (!c) return tag
   return (
     <Tooltip content={<><b>{c.label}</b><br />{c.text}</>}>

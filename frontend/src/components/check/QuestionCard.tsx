@@ -344,7 +344,7 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
               <span className="flex flex-wrap items-center gap-1">
                 {codes.map((c) => (
                   <Tooltip key={c} content={<><b>{cats.find((x) => x.code === c)?.label}</b><br />{cats.find((x) => x.code === c)?.text}</>}>
-                    <IdTag tone={c === choice ? 'primary' : 'teal'}>{catShort(c)}</IdTag>
+                    <IdTag tone={c === choice ? 'primary' : 'teal'} className="!font-sans">{catShort(c)}</IdTag>
                   </Tooltip>
                 ))}
                 

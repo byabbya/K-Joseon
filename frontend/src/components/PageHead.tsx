@@ -4,7 +4,17 @@ import { cx } from './ui'
 
 /** 본문 폭·여백 (사이드바 옆) */
 export function Page({ children, className, narrow }: { children: ReactNode; className?: string; narrow?: boolean }) {
-  return <div className={cx('mx-auto w-full px-4 pt-7 pb-14 lg:px-8', narrow ? 'max-w-[64rem]' : 'max-w-[84rem]', className)}>{children}</div>
+  const max = narrow ? '64rem' : '84rem'
+  // 가운데 정렬 여백을 4px 단위로 내림 — 화면 배율 125%·150%에서 카드 테두리가 픽셀 사이에 걸려 한쪽만 흐려 보이지 않게.
+  // round() 를 못 쓰는 브라우저에서는 이 값이 버려지고 mx-auto 로 가운데 정렬된다
+  return (
+    <div
+      className={cx('mx-auto w-full px-4 pt-7 pb-14 lg:px-8', narrow ? 'max-w-[64rem]' : 'max-w-[84rem]', className)}
+      style={{ marginLeft: `round(down, max(0px, (100% - ${max}) / 2), 4px)` }}
+    >
+      {children}
+    </div>
+  )
 }
 
 export function PageHead({ title, sub, right, eyebrow }: { title: ReactNode; sub?: ReactNode; right?: ReactNode; eyebrow?: ReactNode }) {
@@ -35,18 +45,18 @@ export function FlowSteps({ current, done = 0 }: { current: 1 | 2 | 3; done?: nu
         const on = n === current
         const finished = n <= done || n < current
         return (
-          <li key={s.title} aria-current={on ? 'step' : undefined} className={cx('flex items-center gap-3 px-3 py-3 sm:px-5', i > 0 && 'border-l border-line', on && 'bg-surface-2')}>
+          <li key={s.title} aria-current={on ? 'step' : undefined} className={cx('flex items-center gap-3 px-3 py-3.5 sm:px-5', i > 0 && 'border-l border-line', on && 'bg-surface-2')}>
             <span
               aria-hidden
               className={cx(
-                'grid size-7 shrink-0 place-items-center rounded-[2px] font-mono text-[12px] font-bold',
+                'grid size-9 shrink-0 place-items-center rounded-[3px] font-mono text-[15px] font-bold',
                 on ? 'bg-primary text-on-primary' : finished ? 'bg-primary-soft text-primary-ink ring-1 ring-primary-line ring-inset' : 'bg-surface text-muted ring-1 ring-line ring-inset',
               )}
             >
               {n}
             </span>
             <span className="min-w-0 leading-tight">
-              <span className={cx('block truncate text-[12.5px] font-bold', on ? 'text-fg' : 'text-fg-2')}>{s.title}</span>
+              <span className={cx('block truncate text-[16.5px] font-bold', on ? 'text-fg' : 'text-fg-2')}>{s.title}</span>
             </span>
           </li>
         )
@@ -61,12 +71,12 @@ export function SectionCard({ no, title, sub, tag, children, id }: { no: string;
     <section aria-labelledby={id ? `${id}-title` : undefined} id={id} className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <header className="flex items-start gap-3 border-b border-line bg-primary-soft/70 px-5 pt-4 pb-3.5 sm:px-6">
         <div className="min-w-0 flex-1">
-          <h2 id={id ? `${id}-title` : undefined} className="text-[16px] font-extrabold text-fg">
+          <h2 id={id ? `${id}-title` : undefined} className="text-[18px] font-extrabold text-fg">
             {title}
           </h2>
-          {sub && <p className="mt-0.5 text-[12.5px] text-muted">{sub}</p>}
+          {sub && <p className="mt-1 text-[14px] text-muted">{sub}</p>}
         </div>
-        {tag && <span className="mt-1 shrink-0 rounded-[2px] bg-surface px-1.5 text-[11.5px] leading-5 font-bold text-fg-2 ring-1 ring-line ring-inset">{tag}</span>}
+        {tag && <span className="mt-1 shrink-0 rounded-[2px] bg-surface px-2 text-[13px] leading-6 font-bold text-fg-2 ring-1 ring-line ring-inset">{tag}</span>}
         <span aria-hidden className="-mt-1 shrink-0 font-mono text-[2.2rem] leading-none font-extrabold text-primary/30 select-none">
           {no}
         </span>

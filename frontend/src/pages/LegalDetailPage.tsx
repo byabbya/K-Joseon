@@ -16,6 +16,7 @@ import { Page } from '../components/PageHead'
 import { Button, ChoiceChip, ErrorBox, ExtLink, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconArrowLeft, IconCheck, IconSearch } from '../components/icons'
 import { FIELD_LABEL, SEVERITY, TONE_CLS, VERDICT_DEF, VERDICT_TONE, catShort, fmtDate, noCodes } from '../lib/labels'
+import { useStickyTop } from '../lib/useStickyTop'
 import { useUser } from '../lib/user'
 
 export function LegalDetailPage() {
@@ -38,6 +39,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
   const s = d.summary
   const a = d.analysis
   const latest = d.decisions.length ? d.decisions[d.decisions.length - 1] : null
+  const [asideRef, asideTop] = useStickyTop(80)
   return (
     <Page>
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -98,7 +100,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
         </article>
 
         {a && (
-          <aside aria-label="판정과 검색" className="thin-scroll flex min-w-0 flex-col gap-4 [&>*]:shrink-0 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-8.75rem)] xl:-mx-1 xl:overflow-y-auto xl:px-1 xl:pb-1">
+          <aside ref={asideRef} style={{ top: asideTop }} aria-label="판정과 검색" className="flex min-w-0 flex-col gap-4 xl:sticky">
             <ActionPanel d={d} a={a} reviewerId={userId} />
             <ApprovalLinePanel d={d} />
           </aside>
@@ -108,7 +110,7 @@ function LegalDetail({ d }: { d: RequestDetail }) {
   )
 }
 
-/** 오른쪽 칸(화면에 붙어 있고 칸 전체가 스크롤됨, 아래에 결재선) — 판정 / 법령·판례 검색 탭. 두 탭 모두 그대로 살아 있어 바꿔도 입력이 지워지지 않는다 */
+/** 오른쪽 칸(화면에 붙어 왼쪽과 함께 내려옴, 아래에 결재선) — 판정 / 법령·판례 검색 탭. 두 탭 모두 그대로 살아 있어 바꿔도 입력이 지워지지 않는다 */
 function ActionPanel({ d, a, reviewerId }: { d: RequestDetail; a: Analysis; reviewerId: string | null }) {
   const [tab, setTab] = useState<'decide' | 'search'>('decide')
   const tabs: { k: 'decide' | 'search'; label: string }[] = [
@@ -324,7 +326,7 @@ function Snapshot({ d, a }: { d: RequestDetail; a: Analysis }) {
 
         {conditions.length > 0 && (
           <div>
-            <Sub>보낼 때 지킬 조건</Sub>
+            <Sub>{a.recommendation === '반출 불가' ? '준비할 것' : '보낼 때 지킬 조건'}</Sub>
             <ul className="list-disc space-y-1 pl-5 text-[13px] text-fg">
               {conditions.map((c) => (
                 <li key={c}>{c}</li>
@@ -435,7 +437,7 @@ function EvidenceSearch({ a }: { a: Analysis }) {
       <label htmlFor="evidence-search" className="sr-only">
         법령·판례 검색
       </label>
-      <span className="sticky top-0 z-10 -mx-5 -mt-3.5 block bg-surface px-5 pt-3.5 pb-1">
+      <span className="block">
         <span className="relative block">
         <IconSearch size={15} className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted" />
         <input id="evidence-search" type="search" className={cx(inputCls, 'pl-8')} value={q} onChange={(e) => setQ(e.target.value)} placeholder="예: 수출 신고, 해외 인증 기술자료, 협력사 기술자료" />
@@ -446,7 +448,7 @@ function EvidenceSearch({ a }: { a: Analysis }) {
       </p>
       <ErrorBox error={showing ? s.error : null} className="mt-1" />
       {results.length > 0 && (
-        <div className={cx('mt-1.5 transition-opacity', s.isPlaceholderData && showing && 'opacity-60')}>
+        <div className={cx('thin-scroll mt-1.5 max-h-[55vh] overflow-y-auto pr-0.5 transition-opacity', s.isPlaceholderData && showing && 'opacity-60')}>
           <RelatedList dense items={results} />
         </div>
       )}

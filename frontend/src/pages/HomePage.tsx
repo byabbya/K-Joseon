@@ -18,12 +18,6 @@ import { useUser } from '../lib/user'
 
 const PLACEHOLDER = '예) 프랑스 선급 사전검토용으로 LNG 화물창 단열 시스템 상세 설계도와 방벽 사양서를 이메일로 공유합니다.'
 
-/** 예시 — 누르면 상황 설명에 들어간다 */
-const EXAMPLES: { label: string; text: string }[] = [
-  { label: 'LNG 화물창 선급 검토', text: '프랑스 선급 사전 검토용으로 LNG 화물창 단열 시스템 상세 설계도와 방벽 사양서를 이메일로 공유합니다. 선급 계약 있고 국가과제 아님.' },
-  { label: '국내 협력사 도장 사양서', text: '국내 도장 협력사에 거주구역 계단 난간 도장 사양서를 NDA 체결 후 메일로 보냅니다. 국가과제 아님.' },
-  { label: '한국선급 승인도면 제출', text: '한국선급 승인용으로 거주구 일반배치도를 선급 포털로 제출합니다. 선급 계약 있고 승인도면 목록에 포함된 도면이에요. 국가과제 아님.' },
-]
 
 const DRAFT_KEY = 'kship-guard.draft'
 
@@ -222,25 +216,7 @@ export function HomePage() {
             <p id="situation-help" className="mt-1.5 text-[12px] text-muted">
               <span className="text-stop-fg">*</span> 설명이나 파일 중 하나는 꼭 있어야 해요.
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-[2px] bg-surface-2 px-1.5 text-[11px] font-bold text-muted ring-1 ring-line ring-inset">예시</span>
-              {EXAMPLES.map((x) => (
-                <button
-                  key={x.label}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setText(x.text)
-                    setFields((f) => (f.category_choice ? { category_choice: f.category_choice } : {}))
-                    setErr(null)
-                  }}
-                  className={cx('text-[12px] font-semibold hover:underline', text === x.text ? 'text-fg' : 'text-primary-ink')}
-                >
-                  {x.label}
-                </button>
-              ))}
-              {preview.isFetching && <span className="ml-auto text-[11.5px] text-muted">읽는 중…</span>}
-            </div>
+            {preview.isFetching && <p className="mt-1 text-right text-[11.5px] text-muted">읽는 중…</p>}
             <StructuredFields p={p} fields={fields} set={set} disabled={busy} />
           </SectionCard>
 
@@ -339,12 +315,16 @@ function AnalysisLoading({ done: allDone }: { done: boolean }) {
 
 /* ---------------- 01 기술 ---------------- */
 
+/** 줄이 '·'로 시작하지 않게 가운뎃점 앞에 줄바꿈 금지 문자(U+2060)를 넣는다 */
+const WJ = String.fromCharCode(0x2060)
+const noLeadDot = (s: string) => s.replace(/·/g, WJ + '·')
+
 function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoice; onChange: (v: CategoryChoice) => void; p?: PreviewOut; disabled?: boolean }) {
   const cats = useMeta().data?.categories ?? []
   const hint = new Map((p?.tech_candidates ?? []).map((c) => [c.code as string, c.confident ? '설명에서 찾은 후보' : '약한 단서']))
   const tile = (sel: boolean) =>
     cx(
-      'relative flex h-full min-h-[4.6rem] w-full flex-col items-start gap-0.5 border-r border-b border-line px-3.5 py-3 text-left transition-colors duration-150',
+      'relative flex h-full min-h-[5.2rem] w-full flex-col items-start gap-1 border-r border-b border-line px-4 py-3.5 text-left transition-colors duration-150',
       sel ? 'bg-primary-soft shadow-[inset_3px_0_0_var(--primary)]' : 'bg-surface hover:bg-surface-2',
       disabled && 'opacity-60',
     )
@@ -357,16 +337,18 @@ function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoi
           return (
             <Tooltip key={c.code} block wide content={<><b>{c.label}</b><br />{c.text}</>}>
               <button type="button" role="radio" aria-checked={sel} disabled={disabled} onClick={() => onChange(sel ? '모름' : c.code)} className={tile(sel)}>
-                <span className={cx('text-[13px] leading-snug font-bold', sel ? 'text-primary-ink' : 'text-fg')}>{c.label}</span>
-                <span className="text-[11.5px] text-muted">{CAT_SHORT[c.code] ?? ''}</span>
-                {h && <span className={cx('absolute top-2.5 right-2.5 rounded-[2px] px-1 text-[11px] font-bold ring-1 ring-inset', h === '약한 단서' ? 'bg-surface text-muted ring-line' : 'bg-teal-soft text-teal-ink ring-teal-line')}>{h}</span>}
+                <span className={cx('text-[15px] leading-snug font-bold', sel ? 'text-primary-ink' : 'text-fg')}>{noLeadDot(c.label)}</span>
+                <span className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
+                  {CAT_SHORT[c.code] ?? ''}
+                  {h && <span className={cx('rounded-[2px] px-1.5 text-[11.5px] font-bold whitespace-nowrap ring-1 ring-inset', h === '약한 단서' ? 'bg-surface text-muted ring-line' : 'bg-teal-soft text-teal-ink ring-teal-line')}>{h}</span>}
+                </span>
               </button>
             </Tooltip>
           )
         })}
         <button type="button" role="radio" aria-checked={value === '모름'} disabled={disabled} onClick={() => onChange('모름')} className={tile(value === '모름')}>
-          <span className={cx('text-[13px] font-bold', value === '모름' ? 'text-primary-ink' : 'text-fg')}>잘 모르겠음</span>
-          <span className="text-[11.5px] text-muted">AI가 찾아 드려요</span>
+          <span className={cx('text-[15px] font-bold', value === '모름' ? 'text-primary-ink' : 'text-fg')}>잘 모르겠음</span>
+          <span className="text-[13px] text-muted">AI가 찾아 드려요</span>
         </button>
       </div>
     </SectionCard>
@@ -513,12 +495,12 @@ function PurposeSection({ p, value, onChange, disabled }: { p?: PreviewOut; valu
               disabled={disabled}
               onClick={() => onChange(value === o.value ? null : (o.value as DraftFields['purpose']))}
               className={cx(
-                'flex min-h-12 flex-col items-center justify-center border-r border-b border-line px-2 py-2 text-center text-[12.5px] transition-colors duration-150',
+                'flex min-h-14 flex-col items-center justify-center border-r border-b border-line px-2 py-2.5 text-center text-[14.5px] transition-colors duration-150',
                 sel ? 'bg-primary-soft font-bold text-primary-ink shadow-[inset_0_-2px_0_var(--primary)]' : 'bg-surface font-medium text-fg-2 hover:bg-surface-2',
               )}
             >
               {o.label}
-              {fromText && <span className="text-[11px] font-semibold text-teal-ink">설명에서 읽음</span>}
+              {fromText && <span className="text-[12px] font-semibold text-teal-ink">설명에서 읽음</span>}
             </button>
           )
         })}

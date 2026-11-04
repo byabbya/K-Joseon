@@ -7,7 +7,7 @@ import { USE_MOCK } from '../api/client'
 import { useMeta, useRequestList } from '../api/hooks'
 import { useUser, type Role } from '../lib/user'
 import { RadioGroup, cx } from './ui'
-import { IconCheck, IconChevronDown, LogoMark } from './icons'
+import { IconCheck, IconChevronDown } from './icons'
 
 interface NavItem {
   to: string
@@ -89,15 +89,10 @@ export function AppShell() {
       </a>
 
       {/* 사이드바 */}
-      <aside className="app-sidebar sticky top-0 flex h-dvh w-[13rem] shrink-0 flex-col bg-nav text-nav-fg max-lg:hidden">
-        <Link to={ROLE_HOME[role]} className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-          <span className="grid size-9 place-items-center rounded-field bg-white/95 text-primary ring-1 ring-white/20 ring-inset">
-            <LogoMark size={26} />
-          </span>
-          <span className="leading-tight">
-            <span className="block text-[16px] font-extrabold tracking-[0.02em] text-white">Guardians</span>
-            <span className="block text-[11px] font-medium text-nav-muted">기술자료 반출 검토</span>
-          </span>
+      <aside className="app-sidebar sticky top-0 flex h-dvh w-[13rem] shrink-0 flex-col border-r border-white/15 bg-nav text-nav-fg max-lg:hidden">
+        <Link to={ROLE_HOME[role]} aria-label="가디언즈 Guardians — 첫 화면" className="flex h-16 shrink-0 items-center justify-center gap-2 pr-7 pl-4">
+          <img src="/brand/shield.png" alt="" width={33} height={40} className="h-10 w-auto shrink-0" />
+          <img src="/brand/title.png" alt="가디언즈" width={104} height={45} className="h-auto w-[6.5rem] min-w-0" />
           {USE_MOCK && <span className="ml-auto rounded-[2px] bg-cond-bg px-1 font-mono text-[11px] font-bold text-cond-fg ring-1 ring-cond-line">MOCK</span>}
         </Link>
         <nav aria-label="주 메뉴" className="flex-1 space-y-0.5 px-2 py-4">
@@ -163,27 +158,17 @@ export function AppShell() {
 /* ---------------- 머리줄 ---------------- */
 
 function TopBar({ name }: { name: string }) {
-  const meta = useMeta()
   return (
     <header className="app-topbar sticky top-0 z-40 bg-nav text-nav-fg shadow-[0_1px_0_rgb(255_255_255/0.06)]">
       <div className="flex min-h-16 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 lg:px-8">
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-[17px] font-extrabold text-white">{name || 'Guardians'}</p>
         </div>
-        <p className="flex items-center gap-1.5 text-[12px] text-nav-muted max-md:hidden">
-          <span aria-hidden className={cx('size-1.5 rounded-full', meta.isError ? 'bg-stop-dot' : 'bg-go-dot')} />
-          {meta.isError ? '서버 연결 안 됨' : `${today()} · 서버 연결됨`}
-        </p>
         <RoleSwitch />
         <AccountChip />
       </div>
     </header>
   )
-}
-
-function today() {
-  const d = new Date()
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
 /** 설계 사원 / 법무 담당 두 칸 */
