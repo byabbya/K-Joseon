@@ -37,7 +37,11 @@ export interface RequestInput {
   purpose: Purpose | null
   free_text: string
   recipient_type: RecipientType | null
+  /** 받는 회사·기관 */
   recipient_name: string
+  recipient_dept?: string
+  recipient_person?: string
+  recipient_email?: string
   recipient_country: string | null
   transfer_method: TransferMethod | null
   contract_basis: ContractBasis | null
@@ -378,6 +382,9 @@ export interface EmployeeOut {
   name: string
   department: string
   role: 'employee' | 'legal'
+  /** 직책 (예: 대리). 예전 백엔드에는 없을 수 있다 */
+  position?: string
+  email?: string
 }
 
 export interface DecisionInput {
@@ -420,6 +427,11 @@ export interface RequestSummary {
   purpose: string | null
   channel_code: string | null
   recipient: string
+  recipient_type?: string | null
+  recipient_name?: string
+  recipient_dept?: string
+  recipient_person?: string
+  recipient_email?: string
   recipient_country: string | null
   transfer_method: string | null
   file_count: number
@@ -486,6 +498,9 @@ export function emptyRequestInput(employee_id: string): RequestInput {
     free_text: '',
     recipient_type: null,
     recipient_name: '',
+    recipient_dept: '',
+    recipient_person: '',
+    recipient_email: '',
     recipient_country: null,
     transfer_method: null,
     contract_basis: null,

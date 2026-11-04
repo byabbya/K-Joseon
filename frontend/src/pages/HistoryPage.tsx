@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useRequestList } from '../api/hooks'
 import type { RequestSummary } from '../api/types'
-import { checkTitle } from '../components/check/ListBits'
+import { RecipientInfo, checkTitle } from '../components/check/ListBits'
 import { Page, PageHead } from '../components/PageHead'
 import { ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconChevronRight, IconInbox, IconPlus, IconSearch } from '../components/icons'
@@ -21,7 +21,7 @@ function StateCell({ r }: { r: RequestSummary }) {
         법무 검토 중
       </Pill>
     )
-  return <span className="text-[12px] text-muted">사전분석 완료</span>
+  return <span className="text-[12px] text-muted">AI 검토 완료</span>
 }
 
 export function HistoryPage() {
@@ -35,16 +35,15 @@ export function HistoryPage() {
     if (filter === '법무 검토 중' && r.status !== '법무 검토 중') return false
     if (filter === '판정 완료' && !r.verdict) return false
     if (!needle) return true
-    return [r.request_id, checkTitle(r), r.recipient, r.purpose ?? '', countryName(r.recipient_country)].join(' ').toLowerCase().includes(needle)
+    return [r.request_id, checkTitle(r), r.recipient, r.recipient_dept ?? '', r.recipient_person ?? '', r.purpose ?? '', countryName(r.recipient_country)].join(' ').toLowerCase().includes(needle)
   })
   const count = (f: Filter) => (f === '전체' ? mine.length : f === '법무 검토 중' ? mine.filter((r) => r.status === '법무 검토 중').length : mine.filter((r) => r.verdict).length)
 
   return (
     <Page>
       <PageHead
-        eyebrow="My Requests"
         title="내 요청"
-        sub="요청별 사전 권고와 법무팀 판단을 확인합니다."
+        sub="AI 권고와 법무팀 판정을 확인해요."
         right={
           <Link to="/" className="press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-[13px] font-bold text-on-primary hover:bg-primary-hover">
             <IconPlus size={14} /> 새 검토 요청
@@ -56,7 +55,7 @@ export function HistoryPage() {
           <label className="relative min-w-0 flex-1 basis-64 sm:max-w-md">
             <span className="sr-only">요청 검색</span>
             <IconSearch size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
-            <input className={cx(inputCls, 'h-9 pl-9')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="요청 ID, 자료명, 수신처 검색" />
+            <input className={cx(inputCls, 'h-9 pl-9')} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="요청 ID, 자료, 받는 곳으로 검색" />
           </label>
           <div role="tablist" aria-label="상태" className="ml-auto flex rounded-[3px] bg-surface-2 p-0.5 ring-1 ring-line ring-inset">
             {FILTERS.map((f) => (
@@ -108,9 +107,8 @@ export function HistoryPage() {
                       {r.file_count ? `파일 ${r.file_count}개` : '설명만'}
                     </span>
                   </Cell>
-                  <Cell label="수신처">
-                    <span className="block truncate text-[12.5px] font-semibold text-fg">{[countryName(r.recipient_country) === '-' ? '' : countryName(r.recipient_country), r.recipient].filter((x) => x && x !== '-').join(' ') || '—'}</span>
-                    <span className="block truncate text-[11px] text-muted">{r.purpose ?? '목적 미입력'}</span>
+                  <Cell label="받는 사람">
+                    <RecipientInfo r={r} compact />
                   </Cell>
                   <Cell label="권고">
                     <RecPill rec={r.recommendation} size="xs" />

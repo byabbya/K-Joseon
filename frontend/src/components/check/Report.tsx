@@ -29,7 +29,7 @@ export function Report({ a, prev, decisions, audience }: { a: Analysis; prev: An
           ))}
         </div>
       </Block>
-      <Block n={2} title="판단 축 4개" sub={audience === 'legal' ? '네 축은 따로 정해지며, 어느 하나가 다른 값을 자동으로 정하지 않습니다' : undefined} className={ch('axis')}>
+      <Block n={2} title="판단 기준 4가지" className={ch('axis')}>
         <AxesStrip a={a} decisions={decisions} />
         <div className="mt-3">
           <p className="mb-1.5 text-[12px] font-semibold text-fg-2">관련 기술 후보 — {audience === 'legal' ? '사원 선택' : '내 선택'}과 시스템 후보는 따로 저장</p>
@@ -273,7 +273,7 @@ export function AxesStrip({ a, decisions }: { a: Analysis; decisions: DecisionOu
   const [open, setOpen] = useState<AxisKey | null>(null)
   return (
     <div>
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="판단 축 4개 (서로 독립)">
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="판단 기준 4가지 (따로따로 판단)">
         {AXIS_ORDER.map(({ key, label, who }) => {
           const ax = axes[key]
           const tone = axisTone(ax)

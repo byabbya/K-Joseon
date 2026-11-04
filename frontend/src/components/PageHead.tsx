@@ -22,9 +22,9 @@ export function PageHead({ title, sub, right, eyebrow }: { title: ReactNode; sub
 
 /** 반출 검토 흐름 3단계 — 요청 정보 → AI 사전분석 → 법무 검토 */
 const STEPS = [
-  { title: '요청 정보', sub: '자료와 반출 맥락' },
-  { title: 'AI 사전분석', sub: '후보·근거·빠진 정보 확인' },
-  { title: '법무 검토', sub: '필요할 때만 요청' },
+  { title: '요청 쓰기', sub: '무엇을 누구에게' },
+  { title: 'AI 검토', sub: '권고와 근거 확인' },
+  { title: '법무팀 확인', sub: '필요할 때만' },
 ]
 
 export function FlowSteps({ current, done = 0 }: { current: 1 | 2 | 3; done?: number }) {

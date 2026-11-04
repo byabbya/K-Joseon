@@ -3,11 +3,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
-import { checkTitle } from '../components/check/ListBits'
+import { RecipientInfo, SenderInfo, checkTitle } from '../components/check/ListBits'
 import { Page, PageHead, Panel } from '../components/PageHead'
 import { ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx } from '../components/ui'
 import { IconArrowLeft } from '../components/icons'
-import { REC_TONE, SEVERITY, TONE_CLS, countryName, fmtDate } from '../lib/labels'
+import { REC_TONE, SEVERITY, TONE_CLS, fmtDate } from '../lib/labels'
 
 const RECS: Recommendation[] = ['진행 가능', '조건부 진행', '법무팀 검토 필요', '반출 불가']
 const when = (r: RequestSummary) => r.submitted_at ?? r.created_at
@@ -40,9 +40,9 @@ export function LegalDashboardPage() {
   return (
     <Page>
       <PageHead
-        eyebrow="Dashboard"
+       
         title="반출 검토 현황"
-        sub="법무팀 확인을 요청받은 건과 처리 상태를 봅니다."
+        sub="법무팀에 들어온 요청과 처리 상태예요."
         right={
           <Link to="/legal/requests" className="press inline-flex h-9 items-center gap-1.5 rounded-field bg-primary px-3.5 text-[13px] font-bold text-on-primary hover:bg-primary-hover">
             검토할 요청 보기 <IconArrowLeft size={14} className="rotate-180" />
@@ -61,9 +61,9 @@ export function LegalDashboardPage() {
       <div className="mt-5">
         <div className="min-w-0 space-y-5">
           {/* 우선 확인 항목 */}
-          <Panel tone="alert" eyebrow="Review Watch" title="우선 확인 항목" right={<span className="rounded-full bg-white px-2.5 py-0.5 text-[12.5px] font-bold text-wine-ink tabular-nums">{watch.length}건</span>}>
+          <Panel tone="alert" title="우선 확인 항목" right={<span className="rounded-full bg-white px-2.5 py-0.5 text-[12.5px] font-bold text-wine-ink tabular-nums">{watch.length}건</span>}>
             {loading && <Spinner />}
-            {!loading && !watch.length && <p className="px-5 py-6 text-[13px] text-muted">판정을 기다리는 요청이 없습니다.</p>}
+            {!loading && !watch.length && <p className="px-5 py-6 text-[13px] text-muted">기다리는 요청이 없어요.</p>}
             <ul className="divide-y divide-stop-line">
               {watch.map((r) => {
                 const high = r.recommendation === '반출 불가' || r.recommendation === '법무팀 검토 필요'
@@ -71,7 +71,7 @@ export function LegalDashboardPage() {
                   <li key={r.request_id}>
                     <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/70">
                       <span className={cx('w-16 shrink-0 rounded-[2px] py-0.5 text-center font-mono text-[11px] font-bold ring-1 ring-inset', high ? 'bg-wine text-white ring-wine' : 'bg-surface text-wine-ink ring-stop-line')}>
-                        {high ? 'HIGH' : 'REVIEW'}
+                        {high ? '우선' : '확인'}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13.5px] font-bold text-fg">{checkTitle(r)}</span>
@@ -116,7 +116,7 @@ export function LegalDashboardPage() {
 
           {/* 최근 요청 */}
           <Panel
-            eyebrow="Recent Requests"
+           
             title="최근 검토 요청"
             right={
               <Link to="/legal/requests?tab=done" className="text-[12.5px] font-bold text-primary-ink hover:underline">
@@ -130,7 +130,8 @@ export function LegalDashboardPage() {
                   <tr className="border-b border-line text-[11px] font-bold tracking-[0.04em] text-muted">
                     <th scope="col" className="py-2.5 pr-3 pl-5">요청 ID</th>
                     <th scope="col" className="px-3 py-2.5">반출 자료</th>
-                    <th scope="col" className="px-3 py-2.5">수신처</th>
+                    <th scope="col" className="px-3 py-2.5">보낸 사람</th>
+                    <th scope="col" className="px-3 py-2.5">받는 사람</th>
                     <th scope="col" className="px-3 py-2.5">권고</th>
                     <th scope="col" className="py-2.5 pr-5 pl-3">상태</th>
                   </tr>
@@ -148,11 +149,14 @@ export function LegalDashboardPage() {
                         <p className="truncate font-bold text-fg">{checkTitle(r)}</p>
                         <p className="flex items-center gap-1 text-[11px] text-muted">
                           {r.category_choice !== '모름' && <IdTag className="!text-[11.5px] !leading-4">{r.category_choice}</IdTag>}
-                          {r.channel_code ?? ''}
+                          {r.purpose ?? ''}
                         </p>
                       </td>
-                      <td className="px-3 py-3 text-[12.5px] text-fg-2">
-                        {countryName(r.recipient_country)} · {r.recipient}
+                      <td className="max-w-[12rem] px-3 py-3">
+                        <SenderInfo e={r.employee} compact />
+                      </td>
+                      <td className="max-w-[14rem] px-3 py-3">
+                        <RecipientInfo r={r} compact />
                       </td>
                       <td className="px-3 py-3">
                         <RecPill rec={r.recommendation} size="xs" />
@@ -162,7 +166,7 @@ export function LegalDashboardPage() {
                   ))}
                   {!loading && !recent.length && (
                     <tr>
-                      <td colSpan={5} className="px-5 py-6 text-[13px] text-muted">
+                      <td colSpan={6} className="px-5 py-6 text-[13px] text-muted">
                         아직 요청이 없습니다.
                       </td>
                     </tr>

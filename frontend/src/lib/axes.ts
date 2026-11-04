@@ -38,7 +38,7 @@ function fallback(a: Analysis): Record<AxisKey, Axis> {
   const legal: Axis = {
     value: laws.length ? `검토 대상 조항 ${laws.length}개` : '연결된 조항 없음',
     status: '법무팀 확정 전',
-    note: "저촉 '가능성'과 근거 조항까지만 제시하며, 법적 해당성 확정은 법무팀이 합니다",
+    note: '관련될 수 있는 조항까지만 보여 줘요. 법에 해당하는지는 법무팀이 정해요',
     decided_by: '법무팀',
   }
   const permit: Axis = { value: '법무팀 판정 전', status: '법무팀 확정 전', note: '반출 허가 여부는 법무팀 판정으로만 정해집니다', decided_by: '법무팀' }

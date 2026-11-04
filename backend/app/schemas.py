@@ -40,7 +40,10 @@ class RequestInput(BaseModel):
     free_text: str = ""
     # 구조화 항목 — 비워 두면 free_text 에서 추출을 시도하고, 그래도 없으면 질문으로 돌려준다
     recipient_type: Optional[RecipientType] = None
-    recipient_name: str = ""
+    recipient_name: str = ""                           # 받는 회사·기관 (예: 한국선급)
+    recipient_dept: str = ""                           # 받는 쪽 소속 부서
+    recipient_person: str = ""                         # 받는 쪽 담당자
+    recipient_email: str = ""                          # 받는 쪽 이메일
     recipient_country: Optional[str] = None           # ISO 2자리 (KR, FR …)
     transfer_method: Optional[TransferMethod] = None
     contract_basis: Optional[ContractBasis] = None
@@ -185,6 +188,8 @@ class EmployeeOut(BaseModel):
     employee_id: str
     name: str
     department: str
+    position: str = ""                                 # 직책 (예: 대리)
+    email: str = ""
     role: Literal["employee", "legal"]
 
 
@@ -227,6 +232,11 @@ class RequestSummary(BaseModel):
     purpose: Optional[str] = None
     channel_code: Optional[str] = None
     recipient: str
+    recipient_type: Optional[str] = None
+    recipient_name: str = ""                           # 받는 회사·기관
+    recipient_dept: str = ""
+    recipient_person: str = ""
+    recipient_email: str = ""
     recipient_country: Optional[str] = None
     transfer_method: Optional[str] = None
     file_count: int

@@ -77,12 +77,12 @@ export const W5H1: [string, string][] = [
 export const FIELD_LABEL: Record<string, string> = {
   category_choice: '기술 카테고리',
   purpose: '목적',
-  recipient_type: '수신자 유형',
-  recipient_name: '수신자명',
-  recipient_country: '수신 국가',
-  transfer_method: '전송 방식',
+  recipient_type: '받는 곳 종류',
+  recipient_name: '받는 곳 이름',
+  recipient_country: '받는 나라',
+  transfer_method: '보내는 방법',
   contract_basis: '계약 근거',
-  national_rnd_output: '국가 R&D 산출물',
+  national_rnd_output: '국가 R&D 과제 결과물',
   export_clearance: '정부 수출 신고',
   export_clearance_ref: '신고번호',
   on_approved_list: '승인도면 목록 포함',
@@ -104,9 +104,9 @@ export function fmtValue(v: unknown): string {
 
 /** 판정 값의 정의 (정의서 2-1 2) 승인 여부 입력) */
 export const VERDICT_DEF: Record<Verdict, string> = {
-  승인: '현재 입력과 첨부 기준으로 반출 절차 진행 가능',
-  '내부 검토 필요': '기술보호 담당·설계 부서장·외부 기관 확인(판정 신청, KAITS 질의, 전략물자 판정 등) 후 재심',
-  미승인: '반출 불가 또는 요청 수정 후 재신청',
+  승인: '이대로 보내도 돼요',
+  '내부 검토 필요': '다른 부서나 기관에 확인한 뒤 다시 판단해요',
+  미승인: '보낼 수 없어요. 고쳐서 다시 요청해야 해요',
 }
 
 /** 권고 분류 한 줄 설명 */
@@ -128,7 +128,7 @@ export const EMP_STEP_INDEX: Record<Status, number> = { 접수: 0, '분석 완�
 
 /** 검토 답변의 결론 한 줄 (권고 분류 → 쉬운 말) */
 export const REC_ANSWER: Record<Recommendation, string> = {
-  '진행 가능': '저촉 근거가 발견되지 않았습니다',
+  '진행 가능': '걸리는 규정을 찾지 못했어요',
   '조건부 진행': '조건을 지키면 보낼 수 있습니다',
   '법무팀 검토 필요': '법무팀 확인이 필요합니다',
   '반출 불가': '보낼 수 없습니다',

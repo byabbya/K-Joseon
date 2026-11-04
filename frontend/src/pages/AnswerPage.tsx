@@ -2,11 +2,11 @@
 // 법무팀 답변(있으면, 시스템 답변보다 우선) → 결론·왜 그런가요 → 이렇게 하세요(+ 법무팀에 확인 요청) → 자세한 설명 · 근거(접힘).
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useAddFiles, useMeta, useRequestDetail, useResubmit, useSubmitRequest, useUpdateRequest } from '../api/hooks'
+import { useAddFiles, useRequestDetail, useResubmit, useSubmitRequest, useUpdateRequest } from '../api/hooks'
 import type { Analysis, FileMeta, RequestDetail } from '../api/types'
 import { AnalysisView } from '../components/check/Answer'
 import { ApprovalStamps } from '../components/check/Approval'
-import { FlowSteps, Page, PageHead } from '../components/PageHead'
+import { Page, PageHead } from '../components/PageHead'
 import type { Apply } from '../components/check/FollowUps'
 import { LegalAnswerCard, NextStep } from '../components/check/Handoff'
 import { DEFAULT_FILE_META, realFiles } from '../components/check/model'
@@ -89,26 +89,15 @@ function Answer({ d }: { d: RequestDetail }) {
     requestAnimationFrame(() => document.getElementById('question-title')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
   }
 
-  const step = d.summary.status === '법무 검토 중' || d.summary.status === '판정 완료' || d.summary.status === '재신청' ? 3 : 2
-  const meta = useMeta().data
 
   return (
     <Page>
-      <PageHead
-        eyebrow="AI Pre-review"
-        title="사전분석 결과"
-        sub="자료에서 찾은 기술 후보와 근거, 규칙에 따른 사전 권고입니다."
-        right={<ApprovalStamps d={d} />}
-      />
-      <FlowSteps current={step} />
+      <PageHead title="AI 검토 결과" right={<ApprovalStamps d={d} />} />
 
       {/* 분석 머리줄 */}
       <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-line bg-surface px-4 py-3 shadow-card">
-        <span className="rounded-[2px] bg-teal-soft px-1.5 text-[11px] font-bold text-teal-ink ring-1 ring-teal-line ring-inset">AI 분석 초안</span>
         <span className="font-mono text-[13px] font-bold text-fg">{id}</span>
-        <span className="text-[11.5px] text-muted">
-          {fmtDate(a?.analyzed_at ?? d.summary.created_at)} · 규칙 {meta?.rules_version ?? '—'}
-        </span>
+        <span className="text-[11.5px] text-muted">{fmtDate(a?.analyzed_at ?? d.summary.created_at)}</span>
         {d.parent_request_id && (
           <span className="text-[11.5px] text-muted">
             이전 요청{' '}

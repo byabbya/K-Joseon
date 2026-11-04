@@ -1,4 +1,4 @@
-// 반출 검토 요청 (/) — 01 어떤 기술 자료 · 02 첨부 · 03 외부 제공 상황(설명 + 구조화 항목) · 04 반출 목적 → AI 사전분석 시작 → /check/:id.
+// 반출 검토 요청 (/) — 01 어떤 기술 자료 · 02 첨부 · 03 외부 제공 상황(설명 + 구조화 항목) · 04 반출 목적 → AI 검토 시작 → /check/:id.
 // 상황 설명을 쓰는 동안 /api/preview 로 읽은 값(수신자·국가·전송 방식·계약 근거·목적·기술 후보)을 각 칸에 미리 채운다.
 // 사원이 직접 고른 값이 우선이고, 비워 두면 문장에서 읽은 값을 쓴다. 빠진 정보는 분석 결과 화면에서 묻는다.
 import { useEffect, useRef, useState } from 'react'
@@ -129,9 +129,9 @@ export function HomePage() {
   return (
     <Page>
       <PageHead
-        eyebrow="New Review"
+       
         title="반출 검토 요청"
-        sub="자료와 보낼 상황을 알려 주면, 관련 기술·근거·권고를 담은 사전검토안을 만들어 드립니다."
+        sub="무엇을 누구에게 보내는지 알려 주면 AI가 먼저 검토해 드려요."
         right={
           savedAt ? (
             <p className="flex items-center gap-1.5 text-[12px] text-muted">
@@ -150,7 +150,7 @@ export function HomePage() {
           <CategorySection value={fields.category_choice ?? '모름'} onChange={(v) => set('category_choice', v === '모름' ? null : v)} p={p} disabled={busy} />
 
           {/* 02 첨부 */}
-          <SectionCard no="02" id="files" title="문서와 도면을 첨부해 주세요" sub="PDF 문서와 PNG 도면을 우선 분석하며, 파일마다 따로 판단합니다." tag="선택">
+          <SectionCard no="02" id="files" title="문서와 도면을 첨부해 주세요" sub="파일마다 따로 검토해요." tag="선택">
             <div {...pick.dropProps}>
               <button
                 type="button"
@@ -204,7 +204,7 @@ export function HomePage() {
           </SectionCard>
 
           {/* 03 상황 */}
-          <SectionCard no="03" id="situation" title="외부 제공 상황을 설명해 주세요" sub="설명에서 수신자·국가·전송 방식·계약 근거를 읽어 아래 칸을 채웁니다. 다르면 고쳐 주세요." tag="AI 구조화">
+          <SectionCard no="03" id="situation" title="누구에게 어떻게 보내나요?" sub="설명을 읽고 아래 칸을 자동으로 채워요. 다르면 고쳐 주세요." tag="자동 채움">
             <label htmlFor="situation-text" className="mb-1.5 block text-[12.5px] font-bold text-fg-2">
               상황 설명 <span className="text-stop-fg">*</span>
             </label>
@@ -232,7 +232,7 @@ export function HomePage() {
               </p>
             )}
             <p id="situation-help" className="mt-1.5 text-[12px] text-muted">
-              <span className="text-stop-fg">*</span> 상황 설명이나 첨부 파일 중 하나는 있어야 해요. 아래 칸은 비워 두면 설명에서 읽은 값을 쓰고, 그래도 모르면 결과 화면에서 물어봐요.
+              <span className="text-stop-fg">*</span> 설명이나 파일 중 하나는 꼭 있어야 해요.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span className="rounded-[2px] bg-surface-2 px-1.5 text-[11px] font-bold text-muted ring-1 ring-line ring-inset">예시</span>
@@ -271,11 +271,11 @@ export function HomePage() {
                 {busy ? (
                   <>
                     <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />
-                    분석하는 중…
+                    검토하는 중…
                   </>
                 ) : (
                   <>
-                    AI 사전분석 시작 <IconArrowLeft size={15} className="rotate-180" />
+                    AI 검토 시작 <IconArrowLeft size={15} className="rotate-180" />
                   </>
                 )}
               </Button>
@@ -296,10 +296,10 @@ export function HomePage() {
 
 /** 분석 흐름의 실제 단계 (graph.py 노드 순서). 서버 응답이 오면 결과 화면으로 넘어간다 */
 const STAGES = [
-  { t: '원문 해시·메타데이터', s: '파일 무결성과 업로드 범위를 확인하고 있습니다.' },
-  { t: '문서·도면 특징 추출', s: '문서 텍스트와 도면 기호·글자를 읽고, 표준 용어로 맞추고 있습니다.' },
-  { t: '법령·판례 근거 검색', s: '고시 별표 S01~S08과 대조하고 현행 조항·판례를 찾고 있습니다.' },
-  { t: '규칙 엔진 검증', s: 'R01~R10으로 사전 권고를 분류하고 빠진 정보를 정리하고 있습니다.' },
+  { t: '파일 확인', s: '올린 파일을 확인하고 있어요.' },
+  { t: '내용 읽기', s: '문서 글자와 도면 기호를 읽고 있어요.' },
+  { t: '근거 찾기', s: '관련 법령과 판례를 찾고 있어요.' },
+  { t: '규칙 확인', s: '규칙에 맞춰 권고를 정하고 있어요.' },
 ]
 
 const MIN_LOADING_MS = 2600
@@ -314,7 +314,7 @@ function AnalysisLoading({ done: allDone }: { done: boolean }) {
   }, [])
   const pct = allDone ? 100 : Math.round(((tick + 0.6) / STAGES.length) * 100)
   return (
-    <div role="status" aria-live="polite" aria-label="AI 사전분석 중" className="fixed inset-0 z-[80] grid animate-fade-in place-items-center bg-[#1b2b34]/[0.96] px-6 backdrop-blur-[2px]">
+    <div role="status" aria-live="polite" aria-label="AI 검토 중" className="fixed inset-0 z-[80] grid animate-fade-in place-items-center bg-[#1b2b34]/[0.96] px-6 backdrop-blur-[2px]">
       <div className="flex w-full max-w-[38rem] flex-col items-center text-center">
         {/* 표식: 겹친 틀 + AI */}
         <div aria-hidden className="relative mb-7 size-32">
@@ -324,8 +324,8 @@ function AnalysisLoading({ done: allDone }: { done: boolean }) {
             {allDone ? <IconCheck size={26} strokeWidth={3} /> : 'AI'}
           </span>
         </div>
-        <h2 className="text-[1.6rem] font-extrabold text-white">{allDone ? '사전분석을 마쳤습니다' : '사내 분석 파이프라인 실행 중'}</h2>
-        <p className="mt-2 min-h-5 text-[13px] text-white/75">{allDone ? '결과 화면으로 이동합니다.' : STAGES[step].s}</p>
+        <h2 className="text-[1.6rem] font-extrabold text-white">{allDone ? '검토를 마쳤어요' : 'AI가 검토하고 있어요'}</h2>
+        <p className="mt-2 min-h-5 text-[13px] text-white/75">{allDone ? '결과 화면으로 넘어가요.' : STAGES[step].s}</p>
         <div className="mt-9 h-1 w-full bg-white/12">
           <div className="h-full bg-[#9fb6c1] transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
         </div>
@@ -343,7 +343,7 @@ function AnalysisLoading({ done: allDone }: { done: boolean }) {
             </li>
           ))}
         </ol>
-        <p className="mt-10 text-[11.5px] text-white/65">사내 서버에서만 처리합니다 · 외부 호출 없음</p>
+        <p className="mt-10 text-[11.5px] text-white/65">회사 안 서버에서만 처리해요</p>
       </div>
     </div>
   )
@@ -361,7 +361,7 @@ function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoi
       disabled && 'opacity-60',
     )
   return (
-    <SectionCard no="01" id="category" title="어떤 기술 자료인가요?" sub="직접 고르거나, 확실하지 않으면 '잘 모르겠음'을 두세요. 문서와 설명에서 후보를 찾습니다." tag="선택">
+    <SectionCard no="01" id="category" title="어떤 기술 자료인가요?" sub="잘 모르면 '잘 모르겠음'을 두세요. AI가 찾아 드려요." tag="선택">
       <div role="radiogroup" aria-labelledby="category-title" className="grid grid-cols-1 border-t border-l border-line sm:grid-cols-2 xl:grid-cols-3">
         {cats.map((c) => {
           const sel = value === c.code
@@ -380,7 +380,7 @@ function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoi
         <button type="button" role="radio" aria-checked={value === '모름'} disabled={disabled} onClick={() => onChange('모름')} className={tile(value === '모름')}>
           <span className="font-mono text-[11px] font-bold text-muted">AI</span>
           <span className={cx('text-[13px] font-bold', value === '모름' ? 'text-primary-ink' : 'text-fg')}>잘 모르겠음</span>
-          <span className="text-[11.5px] text-muted">AI가 기술 후보를 제시</span>
+          <span className="text-[11.5px] text-muted">AI가 찾아 드려요</span>
         </button>
       </div>
     </SectionCard>
@@ -394,9 +394,9 @@ type FieldKey = 'recipient_type' | 'recipient_country' | 'transfer_method' | 'co
 function StructuredFields({ p, fields, set, disabled }: { p?: PreviewOut; fields: DraftFields; set: <K extends keyof DraftFields>(k: K, v: DraftFields[K] | null) => void; disabled?: boolean }) {
   const enums = useEnums()
   const cols: { k: FieldKey; label: string; options: [string, string][] }[] = [
-    { k: 'recipient_type', label: '수신자 유형', options: enums('recipient_type').map((v) => [v, v]) },
-    { k: 'recipient_country', label: '수신 국가', options: COUNTRIES.map(([c, n]) => [c, `${n} (${c})`]) },
-    { k: 'transfer_method', label: '전송 방식', options: enums('transfer_method').map((v) => [v, v]) },
+    { k: 'recipient_type', label: '받는 곳 종류', options: enums('recipient_type').map((v) => [v, v]) },
+    { k: 'recipient_country', label: '받는 나라', options: COUNTRIES.map(([c, n]) => [c, `${n} (${c})`]) },
+    { k: 'transfer_method', label: '보내는 방법', options: enums('transfer_method').map((v) => [v, v]) },
     { k: 'contract_basis', label: '계약 근거', options: enums('contract_basis').map((v) => [v, v]) },
   ]
   const read = (k: string) => {
@@ -445,6 +445,7 @@ function StructuredFields({ p, fields, set, disabled }: { p?: PreviewOut; fields
           )
         })}
       </div>
+      <RecipientFields p={p} fields={fields} set={set} disabled={disabled} />
       <label className={cx('mt-2 flex items-start gap-3 rounded-field border border-line bg-surface-2/60 px-4 py-3', disabled && 'opacity-60')}>
         <input
           type="checkbox"
@@ -454,7 +455,7 @@ function StructuredFields({ p, fields, set, disabled }: { p?: PreviewOut; fields
           onChange={(e) => set('national_rnd_output', e.target.checked ? true : null)}
         />
         <span className="min-w-0">
-          <span className="block text-[13px] font-bold text-fg">국가 R&D 과제 산출물에 해당합니다</span>
+          <span className="block text-[13px] font-bold text-fg">국가 R&D 과제로 만든 자료예요</span>
           <span className="block text-[11.5px] text-muted">
             {rnd === null && rndRead ? (
               <span className="font-semibold text-teal-ink">설명에서 읽음: {rndRead.value ? '해당' : '해당 없음'}</span>
@@ -468,6 +469,42 @@ function StructuredFields({ p, fields, set, disabled }: { p?: PreviewOut; fields
   )
 }
 
+/** 받는 사람 — 회사·소속·담당자·이메일. 법무팀 목록과 상세에 그대로 보인다 */
+function RecipientFields({ p, fields, set, disabled }: { p?: PreviewOut; fields: DraftFields; set: <K extends keyof DraftFields>(k: K, v: DraftFields[K] | null) => void; disabled?: boolean }) {
+  const readName = p?.resolved.recipient_name?.value ? String(p.resolved.recipient_name.value) : ''
+  const cols: { k: 'recipient_name' | 'recipient_dept' | 'recipient_person' | 'recipient_email'; label: string; ph: string; type?: string }[] = [
+    { k: 'recipient_name', label: '회사·기관', ph: '예) 프랑스 선급' },
+    { k: 'recipient_dept', label: '소속 부서', ph: '예) 도면승인팀' },
+    { k: 'recipient_person', label: '담당자', ph: '예) 홍길동 선임' },
+    { k: 'recipient_email', label: '이메일', ph: 'name@company.com', type: 'email' },
+  ]
+  return (
+    <fieldset className="mt-2 rounded-field border border-line px-4 pt-2 pb-3">
+      <legend className="px-1 text-[12px] font-bold text-fg-2">받는 사람</legend>
+      <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+        {cols.map((c) => {
+          const own = (fields[c.k] as string | undefined) ?? ''
+          const fromText = c.k === 'recipient_name' && !own && !!readName
+          return (
+            <label key={c.k} className="block min-w-0">
+              <span className="mb-1 block text-[12px] font-semibold text-muted">{c.label}</span>
+              <input
+                type={c.type ?? 'text'}
+                className={cx(inputCls, 'h-9', fromText && 'border-teal-line bg-teal-soft/40')}
+                value={own || (fromText ? readName : '')}
+                placeholder={c.ph}
+                disabled={disabled}
+                onChange={(e) => set(c.k, e.target.value || null)}
+              />
+              {fromText && <span className="mt-1 block text-[11px] font-semibold text-teal-ink">설명에서 읽음</span>}
+            </label>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+}
+
 /* ---------------- 04 목적 ---------------- */
 
 function PurposeSection({ p, value, onChange, disabled }: { p?: PreviewOut; value: string | null; onChange: (v: DraftFields['purpose'] | null) => void; disabled?: boolean }) {
@@ -476,7 +513,7 @@ function PurposeSection({ p, value, onChange, disabled }: { p?: PreviewOut; valu
   const read = r?.value ? String(r.value) : null
   const current = value ?? read
   return (
-    <SectionCard no="04" id="purpose" title="반출 목적을 선택해 주세요" sub="목적은 반출 경로(CH-01~09)로 바뀌어 규칙 판단의 첫 기준이 됩니다. 비워 두면 설명에서 읽습니다." tag="선택">
+    <SectionCard no="04" id="purpose" title="왜 보내나요?" sub="비워 두면 설명에서 읽어요." tag="선택">
       <div role="radiogroup" aria-labelledby="purpose-title" className="grid grid-cols-2 border-t border-l border-line sm:grid-cols-3 xl:grid-cols-4">
         {opts.map((o) => {
           const sel = current === o.value

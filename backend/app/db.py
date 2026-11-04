@@ -22,6 +22,8 @@ class Employee(SQLModel, table=True):
     name: str
     department: str
     role: str                                      # employee / legal
+    position: str = ""                             # 직책
+    email: str = ""
 
 
 class Request(SQLModel, table=True):
@@ -104,6 +106,16 @@ class AuditLog(SQLModel, table=True):
 def init() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     SQLModel.metadata.create_all(engine)
+    _add_columns("employee", {"position": "VARCHAR NOT NULL DEFAULT ''", "email": "VARCHAR NOT NULL DEFAULT ''"})
+
+
+def _add_columns(table: str, cols: dict[str, str]) -> None:
+    """예전 DB 에 없는 칸만 더한다 (SQLite ALTER TABLE ADD COLUMN)."""
+    with engine.begin() as c:
+        have = {row[1] for row in c.exec_driver_sql(f"PRAGMA table_info({table})")}
+        for name, ddl in cols.items():
+            if name not in have:
+                c.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
 
 
 def audit(session: Session, request_id: Optional[str], actor: str, action: str, **detail) -> None:

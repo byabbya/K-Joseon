@@ -1,4 +1,4 @@
-"""K-Ship Guard AX API. 실행: backend 폴더에서 `../.venv/Scripts/python -m uvicorn app.main:app --port 8000`"""
+"""Guardians API. 실행: backend 폴더에서 `../.venv/Scripts/python -m uvicorn app.main:app --port 8000`"""
 import json
 import os
 import threading
@@ -106,7 +106,7 @@ async def lifespan(_):
     yield
 
 
-app = FastAPI(title="K-Ship Guard AX", lifespan=lifespan)
+app = FastAPI(title="Guardians", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
                    allow_methods=["*"], allow_headers=["*"])
 
@@ -160,6 +160,9 @@ def _summary(s: Session, r: Request) -> RequestSummary:
         submitted_at=r.submitted_at, category_choice=inp.get("category_choice", "모름"), purpose=rv("purpose"),
         channel_code=(a or {}).get("channel_code") or reference.purpose_to_channel().get(inp.get("purpose") or ""),
         recipient=" ".join(x for x in [rv("recipient_type"), rv("recipient_name")] if x) or "-",
+        recipient_type=rv("recipient_type"), recipient_name=rv("recipient_name") or "",
+        recipient_dept=inp.get("recipient_dept") or "", recipient_person=inp.get("recipient_person") or "",
+        recipient_email=inp.get("recipient_email") or "",
         recipient_country=rv("recipient_country"), transfer_method=rv("transfer_method"),
         file_count=len(inp.get("files", [])), recommendation=r.recommendation, verdict=r.verdict)
 

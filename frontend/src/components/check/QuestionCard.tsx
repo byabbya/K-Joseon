@@ -47,7 +47,6 @@ export function QuestionCard(p: QuestionCardProps) {
     <section aria-labelledby="question-title" className="rounded-card border border-line bg-surface shadow-card">
       <header className="flex flex-wrap items-end gap-x-3 gap-y-1 border-b border-line bg-primary-soft/70 px-5 py-4 sm:px-6">
         <div>
-          <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Structured Facts</p>
           <h2 id="question-title" className="mt-0.5 scroll-mt-24 text-[16px] font-extrabold text-fg">
             {audience === 'legal' ? `${d.summary.employee.name}의 요청` : 'AI가 정리한 요청'}
           </h2>
@@ -528,11 +527,11 @@ export function WhereEditor({ init, types, onApply, submitLabel = '고치고 다
     <div className="space-y-2.5">
       <div>
         <p className="mb-1 text-[11.5px] text-muted">국가</p>
-        <Combobox label="수신 국가" value={v.country} options={COUNTRY_OPTIONS} onChange={(c) => setV({ ...v, country: c })} searchable placeholder="국가 선택" searchPlaceholder="국가명 또는 코드 (예: 프랑스, FR)" />
+        <Combobox label="받는 나라" value={v.country} options={COUNTRY_OPTIONS} onChange={(c) => setV({ ...v, country: c })} searchable placeholder="국가 선택" searchPlaceholder="국가명 또는 코드 (예: 프랑스, FR)" />
       </div>
       <div>
         <p className="mb-1 text-[11.5px] text-muted">받는 쪽</p>
-        <Combobox label="수신자 유형" value={v.type} options={types.map((t) => ({ value: t, label: t }))} onChange={(t) => setV({ ...v, type: t as RecipientType })} searchable={false} placeholder="수신자 유형" />
+        <Combobox label="받는 곳 종류" value={v.type} options={types.map((t) => ({ value: t, label: t }))} onChange={(t) => setV({ ...v, type: t as RecipientType })} searchable={false} placeholder="받는 곳 종류" />
       </div>
       <label className="block">
         <span className="mb-1 block text-[11.5px] text-muted">이름 (선택)</span>

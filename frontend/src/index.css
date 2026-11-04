@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   K-Ship Guard AX 디자인 토큰 — 바다(조선) 톤의 대시보드
+   Guardians 디자인 토큰 — 바다(조선) 톤의 대시보드
    흰 바탕에 옅은 푸른 세로 물결, 흰 카드(둥근 모서리 · 아주 옅은 그림자), 네이비 주색, 바다색 보조.
-   권고 4색은 채도를 낮춰 항상 글자와 함께 쓴다. 글꼴은 에이투지체(번들).
+   권고 4색은 채도를 낮춰 항상 글자와 함께 쓴다. 글꼴은 Pretendard(npm 번들).
    색·반경·그림자·모션은 여기서만 정의하고 컴포넌트는 Tailwind 유틸리티만 쓴다.
    다크 모드는 prefers-color-scheme 에서 같은 토큰 값만 바꾼다.
 ------------------------------------------------------------------- */
@@ -145,15 +145,9 @@
   }
 }
 
-/* 에이투지체 (SIL OFL) — 번들, 외부 요청 없음. assets/fonts/a2z/NOTICE.md */
-@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
-@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "A2Z"; src: url("./assets/fonts/a2z/A2Z-ExtraBold.woff2") format("woff2"); font-weight: 800 900; font-style: normal; font-display: swap; }
 
 @theme inline {
-  --font-sans: "A2Z", "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "D2Coding", Consolas, monospace;
 
   --color-bg: var(--bg);

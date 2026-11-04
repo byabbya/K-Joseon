@@ -54,8 +54,8 @@ export function AnalysisView(p: SystemAnswerProps & { question?: ReactNode; /** 
             <StatTiles a={p.a} />
             {p.a.missing.length > 0 && p.a.recommendation !== '반출 불가' && (
               <div id="missing" className="scroll-mt-24">
-                <Panel tone="alert" eyebrow="Missing Check" title="확인해 주세요" right={<span className="grid h-7 min-w-7 place-items-center rounded-full bg-white px-2 font-mono text-[13px] font-bold text-stop-fg">{p.a.missing.length}</span>} bodyClass="px-4 py-1">
-                  <p className="px-1 pt-3 text-[13px] font-semibold text-stop-fg">{p.onAnswer ? '답을 고르면 바로 다시 분석해요. 몰라도 괜찮아요.' : '사원이 아직 답하지 않은 항목입니다.'}</p>
+                <Panel tone="alert" title="확인해 주세요" right={<span className="grid h-7 min-w-7 place-items-center rounded-full bg-white px-2 font-mono text-[13px] font-bold text-stop-fg">{p.a.missing.length}</span>} bodyClass="px-4 py-1">
+                  <p className="px-1 pt-3 text-[13px] font-semibold text-stop-fg">{p.onAnswer ? '답을 고르면 바로 다시 분석해요. 몰라도 괜찮아요.' : p.audience === 'legal' ? '사원이 아직 답하지 않은 항목이에요.' : '법무팀이 확인하는 동안에는 답을 바꿀 수 없어요.'}</p>
                   <MissingQuestions a={p.a} input={p.d.input} onAnswer={p.onAnswer} busy={p.busy} />
                 </Panel>
               </div>
@@ -199,7 +199,6 @@ function TodoCard({ d, a, onAttach, busy, audience, nextStep }: SystemAnswerProp
   return (
     <section id="todo-card" aria-labelledby="todo-title" className="scroll-mt-24 overflow-hidden rounded-card border border-stop-line bg-alert-body shadow-card">
       <div className="bg-wine px-5 pt-4 pb-3">
-        <p className="text-[11.5px] font-bold tracking-[0.12em] text-white uppercase">Next Actions</p>
         <h2 id="todo-title" className="mt-0.5 text-[16px] font-extrabold text-white">
           할 일
         </h2>
@@ -246,7 +245,7 @@ function CandidatesPanel({ a }: { a: Analysis }) {
     }
   const list = [...merged.values()].sort((x, y) => Number(y.confident) - Number(x.confident) || x.code.localeCompare(y.code))
   return (
-    <Panel eyebrow="Technology Candidates" title="관련 기술 후보" right={<span className="rounded-[2px] bg-surface-2 px-1.5 text-[11.5px] font-bold text-muted ring-1 ring-line ring-inset">내 선택 ≠ 시스템 후보</span>} bodyClass="px-5 py-4">
+    <Panel title="관련 기술 후보" right={<span className="rounded-[2px] bg-surface-2 px-1.5 text-[11.5px] font-bold text-muted ring-1 ring-line ring-inset">내 선택 ≠ 시스템 후보</span>} bodyClass="px-5 py-4">
       <p className="text-[12.5px] text-fg-2">
         내가 고른 기술 · <b className="text-fg">{choice === '모름' ? '잘 모르겠음' : `${choice} ${cats.find((c) => c.code === choice)?.label ?? ''}`}</b>
         {a.category_mismatch && <span className="ml-2 text-review-fg">시스템 후보와 달라요 — 둘 다 법무팀에 보여요</span>}
@@ -280,7 +279,7 @@ const QUADRANTS: { no: string; title: string; sub: string; orders: number[]; cas
   { no: '①', title: '고시 해당 기술', sub: '국가핵심기술 지정 고시 별표', orders: [1] },
   { no: '②', title: '법률', sub: '산업기술보호법 · 대외무역법 · 연구개발혁신법 · 하도급법', orders: [2, 4] },
   { no: '③', title: '산업기술보호지침', sub: '반출 통제 · 외주 · 외국인 관리', orders: [3] },
-  { no: '④', title: '판례 · 공정위 의결', sub: '비슷한 사건의 판단', orders: [], cases: true },
+  { no: '④', title: '판례 · 공정위 결정', sub: '비슷한 사건의 판단', orders: [], cases: true },
 ]
 
 function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis | null; d: RequestDetail; audience: Audience }) {
@@ -300,23 +299,23 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
     sub: q.sub,
     clauses: a.clauses.filter((c) => q.orders.includes(c.order)).sort((x, y) => Number(x.status === '구버전') - Number(y.status === '구버전') || x.order - y.order),
     cases: q.cases ? a.precedents : ([] as Analysis['precedents']),
-  }))
+  })).filter((c) => c.clauses.length || c.cases.length)
   const any = cols.some((c) => c.clauses.length || c.cases.length)
   return (
     <Panel
       id="evidence"
-      eyebrow="Legal Evidence"
-      title="적용 검토 근거"
+     
+      title="적용 근거"
       right={
         <span className="text-[12px] font-semibold text-fg-2">
-          법령·지침 {laws} · 판례·의결 {a.precedents.length}
+          법령 {laws} · 판례 {a.precedents.length}
         </span>
       }
       className="print:border-0"
     >
       {any ? (
         <div className="relative px-4 py-4">
-          <ol className="grid gap-3 md:grid-cols-2" aria-label="근거 4사분면">
+          <ol className={cx('grid gap-3', cols.length > 1 && 'md:grid-cols-2')} aria-label="근거 종류별">
             {cols.map((c) => (
               <li key={c.key} className="flex min-w-0 flex-col rounded-field bg-surface-2 p-2.5 ring-1 ring-line ring-inset">
                 <div className="mb-2 flex items-start gap-2 px-1">
@@ -360,7 +359,7 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
                       <p className="flex items-center gap-1.5">
                         <Cite ids={[x.case_id]} />
                         <span className="rounded-pill bg-teal-soft px-2 text-[11px] font-bold text-teal-ink ring-1 ring-teal-line ring-inset">{x.card_type === 'principle' ? '법리' : x.kind}</span>
-                        {x.review_status !== 'approved' && <span className="rounded-pill bg-surface-2 px-2 text-[11px] font-semibold text-muted ring-1 ring-line ring-inset">요약 초안</span>}
+                        {x.review_status !== 'approved' && <span className="rounded-pill bg-surface-2 px-2 text-[11px] font-semibold text-muted ring-1 ring-line ring-inset">요약 검수 전</span>}
                         <span className="ml-auto font-mono text-[11px] text-muted">{x.decision_date}</span>
                       </p>
                       <p className="mt-1.5 text-[13px] leading-snug font-bold text-fg">
@@ -392,7 +391,7 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
       <div className="border-t border-line">
         <button type="button" aria-expanded={open} aria-controls="report-body" onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-5 py-3 text-left text-[13px] font-bold text-primary-ink hover:bg-surface-2">
           {open ? '근거 보고서 접기' : '근거 보고서 전체 보기'}
-          <span className="font-normal text-muted">요약 · 판단 축 4개 · 파일별 판단 · 출처 목록</span>
+          <span className="font-normal text-muted">요약 · 판단 기준 4가지 · 파일별 결과 · 출처</span>
           <IconChevronDown size={16} className={cx('ml-auto shrink-0 text-muted transition-transform duration-200', open && 'rotate-180')} />
         </button>
         <div id="report-body" className="collapse-grid" data-open={open} inert={!open}>

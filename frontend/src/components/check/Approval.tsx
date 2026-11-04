@@ -41,11 +41,11 @@ export function useApprovalLine(d: RequestDetail): ApprovalStep[] {
     state: submitted || !needsLegal ? 'done' : 'current',
     stamp: submitted || !needsLegal ? '신청' : undefined,
     date: submitted ? s.submitted_at : !needsLegal ? s.created_at : null,
-    action: submitted ? '기안 상신' : !needsLegal ? '반출 검토 요청' : '상신 전 · 법무팀 확인 요청 필요',
+    action: submitted ? '법무팀에 요청함' : !needsLegal ? '반출 검토 요청' : '법무팀 확인 요청이 필요해요',
   }
   const approvers: ApprovalStep[] = [
-    { group: '승인', title: '기술보호', person: tech, state: 'waiting', action: needsLegal ? '기술보호 검토' : '반출 승인 (전결)' },
-    { group: '승인', title: '법무팀', person: law, state: needsLegal ? 'waiting' : 'skipped', action: needsLegal ? '최종 승인' : '생략 · 법무 확인 불필요' },
+    { group: '승인', title: '기술보호', person: tech, state: 'waiting', action: needsLegal ? '기술보호 검토' : '반출 승인 (기술보호팀에서 끝냄)' },
+    { group: '승인', title: '법무팀', person: law, state: needsLegal ? 'waiting' : 'skipped', action: needsLegal ? '최종 승인' : '생략 · 법무팀 확인 필요 없음' },
   ]
 
   if (last) {
@@ -55,7 +55,7 @@ export function useApprovalLine(d: RequestDetail): ApprovalStep[] {
     approvers.forEach((x, j) => {
       if (j === i) return
       if (j < i) approvers[j] = { ...x, state: 'skipped', action: '생략' }
-      else approvers[j] = { ...x, state: last.verdict === '내부 검토 필요' ? 'waiting' : 'skipped', action: last.verdict === '내부 검토 필요' ? '재심 대기' : '생략' }
+      else approvers[j] = { ...x, state: last.verdict === '내부 검토 필요' ? 'waiting' : 'skipped', action: last.verdict === '내부 검토 필요' ? '다시 판단 대기' : '생략' }
     })
   } else if (applicant.state === 'done') {
     approvers[0] = { ...approvers[0], state: 'current', action: needsLegal ? '결재 대기 · 기술보호 검토' : '결재 대기 · 반출 승인' }
@@ -138,7 +138,6 @@ export function ApprovalLinePanel({ d }: { d: RequestDetail }) {
   return (
     <section aria-labelledby="approval-title" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <div className="border-b border-line bg-primary-soft/70 px-5 pt-4 pb-3">
-        <p className="text-[11.5px] font-bold tracking-[0.12em] text-muted uppercase">Approval Line</p>
         <h2 id="approval-title" className="mt-0.5 text-[15px] font-extrabold text-fg">
           결재선
         </h2>

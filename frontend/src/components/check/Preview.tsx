@@ -16,7 +16,7 @@ import { ReadMark, WhereEditor } from './QuestionCard'
 export type DraftFields = Partial<
   Pick<
     RequestInput,
-    'purpose' | 'recipient_type' | 'recipient_country' | 'recipient_name' | 'transfer_method' | 'contract_basis' | 'national_rnd_output' | 'export_clearance' | 'export_clearance_ref' | 'category_choice'
+    'purpose' | 'recipient_type' | 'recipient_country' | 'recipient_name' | 'recipient_dept' | 'recipient_person' | 'recipient_email' | 'transfer_method' | 'contract_basis' | 'national_rnd_output' | 'export_clearance' | 'export_clearance_ref' | 'category_choice'
   >
 >
 

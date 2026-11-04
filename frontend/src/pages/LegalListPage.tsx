@@ -5,10 +5,10 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMeta, useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
 import { Page, PageHead } from '../components/PageHead'
-import { checkTitle } from '../components/check/ListBits'
+import { RecipientInfo, SenderInfo, checkTitle } from '../components/check/ListBits'
 import { ErrorBox, IdTag, Pill, RecPill, Segmented, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconInbox, IconSort } from '../components/icons'
-import { SEVERITY, countryName, fmtDate } from '../lib/labels'
+import { SEVERITY, fmtDate } from '../lib/labels'
 
 type Tab = 'pending' | 'done'
 type Sort = '요청일' | '시스템 권고' | '부서'
@@ -70,7 +70,7 @@ export function LegalListPage() {
 
   return (
     <Page>
-      <PageHead eyebrow="Legal Review Queue" title="검토 요청" sub="사원이 사전분석 뒤 법무팀 확인을 요청한 건입니다. 사전분석 결과와 근거를 보고 판정을 기록합니다." />
+      <PageHead title="검토 요청" sub="사원이 법무팀 확인을 요청한 건이에요." />
 
       <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
         {/* 탭 */}
@@ -128,7 +128,7 @@ export function LegalListPage() {
         {q.data && !rows.length && (
           <div className="drafting-grid flex flex-col items-center gap-2 py-14 text-center text-sm text-muted">
             <IconInbox size={28} />
-            {tab === 'pending' ? '답변을 기다리는 확인 요청이 없습니다.' : '답변을 마친 확인 요청이 없습니다.'}
+            {tab === 'pending' ? '기다리는 요청이 없어요.' : '처리한 요청이 없어요.'}
           </div>
         )}
         {rows.length > 0 && (
@@ -137,56 +137,48 @@ export function LegalListPage() {
               <table className="w-full text-left text-[13.5px]">
                 <caption className="sr-only">{tab === 'pending' ? '미처리' : '처리 완료'} 확인 요청 목록</caption>
                 <thead>
-                  <tr className="border-b border-line text-[11.5px] font-bold tracking-[0.05em] text-muted">
-                    <th scope="col" className="py-2.5 pr-3 pl-5">질문 · 확인 ID</th>
-                    <th scope="col" className="px-3 py-2.5">요청일</th>
-                    <th scope="col" className="px-3 py-2.5">질의자 · 부서</th>
-                    <th scope="col" className="px-3 py-2.5">S코드 후보</th>
-                    <th scope="col" className="px-3 py-2.5">목적 (CH)</th>
-                    <th scope="col" className="px-3 py-2.5">수신자 · 국가</th>
+                  <tr className="border-b border-line text-[11.5px] font-bold text-muted">
+                    <th scope="col" className="py-2.5 pr-3 pl-5">요청</th>
+                    <th scope="col" className="px-3 py-2.5">보낸 사람</th>
+                    <th scope="col" className="px-3 py-2.5">받는 사람</th>
+                    <th scope="col" className="px-3 py-2.5">목적 · 자료</th>
                     <th scope="col" className="px-3 py-2.5">시스템 권고</th>
-                    <th scope="col" className="py-2.5 pr-5 pl-3">법무 답변</th>
+                    <th scope="col" className="py-2.5 pr-5 pl-3">법무 판정</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {rows.map((r) => (
                     <tr key={r.request_id} onClick={() => nav(`/legal/${encodeURIComponent(r.request_id)}`)} className="cursor-pointer align-top transition-colors duration-150 hover:bg-surface-2">
-                      <td className="max-w-[20rem] py-3 pr-3 pl-5">
+                      <td className="max-w-[19rem] py-3 pr-3 pl-5">
                         <Link
                           to={`/legal/${encodeURIComponent(r.request_id)}`}
                           onClick={(e) => e.stopPropagation()}
                           className="line-clamp-2 text-[13.5px] leading-snug font-semibold text-fg hover:text-primary-ink hover:underline"
                           title={r.title}
                         >
-                          “{checkTitle(r)}”
+                          {checkTitle(r)}
                         </Link>
-                        <p className="mt-0.5 font-mono text-[11.5px] text-muted">{r.request_id}</p>
+                        <p className="mt-0.5 font-mono text-[11.5px] text-muted tabular-nums">
+                          {r.request_id} · {fmtDate(when(r))}
+                        </p>
                       </td>
-                      <td className="px-3 py-3 font-mono text-[12.5px] whitespace-nowrap text-fg-2 tabular-nums">{fmtDate(when(r))}</td>
-                      <td className="px-3 py-3">
-                        <p className="text-fg">{r.employee.name}</p>
-                        <p className="text-[11.5px] text-muted">{r.employee.department}</p>
+                      <td className="max-w-[13rem] px-3 py-3">
+                        <SenderInfo e={r.employee} />
                       </td>
-                      <td className="px-3 py-3">
-                        <span className="flex flex-wrap items-center gap-1">
-                          {r.category_choice === '모름' ? <span className="text-[12px] text-muted">사원 선택 모름</span> : <IdTag tone="primary">{r.category_choice}</IdTag>}
-                        </span>
-                        <p className="mt-0.5 text-[11.5px] text-muted">{r.file_count ? `첨부 ${r.file_count}건` : '첨부 없음 (문장만)'}</p>
+                      <td className="max-w-[15rem] px-3 py-3">
+                        <RecipientInfo r={r} />
                       </td>
                       <td className="px-3 py-3">
-                        {r.channel_code && <IdTag>{r.channel_code}</IdTag>}
-                        <p className="mt-0.5 text-[12px] text-fg-2">{r.purpose ?? '목적 미입력'}</p>
-                      </td>
-                      <td className="px-3 py-3">
-                        <p className="text-fg">{r.recipient}</p>
-                        <p className="text-[11.5px] text-muted">
-                          {countryName(r.recipient_country)} · {r.transfer_method ?? '—'}
+                        <p className="text-[12.5px] font-semibold text-fg">{r.purpose ?? '목적 미입력'}</p>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[11.5px] text-muted">
+                          {r.category_choice !== '모름' && <IdTag tone="primary">{r.category_choice}</IdTag>}
+                          {[r.transfer_method, r.file_count ? `파일 ${r.file_count}개` : '설명만'].filter(Boolean).join(' · ')}
                         </p>
                       </td>
                       <td className="px-3 py-3">
                         <RecPill rec={r.recommendation} size="xs" />
                       </td>
-                      <td className="py-3 pr-5 pl-3">{r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">답변 대기</Pill>}</td>
+                      <td className="py-3 pr-5 pl-3">{r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">판정 대기</Pill>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -198,16 +190,20 @@ export function LegalListPage() {
                   <Link to={`/legal/${encodeURIComponent(r.request_id)}`} className="block px-4 py-3.5 hover:bg-surface-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <RecPill rec={r.recommendation} size="xs" />
-                      {r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">답변 대기</Pill>}
+                      {r.verdict ? <VerdictPill verdict={r.verdict} size="xs" /> : <Pill tone="info" size="xs">판정 대기</Pill>}
                       <span className="ml-auto font-mono text-[11.5px] text-muted">{r.request_id}</span>
                     </div>
-                    <p className="mt-1.5 line-clamp-2 text-[14px] leading-snug font-semibold text-fg">“{checkTitle(r)}”</p>
-                    <p className="text-[12px] text-fg-2">
-                      {r.employee.name} · {r.employee.department}
-                    </p>
-                    <p className="text-[12px] text-muted">
-                      {r.category_choice} · {r.channel_code ?? '—'} · {r.recipient} {countryName(r.recipient_country)} · {fmtDate(when(r))}
-                    </p>
+                    <p className="mt-1.5 line-clamp-2 text-[14px] leading-snug font-semibold text-fg">{checkTitle(r)}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-muted">보낸 사람</p>
+                        <SenderInfo e={r.employee} compact />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-muted">받는 사람</p>
+                        <RecipientInfo r={r} compact />
+                      </div>
+                    </div>
                   </Link>
                 </li>
               ))}

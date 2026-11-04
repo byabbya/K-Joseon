@@ -30,7 +30,7 @@ const NAV: Record<Role, NavItem[]> = {
 /** 머리줄에 쓰는 화면 이름 */
 function pageName(p: string): string {
   if (p === '/') return '반출 검토 요청'
-  if (p.startsWith('/check')) return '사전분석 결과'
+  if (p.startsWith('/check')) return 'AI 검토 결과'
   if (p.startsWith('/history')) return '내 요청'
   if (p === '/legal' || p === '/legal/') return '대시보드'
   if (p.startsWith('/legal/requests')) return '검토 요청'
@@ -95,8 +95,8 @@ export function AppShell() {
             <LogoMark size={26} />
           </span>
           <span className="leading-tight">
-            <span className="block text-[15px] font-extrabold tracking-[0.08em] text-white">K-SHIP</span>
-            <span className="block text-[11px] font-semibold tracking-[0.2em] text-nav-muted">GUARD AX</span>
+            <span className="block text-[16px] font-extrabold tracking-[0.02em] text-white">Guardians</span>
+            <span className="block text-[11px] font-medium text-nav-muted">기술자료 반출 검토</span>
           </span>
           {USE_MOCK && <span className="ml-auto rounded-[2px] bg-cond-bg px-1 font-mono text-[11px] font-bold text-cond-fg ring-1 ring-cond-line">MOCK</span>}
         </Link>
@@ -147,7 +147,7 @@ export function AppShell() {
         {meta.isError && (
           <div role="alert" className="px-4 pt-3 lg:px-8">
             <p className="rounded-field border border-stop-line bg-stop-bg px-3 py-2 text-sm text-stop-fg">
-              기준정보를 불러오지 못했습니다. 백엔드 실행 여부를 확인하세요.
+              서버에 연결하지 못했어요. 백엔드가 켜져 있는지 확인해 주세요.
             </p>
           </div>
         )}
@@ -168,16 +168,12 @@ function TopBar({ name }: { name: string }) {
     <header className="app-topbar sticky top-0 z-40 bg-nav text-nav-fg shadow-[0_1px_0_rgb(255_255_255/0.06)]">
       <div className="flex min-h-16 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 lg:px-8">
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-[16px] font-extrabold tracking-[0.02em] text-white">K-SHIP GUARD AX</p>
-          <p className="truncate text-[11.5px] text-nav-muted">
-            Technology Transfer Compliance{name ? ` · ${name}` : ''}
-          </p>
+          <p className="truncate text-[17px] font-extrabold text-white">{name || 'Guardians'}</p>
         </div>
-        <div className="flex items-center gap-4 max-md:hidden">
-          <Stat label="기준 정보" value={<>{today()} · {meta.isError ? <span className="text-[#f0a8a8]">연결 안 됨</span> : '정상'}</>} dot={meta.isError ? 'stop' : 'go'} />
-          <span aria-hidden className="h-8 w-px bg-white/15" />
-          <Stat label="KST" value={<Clock />} />
-        </div>
+        <p className="flex items-center gap-1.5 text-[12px] text-nav-muted max-md:hidden">
+          <span aria-hidden className={cx('size-1.5 rounded-full', meta.isError ? 'bg-stop-dot' : 'bg-go-dot')} />
+          {meta.isError ? '서버 연결 안 됨' : `${today()} · 서버 연결됨`}
+        </p>
         <RoleSwitch />
         <AccountChip />
       </div>
@@ -188,27 +184,6 @@ function TopBar({ name }: { name: string }) {
 function today() {
   const d = new Date()
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-}
-
-function Stat({ label, value, dot }: { label: string; value: React.ReactNode; dot?: 'go' | 'stop' }) {
-  return (
-    <div className="flex items-center gap-2">
-      {dot && <span aria-hidden className={cx('size-1.5 rounded-full', dot === 'go' ? 'bg-go-dot' : 'bg-stop-dot')} />}
-      <div className="leading-tight">
-        <p className="text-[11px] font-semibold tracking-[0.04em] text-nav-muted">{label}</p>
-        <p className="font-mono text-[12.5px] font-bold text-white tabular-nums">{value}</p>
-      </div>
-    </div>
-  )
-}
-
-function Clock() {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(new Date()), 1000)
-    return () => window.clearInterval(t)
-  }, [])
-  return <>{now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Seoul', hour12: false })}</>
 }
 
 /** 설계 사원 / 법무 담당 두 칸 */
@@ -283,8 +258,7 @@ function AccountChip() {
         <span className="leading-tight max-sm:hidden">
           <span className="block text-[13px] font-bold text-white">{me?.name ?? '사용자 선택'}</span>
           <span className="block text-[11px] text-nav-muted">
-            {me?.department ?? ''}
-            {me ? ` · ${role === 'legal' ? '승인권자' : me.employee_id}` : ''}
+            {[me?.position, me?.department].filter(Boolean).join(' · ')}
           </span>
         </span>
         <span className="sr-only">사용자 바꾸기</span>
@@ -311,7 +285,7 @@ function AccountChip() {
                   <span className="min-w-0 flex-1">
                     <span className={cx('block text-[13px]', sel ? 'font-bold text-primary-ink' : 'text-fg')}>{p.name}</span>
                     <span className="block text-[11px] text-muted">
-                      {p.department} · <span className="font-mono">{p.employee_id}</span>
+                      {[p.position, p.department].filter(Boolean).join(' · ')} · <span className="font-mono">{p.employee_id}</span>
                     </span>
                   </span>
                   {sel && <IconCheck size={14} className="text-primary-ink" />}
