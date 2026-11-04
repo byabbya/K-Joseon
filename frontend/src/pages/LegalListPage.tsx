@@ -6,9 +6,9 @@ import { useMeta, useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
 import { Page, PageHead } from '../components/PageHead'
 import { RecipientInfo, SenderInfo, checkTitle } from '../components/check/ListBits'
-import { ErrorBox, IdTag, Pill, RecPill, Segmented, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
+import { ErrorBox, Pill, RecPill, Segmented, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconInbox, IconSort } from '../components/icons'
-import { SEVERITY, fmtDate } from '../lib/labels'
+import { SEVERITY, catShort, fmtDate } from '../lib/labels'
 
 type Tab = 'pending' | 'done'
 type Sort = '요청일' | '시스템 권고' | '부서'
@@ -158,22 +158,25 @@ export function LegalListPage() {
                         >
                           {checkTitle(r)}
                         </Link>
-                        <p className="mt-0.5 font-mono text-[11.5px] text-muted tabular-nums">
-                          {r.request_id} · {fmtDate(when(r))}
+                        <p className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-[11.5px] text-muted tabular-nums">
+                          <span>{r.request_id}</span>
+                          <span>{fmtDate(when(r))}</span>
                         </p>
-                      </td>
-                      <td className="max-w-[13rem] px-3 py-3">
-                        <SenderInfo e={r.employee} />
-                      </td>
-                      <td className="max-w-[15rem] px-3 py-3">
-                        <RecipientInfo r={r} />
                       </td>
                       <td className="px-3 py-3">
-                        <p className="text-[12.5px] font-semibold text-fg">{r.purpose ?? '목적 미입력'}</p>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[11.5px] text-muted">
-                          {r.category_choice !== '모름' && <IdTag tone="primary">{r.category_choice}</IdTag>}
-                          {[r.transfer_method, r.file_count ? `파일 ${r.file_count}개` : '설명만'].filter(Boolean).join(' · ')}
-                        </p>
+                        <div className="w-[11.5rem]">
+                          <SenderInfo e={r.employee} />
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="w-[13.5rem]">
+                          <RecipientInfo r={r} />
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="text-[12.5px] font-semibold whitespace-nowrap text-fg">{r.purpose ?? '목적 미입력'}</p>
+                        {r.category_choice !== '모름' && <p className="mt-0.5 text-[11.5px] whitespace-nowrap text-muted">{catShort(r.category_choice)}</p>}
+                        <p className="text-[11.5px] whitespace-nowrap text-muted">{[r.transfer_method, r.file_count ? `파일 ${r.file_count}개` : '설명만'].filter(Boolean).join(' · ')}</p>
                       </td>
                       <td className="px-3 py-3">
                         <RecPill rec={r.recommendation} size="xs" />

@@ -5,9 +5,9 @@ import { useRequestList } from '../api/hooks'
 import type { RequestSummary } from '../api/types'
 import { RecipientInfo, checkTitle } from '../components/check/ListBits'
 import { Page, PageHead } from '../components/PageHead'
-import { ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
+import { ErrorBox, Pill, RecPill, Spinner, VerdictPill, cx, inputCls } from '../components/ui'
 import { IconChevronRight, IconInbox, IconPlus, IconSearch } from '../components/icons'
-import { countryName, fmtDate } from '../lib/labels'
+import { catShort, countryName, fmtDate } from '../lib/labels'
 import { useUser } from '../lib/user'
 
 type Filter = '전체' | '법무 검토 중' | '판정 완료'
@@ -103,7 +103,7 @@ export function HistoryPage() {
                       {checkTitle(r)}
                     </span>
                     <span className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
-                      {r.category_choice !== '모름' && <IdTag className="!text-[11.5px] !leading-4">{r.category_choice}</IdTag>}
+                      {r.category_choice !== '모름' && <span className="whitespace-nowrap">{catShort(r.category_choice)} ·</span>}
                       {r.file_count ? `파일 ${r.file_count}개` : '설명만'}
                     </span>
                   </Cell>
@@ -130,7 +130,7 @@ export function HistoryPage() {
 function Cell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 text-[11px] font-semibold text-muted">{label}</p>
+      <p className="mb-0.5 text-[11px] font-semibold whitespace-nowrap text-muted">{label}</p>
       {children}
     </div>
   )

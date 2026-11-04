@@ -5,7 +5,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useMeta } from '../../api/hooks'
 import type { Analysis, Axis, AxisKey, ClauseRef, DecisionOut, FileResult, PrecedentCard, Recommendation, Verdict } from '../../api/types'
 import { AXIS_ORDER, resolveAxes } from '../../lib/axes'
-import { FIELD_LABEL, REC_TONE, SANCTIONED, TONE_CLS, VERDICT_TONE, W5H1, countryName, type Tone } from '../../lib/labels'
+import { FIELD_LABEL, REC_TONE, SANCTIONED, TONE_CLS, VERDICT_TONE, W5H1, countryName, catShort, noCodes, type Tone } from '../../lib/labels'
 import { Button, Collapsible, ExtLink, IdTag, Pill, RecPill, Tooltip, cx } from '../ui'
 import { IconAlert, IconArrowLeft, IconBook, IconCheckCircle, IconFileText, IconInfo, IconRefresh, IconScale } from '../icons'
 import { changedParts, isTextOnly } from './model'
@@ -114,7 +114,7 @@ function SummaryTable({ a, changed }: { a: Analysis; changed: Set<string> }) {
           {a.files.map((f) => (
             <tr key={f.asset_id} className={cx('align-top', changed.has(`file:${f.asset_id}`) && 'animate-changed')}>
               <th scope="row" className="max-w-[11rem] py-2.5 pr-2 pl-3 font-normal">
-                <span className="line-clamp-2 font-semibold break-all text-fg" title={f.filename}>
+                <span className="line-clamp-2 font-semibold text-fg [overflow-wrap:anywhere]" title={f.filename}>
                   {f.filename}
                 </span>
                 {f.contains_supplier_data !== '아니오' && <span className="mt-0.5 block text-[11px] font-semibold text-review-fg">협력사 자료 {f.contains_supplier_data}</span>}
@@ -145,7 +145,7 @@ function SummaryTable({ a, changed }: { a: Analysis; changed: Set<string> }) {
                 <span className="flex flex-col gap-1">
                   {f.rule_hits.map((h, i) => (
                     <span key={`${h.rule_id}-${i}`} className="inline-flex flex-wrap items-baseline gap-1" title={h.reason || h.name}>
-                      {cit?.audience === 'legal' ? <IdTag className="!text-[11.5px] !leading-4">{h.rule_id}</IdTag> : <span className="text-fg-2">{h.name}</span>}
+                      <span className="text-fg-2">{h.name}</span>
                       <Cite ids={cit?.forRule(h.rule_id) ?? []} />
                     </span>
                   ))}
@@ -169,7 +169,7 @@ function CandTag({ c }: { c: FileResult['model_candidates'][number] }) {
       content={
         <span className="block space-y-1">
           <b>
-            {c.code} {c.label} · 점수 {c.score.toFixed(2)} {c.confident ? '' : '(미확정)'}
+            {c.label} · 점수 {c.score.toFixed(2)} {c.confident ? '' : '(미확정)'}
           </b>
           {c.evidence.slice(0, 4).map((e, i) => (
             <span key={i} className="block opacity-85">
@@ -186,7 +186,7 @@ function CandTag({ c }: { c: FileResult['model_candidates'][number] }) {
           c.confident ? 'bg-teal-soft text-teal-ink ring-1 ring-teal-line ring-inset' : 'border border-dashed border-line-strong text-muted',
         )}
       >
-        {c.code}
+        {catShort(c.code)}
         {!c.confident && <span className="font-sans text-[11px]">미확정</span>}
       </span>
     </Tooltip>
@@ -196,7 +196,7 @@ function CandTag({ c }: { c: FileResult['model_candidates'][number] }) {
 const plainOfHit = (h: FileResult['rule_hits'][number]) => (h.plain || h.reason || h.name).trim()
 
 /** 사원 화면: 근거 데이터 문장 속 규칙 번호([R04])·경로 코드(CH-01)를 뺀다 */
-const forEmployee = (t: string) => t.replace(/\[(?:R|P)\d{1,2}[a-z]?\]\s*/g, '').replace(/CH-\d{2}\s*/g, '').trim()
+const forEmployee = noCodes
 
 /** 파일별 규칙 사유 — 사원은 쉬운 이유, 법무팀은 규칙 ID + 원래 사유 + 처리 메모 (출처 칩 포함) */
 function FileReasons({ a }: { a: Analysis }) {
@@ -220,7 +220,6 @@ function FileReasons({ a }: { a: Analysis }) {
                   const legal = cit?.audience === 'legal'
                   return (
                     <p key={`${h.rule_id}-${i}`} className={cx('text-[12.5px] leading-snug', ids.length ? 'text-fg-2' : 'text-muted')}>
-                      {legal && <IdTag className="mr-1 !text-[11.5px] !leading-4">{h.rule_id}</IdTag>}
                       {legal ? h.reason || h.name : plainOfHit(h)} {ids.length ? <Cite ids={ids} /> : legal && <span className="text-[11px]">(시스템 메모 · 연결된 출처 없음)</span>}
                     </p>
                   )
@@ -285,14 +284,14 @@ export function AxesStrip({ a, decisions }: { a: Analysis; decisions: DecisionOu
                 type="button"
                 aria-expanded={isOpen}
                 onClick={() => setOpen(isOpen ? null : key)}
-                title={ax.note || undefined}
+                title={ax.note ? noCodes(ax.note) : undefined}
                 className="flex h-full w-full flex-col items-start gap-1 rounded-field px-3 py-2.5 text-left hover:bg-surface-2"
               >
-                <span className="flex w-full items-center gap-1 text-[11px] font-bold tracking-[0.05em] text-muted">
+                <span className="flex w-full items-center gap-1 text-[11px] font-bold tracking-[0.05em] whitespace-nowrap text-muted">
                   {label}
                   {ax.note && <IconInfo size={12} className="ml-auto shrink-0 opacity-70" />}
                 </span>
-                <span className={cx('line-clamp-2 text-[13.5px] leading-snug font-semibold break-keep', pending ? 'text-fg-2' : 'text-fg')}>{ax.value}</span>
+                <span className={cx('line-clamp-2 text-[13.5px] leading-snug font-semibold break-keep', pending ? 'text-fg-2' : 'text-fg')}>{noCodes(ax.value)}</span>
                 <span className="mt-auto flex flex-wrap items-center gap-1 pt-1">
                   <Pill tone={tone} size="xs">
                     {ax.status}
@@ -359,7 +358,7 @@ function GradeBadge({ f }: { f: FileResult }) {
     <span
       title={f.info_grade_evidence ? `문서 표기: "${f.info_grade_evidence}"` : '문서에 보안등급 표기가 없거나 읽지 못함'}
       className={cx(
-        'inline-flex items-center gap-1 rounded-[4px] px-1.5 text-[11px] leading-5 font-semibold ring-1 ring-inset',
+        'inline-flex items-center gap-1 rounded-[4px] px-1.5 text-[11px] leading-5 font-semibold whitespace-nowrap ring-1 ring-inset',
         marked ? 'bg-cond-bg text-cond-fg ring-cond-line' : 'bg-surface-2 text-muted ring-line',
       )}
     >
@@ -417,7 +416,6 @@ function ScopeChecks({ a }: { a: Analysis }) {
 /* ---------------- 더 확인이 필요한 것 ---------------- */
 
 function MissingList({ a }: { a: Analysis }) {
-  const legal = useCitations()?.audience === 'legal'
   if (!a.missing.length)
     return (
       <p className="flex items-center gap-1.5 text-[13px] text-go-fg">
@@ -435,7 +433,6 @@ function MissingList({ a }: { a: Analysis }) {
             <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-cond-dot" />
             <span className="min-w-0">
               <span className="font-semibold text-fg">{FIELD_LABEL[m.field] ?? m.field}</span> — {m.question}
-              {legal && m.rule_id && <IdTag className="ml-1.5 !text-[11.5px] !leading-4">{m.rule_id}</IdTag>}
             </span>
           </li>
         ))}
@@ -492,10 +489,10 @@ export function DeltaLine({ prev, next }: { prev: Analysis; next: Analysis }) {
 function CatTag({ code, tone }: { code: string; tone: 'primary' | 'teal' }) {
   const cats = useMeta().data?.categories ?? []
   const c = cats.find((x) => x.code === code)
-  const tag = <IdTag tone={tone}>{code}</IdTag>
+  const tag = <IdTag tone={tone}>{catShort(code)}</IdTag>
   if (!c) return tag
   return (
-    <Tooltip content={<><b>{c.code} {c.label}</b><br />{c.text}</>}>
+    <Tooltip content={<><b>{c.label}</b><br />{c.text}</>}>
       <span tabIndex={0} className="rounded-[4px]">
         {tag}
       </span>
@@ -550,7 +547,7 @@ function ClauseItem({ c }: { c: ClauseRef }) {
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         {!c.why && <Cite ids={[c.clause_id]} />}
         <span className={cx('text-[13.5px] font-semibold', old ? 'text-muted line-through' : 'text-fg')}>
-          {c.law_name} {c.article_no}
+          {c.law_name} {noCodes(c.article_no)}
         </span>
         <span className={cx('text-[13px]', old ? 'text-muted' : 'text-fg-2')}>{c.title}</span>
         {old && (
@@ -568,7 +565,7 @@ function ClauseItem({ c }: { c: ClauseRef }) {
         <p className="mt-1.5 flex gap-1.5 text-[12.5px] leading-relaxed text-fg">
           <span className="shrink-0 font-semibold text-primary-ink">왜</span>
           <span className="min-w-0">
-            {legal ? c.why : forEmployee(c.why)} <Cite ids={[c.clause_id]} />
+            {forEmployee(c.why)} <Cite ids={[c.clause_id]} />
           </span>
         </p>
       )}
@@ -623,7 +620,7 @@ function PrecedentItem({ p, defaultOpen }: { p: PrecedentCard; defaultOpen: bool
       {p.similarity && (
         <p className="mt-2 rounded-[6px] bg-primary-soft px-2.5 py-1.5 text-[12.5px] text-primary-ink">
           <span className="font-bold">현재 요청과의 유사점 · </span>
-          {legal ? p.similarity : forEmployee(p.similarity)}
+          {forEmployee(p.similarity)}
         </p>
       )}
       <div className="mt-1.5">

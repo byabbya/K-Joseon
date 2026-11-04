@@ -5,7 +5,7 @@ import { useState, type ReactNode } from 'react'
 import { USE_MOCK, fileUrl } from '../../api/client'
 import { useMeta } from '../../api/hooks'
 import type { Analysis, CategoryChoice, ContractBasis, ExportClearance, FileMeta, ListInclusion, Purpose, RecipientType, RequestDetail, SCode, TransferMethod } from '../../api/types'
-import { COUNTRIES, fmtDate } from '../../lib/labels'
+import { COUNTRIES, catShort, fmtDate } from '../../lib/labels'
 import { Button, ErrorBox, FileBadge, IdTag, Pill, Segmented, Tooltip, cx, inputCls } from '../ui'
 import { Combobox } from '../Combobox'
 import { IconChevronDown, IconEye, IconPaperclip, IconPencil, IconUpload } from '../icons'
@@ -343,11 +343,11 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
             codes.length ? (
               <span className="flex flex-wrap items-center gap-1">
                 {codes.map((c) => (
-                  <Tooltip key={c} content={<><b>{c} {cats.find((x) => x.code === c)?.label}</b><br />{cats.find((x) => x.code === c)?.text}</>}>
-                    <IdTag tone={c === choice ? 'primary' : 'teal'}>{c}</IdTag>
+                  <Tooltip key={c} content={<><b>{cats.find((x) => x.code === c)?.label}</b><br />{cats.find((x) => x.code === c)?.text}</>}>
+                    <IdTag tone={c === choice ? 'primary' : 'teal'}>{catShort(c)}</IdTag>
                   </Tooltip>
                 ))}
-                <span className="truncate text-[12.5px] text-fg-2">{codes.length === 1 ? cats.find((x) => x.code === codes[0])?.label : ''}</span>
+                
               </span>
             ) : null
           }
@@ -435,7 +435,6 @@ function Understood({ d, a, onApply, busy, audience }: { d: RequestDetail; a: An
 function Item({
   label,
   value,
-  badge,
   empty = '모름',
   extracted,
   markerText = '문장에서 읽음',
@@ -460,7 +459,6 @@ function Item({
   const content = (
     <>
       <span className={cx('flex min-w-0 items-center gap-1.5 text-[14px] font-semibold', value ? (warn ? 'text-review-fg' : 'text-fg') : 'text-muted')}>
-        {badge && value && <IdTag className="!text-[11.5px]">{badge}</IdTag>}
         <span className="min-w-0 truncate">{value ?? empty}</span>
       </span>
       <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">

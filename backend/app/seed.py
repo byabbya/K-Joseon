@@ -3,13 +3,13 @@ import json
 
 from .db import Decision, Employee, Request, Session, engine, select
 
-# (사번, 이름, 부서, 역할, 직책, 이메일) — 이메일은 예시 도메인
+# (사번, 이름, 부서, 역할, 직책, 이메일) — 직책은 사원 → 매니저 → 선임매니저 → 책임매니저. 이메일은 예시 도메인
 EMPLOYEES = [
-    ("E1001", "김설계", "기본설계팀", "employee", "대리", "sg.kim@shipyard.example"),
-    ("E1002", "이상세", "상세설계팀", "employee", "과장", "ss.lee@shipyard.example"),
+    ("E1001", "김설계", "기본설계팀", "employee", "매니저", "sg.kim@shipyard.example"),
+    ("E1002", "이상세", "상세설계팀", "employee", "선임매니저", "ss.lee@shipyard.example"),
     ("E1003", "박생산", "생산설계팀", "employee", "사원", "ss.park@shipyard.example"),
-    ("L2001", "최법무", "법무팀", "legal", "차장", "bm.choi@shipyard.example"),
-    ("L2002", "정보안", "기술보호팀", "legal", "과장", "ba.jung@shipyard.example"),
+    ("L2001", "최법무", "법무팀", "legal", "책임매니저", "bm.choi@shipyard.example"),
+    ("L2002", "정보안", "기술보호팀", "legal", "선임매니저", "ba.jung@shipyard.example"),
 ]
 
 # (요청ID, 사원, 날짜, S코드, 수신자 유형, 국가, 목적, 판정, 사유)
@@ -28,10 +28,10 @@ PAST = [
 def run() -> None:
     with Session(engine) as s:
         if s.exec(select(Employee)).first():
-            # 예전 DB — 직책·이메일만 채운다
+            # 예전 DB — 직책·이메일을 위 목록에 맞춘다
             for eid, _n, _d, _r, pos, mail in EMPLOYEES:
                 e = s.get(Employee, eid)
-                if e and not e.position:
+                if e and (e.position, e.email) != (pos, mail):
                     e.position, e.email = pos, mail
                     s.add(e)
             s.commit()

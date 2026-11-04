@@ -29,9 +29,10 @@ const GROUP_ORDER = ['승인 제출', '협력·외주', '해외·이전', '기�
 
 export function usePurposeOptions(): ComboOption[] {
   const purposes = useMeta().data?.purposes ?? []
-  return purposes
-    .map((p) => ({ value: p.label as string, label: p.label as string, badge: p.channel_code, group: PURPOSE_GROUP[p.channel_code] ?? '기타' }))
-    .sort((x, y) => GROUP_ORDER.indexOf(x.group) - GROUP_ORDER.indexOf(y.group) || x.badge.localeCompare(y.badge))
+  return [...purposes]
+    .sort((x, y) => String(x.channel_code).localeCompare(String(y.channel_code)))
+    .map((p) => ({ value: p.label as string, label: p.label as string, group: PURPOSE_GROUP[p.channel_code] ?? '기타' }))
+    .sort((x, y) => GROUP_ORDER.indexOf(x.group) - GROUP_ORDER.indexOf(y.group))
 }
 
 export const COUNTRY_OPTIONS: ComboOption[] = COUNTRIES.map(([c, n]) => ({ value: c, label: n, badge: c, keywords: c.toLowerCase() }))
@@ -40,6 +41,6 @@ export function useCategoryOptions(model: Set<string>): ComboOption[] {
   const cats = useMeta().data?.categories ?? []
   return [
     { value: '모름', label: '잘 모르겠음', badge: '?', keywords: '모름 unknown', hint: '시스템 후보 사용' },
-    ...cats.map((c) => ({ value: c.code as string, label: c.label, badge: c.code as string, keywords: c.text, hint: model.has(c.code) ? '시스템 후보' : undefined })),
+    ...cats.map((c) => ({ value: c.code as string, label: c.label, keywords: c.text, hint: model.has(c.code) ? '시스템 후보' : undefined })),
   ]
 }

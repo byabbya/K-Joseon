@@ -69,7 +69,7 @@ export function IdTag({ children, className, title, tone = 'plain' }: { children
     <span
       title={title}
       className={cx(
-        'inline-flex shrink-0 items-center gap-1 rounded-[4px] px-1.5 font-mono text-[11.5px] leading-5 ring-1 ring-inset tabular-nums',
+        'inline-flex shrink-0 items-center gap-1 rounded-[4px] px-1.5 font-mono text-[11.5px] leading-5 whitespace-nowrap ring-1 ring-inset tabular-nums',
         tone === 'plain' && 'bg-surface-2 text-fg-2 ring-line',
         tone === 'primary' && 'bg-primary-soft text-primary-ink ring-primary-line',
         tone === 'teal' && 'bg-teal-soft text-teal-ink ring-teal-line',

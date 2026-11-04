@@ -279,6 +279,9 @@
     background-repeat: no-repeat;
     color: var(--fg);
     font-family: var(--font-sans);
+    /* 한글은 단어 중간에서 끊지 않고, 너무 긴 낱말만 넘칠 때 끊는다 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
     font-size: 14px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -416,4 +419,18 @@
   }
   .animate-fade-in, .animate-changed, .animate-pop-in, .animate-rise-in, .animate-swap-in { animation: none !important; }
   .shimmer-text { animation: none !important; color: #555 !important; background: none !important; }
+}
+
+/* 줄바꿈 — 번호·날짜·이메일(고정폭 글꼴)과 표 머리는 한 줄로, 제목은 줄 길이를 고르게 */
+@layer base {
+  .font-mono,
+  .tabular-nums,
+  th {
+    white-space: nowrap;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
 }

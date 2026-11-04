@@ -1,6 +1,6 @@
 // 진행 단계.
 // 사원: 질의 → 시스템 답변 → 법무팀 확인 중 → 법무팀 답변 (질문하고 답을 받는 흐름)
-// 법무팀: 정의서 상태 이름 그대로 — 접수 → 분석 완료 → 법무 검토 중 → 판정 완료 (→ 재신청)
+// 법무팀: 정의서 상태 이름 그대로 — 접수 → 분석 완료 → 법무 검토 중 → 판정 완료 (재신청은 판정 완료로 보인다)
 import type { Status, Verdict } from '../../api/types'
 import { EMP_STEPS, EMP_STEP_INDEX, STATUS_FLOW } from '../../lib/labels'
 import { cx } from '../ui'
@@ -8,16 +8,13 @@ import { IconCheck } from '../icons'
 
 export function StatusStepper({ status, verdict, compact, audience = 'employee' }: { status: Status | null; verdict?: Verdict | null; compact?: boolean; audience?: 'employee' | 'legal' }) {
   if (audience === 'employee') return <EmployeeSteps status={status} verdict={verdict} compact={compact} />
-  // 재신청은 판정 완료 뒤 단계
-  const idx = status === null ? -1 : status === '재신청' ? 4 : STATUS_FLOW.indexOf(status as (typeof STATUS_FLOW)[number])
-  const steps = [...STATUS_FLOW, '재신청'] as const
+  const idx = status === null ? -1 : status === '재신청' ? 3 : STATUS_FLOW.indexOf(status as (typeof STATUS_FLOW)[number])
   return (
     <Steps compact={compact}>
-      {steps.map((s, i) => {
-        const done = i < idx || (i === idx && (s === '판정 완료' || s === '재신청'))
-        const optional = s === '재신청' && idx < 4
+      {STATUS_FLOW.map((s, i) => {
+        const done = i < idx || (i === idx && s === '판정 완료')
         const label = s === '판정 완료' && verdict && idx >= 3 ? `판정 완료 · ${verdict}` : s
-        return <Step key={s} i={i} idx={idx} done={done} current={i === idx} optional={optional} pulse={i === idx && s === '법무 검토 중'} label={label} />
+        return <Step key={s} i={i} idx={idx} done={done} current={i === idx} pulse={i === idx && s === '법무 검토 중'} label={label} />
       })}
     </Steps>
   )

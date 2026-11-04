@@ -382,7 +382,7 @@ export interface EmployeeOut {
   name: string
   department: string
   role: 'employee' | 'legal'
-  /** 직책 (예: 대리). 예전 백엔드에는 없을 수 있다 */
+  /** 직책 (사원·매니저·선임매니저·책임매니저). 예전 백엔드에는 없을 수 있다 */
   position?: string
   email?: string
 }

@@ -13,22 +13,10 @@ import { useEnums, usePurposeOptions } from '../components/check/options'
 import { FlowSteps, Page, PageHead, SectionCard } from '../components/PageHead'
 import { Button, ErrorBox, RecPill, Tooltip, cx, inputCls } from '../components/ui'
 import { IconArrowLeft, IconCheck, IconUpload } from '../components/icons'
-import { COUNTRIES, fmtDate } from '../lib/labels'
+import { CAT_SHORT, COUNTRIES, fmtDate } from '../lib/labels'
 import { useUser } from '../lib/user'
 
 const PLACEHOLDER = '예) 프랑스 선급 사전검토용으로 LNG 화물창 단열 시스템 상세 설계도와 방벽 사양서를 이메일로 공유합니다.'
-
-/** 분류 카드 아래 한 줄 설명 */
-const CAT_SUB: Record<string, string> = {
-  S01: '선박·해양시스템 설계',
-  S02: 'LNG·수소·암모니아 저장',
-  S03: '생산·건조 공법',
-  S04: '추진·동력 핵심 부품',
-  S05: '항해·제어 시스템',
-  S06: '설계·생산 지원 SW',
-  S07: 'P&ID·기자재 설계',
-  S08: '연료 공급·재액화',
-}
 
 /** 예시 — 누르면 상황 설명에 들어간다 */
 const EXAMPLES: { label: string; text: string }[] = [
@@ -367,18 +355,16 @@ function CategorySection({ value, onChange, p, disabled }: { value: CategoryChoi
           const sel = value === c.code
           const h = hint.get(c.code)
           return (
-            <Tooltip key={c.code} block wide content={<><b>{c.code} {c.label}</b><br />{c.text}</>}>
+            <Tooltip key={c.code} block wide content={<><b>{c.label}</b><br />{c.text}</>}>
               <button type="button" role="radio" aria-checked={sel} disabled={disabled} onClick={() => onChange(sel ? '모름' : c.code)} className={tile(sel)}>
-                <span className="font-mono text-[11px] font-bold text-muted">{c.code}</span>
                 <span className={cx('text-[13px] leading-snug font-bold', sel ? 'text-primary-ink' : 'text-fg')}>{c.label}</span>
-                <span className="text-[11.5px] text-muted">{CAT_SUB[c.code] ?? ''}</span>
+                <span className="text-[11.5px] text-muted">{CAT_SHORT[c.code] ?? ''}</span>
                 {h && <span className={cx('absolute top-2.5 right-2.5 rounded-[2px] px-1 text-[11px] font-bold ring-1 ring-inset', h === '약한 단서' ? 'bg-surface text-muted ring-line' : 'bg-teal-soft text-teal-ink ring-teal-line')}>{h}</span>}
               </button>
             </Tooltip>
           )
         })}
         <button type="button" role="radio" aria-checked={value === '모름'} disabled={disabled} onClick={() => onChange('모름')} className={tile(value === '모름')}>
-          <span className="font-mono text-[11px] font-bold text-muted">AI</span>
           <span className={cx('text-[13px] font-bold', value === '모름' ? 'text-primary-ink' : 'text-fg')}>잘 모르겠음</span>
           <span className="text-[11.5px] text-muted">AI가 찾아 드려요</span>
         </button>

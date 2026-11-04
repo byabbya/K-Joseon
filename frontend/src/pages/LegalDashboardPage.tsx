@@ -5,9 +5,9 @@ import { useRequestList } from '../api/hooks'
 import type { Recommendation, RequestSummary } from '../api/types'
 import { RecipientInfo, SenderInfo, checkTitle } from '../components/check/ListBits'
 import { Page, PageHead, Panel } from '../components/PageHead'
-import { ErrorBox, IdTag, Pill, RecPill, Spinner, VerdictPill, cx } from '../components/ui'
+import { ErrorBox, Pill, RecPill, Spinner, VerdictPill, cx } from '../components/ui'
 import { IconArrowLeft } from '../components/icons'
-import { REC_TONE, SEVERITY, TONE_CLS, fmtDate } from '../lib/labels'
+import { REC_TONE, SEVERITY, TONE_CLS, catShort, fmtDate } from '../lib/labels'
 
 const RECS: Recommendation[] = ['진행 가능', '조건부 진행', '법무팀 검토 필요', '반출 불가']
 const when = (r: RequestSummary) => r.submitted_at ?? r.created_at
@@ -148,7 +148,7 @@ export function LegalDashboardPage() {
                       <td className="max-w-[18rem] px-3 py-3">
                         <p className="truncate font-bold text-fg">{checkTitle(r)}</p>
                         <p className="flex items-center gap-1 text-[11px] text-muted">
-                          {r.category_choice !== '모름' && <IdTag className="!text-[11.5px] !leading-4">{r.category_choice}</IdTag>}
+                          {r.category_choice !== '모름' && <span className="whitespace-nowrap">{catShort(r.category_choice)} ·</span>}
                           {r.purpose ?? ''}
                         </p>
                       </td>

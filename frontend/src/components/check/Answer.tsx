@@ -5,9 +5,9 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useMeta } from '../../api/hooks'
 import type { Analysis, FileResult, RequestDetail, RequestInput, RuleHit } from '../../api/types'
-import { REC_HEADLINE, REC_TONE, SEVERITY, TONE_CLS } from '../../lib/labels'
+import { REC_HEADLINE, REC_TONE, SEVERITY, TONE_CLS, catShort, noCodes } from '../../lib/labels'
 import { useUser } from '../../lib/user'
-import { Button, ExtLink, IdTag, RecPill, cx } from '../ui'
+import { Button, ExtLink, RecPill, cx } from '../ui'
 import { IconAlert, IconArrowLeft, IconCheck, IconChevronDown, IconFileDrawing, IconLayers, IconPaperclip, IconScale } from '../icons'
 import { Cite, CitationProvider, CitedText, OPEN_REPORT_EVENT, type Citations } from './citations'
 import { Panel } from '../PageHead'
@@ -82,7 +82,6 @@ function HeroCard({ d, a, audience, nextStep, cit }: SystemAnswerProps & { cit: 
   const files = realFiles(a)
   const perFile = files.length > 1 && new Set(files.map((f) => f.recommendation)).size > 1
   const why = whyLines(a, cit).slice(0, 2)
-  const rules = [...new Set(a.files.flatMap((f) => f.rule_hits).filter((h) => h.outcome).sort(ruleOrder).map((h) => h.rule_id))]
   const sent = d.summary.status !== '분석 완료' && d.summary.status !== '접수'
   const cta = d.decisions.length ? '법무팀 답변 보기' : (rec === '법무팀 검토 필요' || rec === '반출 불가') && !sent && nextStep ? '법무팀에 확인 요청' : '할 일 보기'
   const go = () => {
@@ -122,16 +121,6 @@ function HeroCard({ d, a, audience, nextStep, cit }: SystemAnswerProps & { cit: 
           )}
         </div>
         <div className="mt-5 flex flex-wrap items-end gap-3">
-          {rules.length > 0 && (
-            <p className="flex flex-wrap items-center gap-1.5 text-[12px] text-white/75">
-              적용 규칙
-              {rules.map((r) => (
-                <span key={r} className="rounded-[4px] bg-white/12 px-1.5 font-mono text-[11.5px] leading-5 text-white">
-                  {r}
-                </span>
-              ))}
-            </p>
-          )}
           {d.decisions.length > 0 && <p className="text-[12.5px] font-semibold text-white/85">법무팀 답변이 이 권고보다 우선해요.</p>}
           <button type="button" onClick={go} className="press ml-auto inline-flex items-center gap-2 rounded-pill bg-white py-1.5 pr-1.5 pl-4 text-[13px] font-bold text-primary hover:bg-primary-soft">
             {cta}
@@ -154,8 +143,8 @@ function StatTiles({ a }: { a: Analysis }) {
   const precs = a.precedents.length
   const missing = a.recommendation === '반출 불가' ? 0 : a.missing.length
   const tiles: { label: string; value: string; unit?: string; sub: string; warn?: boolean; href?: string; icon: ReactNode }[] = [
-    { label: '관련 기술', value: codes.join(' · ') || '없음', sub: codes.length ? (cats.find((c) => c.code === codes[0])?.label ?? '') : '핵심기술 단서 없음', icon: <IconLayers size={15} /> },
-    { label: '적용 근거', value: String(laws + precs), unit: '건', sub: `법령·지침 ${laws} · 판례·의결 ${precs}`, href: '#evidence', icon: <IconScale size={15} /> },
+    { label: '관련 기술', value: codes.length ? codes.map(catShort).join(' · ') : '없음', sub: codes.length ? (cats.find((c) => c.code === codes[0])?.label ?? '') : '핵심기술 단서 없음', icon: <IconLayers size={15} /> },
+    { label: '적용 근거', value: String(laws + precs), unit: '건', sub: `법령 ${laws} · 판례 ${precs}`, href: '#evidence', icon: <IconScale size={15} /> },
     { label: '확인할 것', value: String(missing), unit: '개', sub: missing ? '답하면 바로 다시 분석' : '빠진 정보 없음', warn: missing > 0, href: missing ? '#missing' : undefined, icon: <IconAlert size={15} /> },
   ]
   return (
@@ -169,7 +158,13 @@ function StatTiles({ a }: { a: Analysis }) {
               </span>
               {t.label}
             </span>
-            <span className={cx('mt-2 block truncate text-[1.6rem] leading-none font-extrabold tabular-nums', t.warn ? 'text-wine-ink' : 'text-fg')}>
+            <span
+              className={cx(
+                'mt-2 block font-extrabold',
+                /^\d+$/.test(t.value) ? 'truncate text-[1.6rem] leading-none tabular-nums' : 'line-clamp-2 min-h-[1.6rem] text-[1.05rem] leading-snug',
+                t.warn ? 'text-wine-ink' : 'text-fg',
+              )}
+            >
               {t.value}
               {t.unit && <span className="ml-1 text-[13px] font-bold text-fg-2">{t.unit}</span>}
             </span>
@@ -247,7 +242,7 @@ function CandidatesPanel({ a }: { a: Analysis }) {
   return (
     <Panel title="관련 기술 후보" right={<span className="rounded-[2px] bg-surface-2 px-1.5 text-[11.5px] font-bold text-muted ring-1 ring-line ring-inset">내 선택 ≠ 시스템 후보</span>} bodyClass="px-5 py-4">
       <p className="text-[12.5px] text-fg-2">
-        내가 고른 기술 · <b className="text-fg">{choice === '모름' ? '잘 모르겠음' : `${choice} ${cats.find((c) => c.code === choice)?.label ?? ''}`}</b>
+        내가 고른 기술 · <b className="text-fg">{choice === '모름' ? '잘 모르겠음' : (cats.find((c) => c.code === choice)?.label ?? catShort(choice))}</b>
         {a.category_mismatch && <span className="ml-2 text-review-fg">시스템 후보와 달라요 — 둘 다 법무팀에 보여요</span>}
       </p>
       {list.length ? (
@@ -255,7 +250,6 @@ function CandidatesPanel({ a }: { a: Analysis }) {
           {list.map((c) => (
             <li key={c.code} className="border-r border-b border-line px-4 py-3">
               <p className="flex items-center gap-2">
-                <IdTag tone={c.confident ? 'teal' : 'plain'}>{c.code}</IdTag>
                 <span className="min-w-0 truncate text-[13px] font-bold text-fg">{c.label || cats.find((x) => x.code === c.code)?.label}</span>
                 {!c.confident && <span className="ml-auto shrink-0 text-[11.5px] font-semibold text-muted">약한 단서</span>}
               </p>
@@ -323,7 +317,7 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
                     {c.no}
                   </span>
                   <span className="min-w-0 flex-1 leading-tight">
-                    <span className="block text-[13px] font-extrabold text-fg">{c.title}</span>
+                    <span className="block text-[13px] font-extrabold whitespace-nowrap text-fg">{c.title}</span>
                     <span className="block truncate text-[11.5px] text-muted">{c.sub}</span>
                   </span>
                   <span className="rounded-pill bg-surface px-2 font-mono text-[11.5px] font-bold text-fg-2 ring-1 ring-line">{c.clauses.length + c.cases.length}</span>
@@ -338,7 +332,7 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
                         <span className="ml-auto font-mono text-[11px] text-muted">시행 {x.effective_date}</span>
                       </p>
                       <p className={cx('mt-1.5 text-[13px] leading-snug font-bold text-fg', x.status === '구버전' && 'line-through')}>
-                        {x.layer === 'notice' ? '국가핵심기술 고시' : x.law_name} {x.article_no}
+                        {x.layer === 'notice' ? '국가핵심기술 고시' : x.law_name} {noCodes(x.article_no)}
                       </p>
                       {x.title && <p className="mt-0.5 text-[12px] leading-snug text-fg-2">{x.title}</p>}
                       {x.why && (
@@ -372,7 +366,7 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
                           {x.w5h1.how_judged}
                         </p>
                       )}
-                      {x.similarity && <p className="mt-1.5 line-clamp-2 text-[11.5px] text-muted">비슷한 점 · {x.similarity}</p>}
+                      {x.similarity && <p className="mt-1.5 line-clamp-2 text-[11.5px] text-muted">비슷한 점 · {noCodes(x.similarity)}</p>}
                       {x.source_url && (
                         <p className="mt-2 text-right text-[11.5px]">
                           <ExtLink href={x.source_url}>원문</ExtLink>
@@ -390,8 +384,8 @@ function EvidencePanel({ a, prev, d, audience }: { a: Analysis; prev: Analysis |
       )}
       <div className="border-t border-line">
         <button type="button" aria-expanded={open} aria-controls="report-body" onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-5 py-3 text-left text-[13px] font-bold text-primary-ink hover:bg-surface-2">
-          {open ? '근거 보고서 접기' : '근거 보고서 전체 보기'}
-          <span className="font-normal text-muted">요약 · 판단 기준 4가지 · 파일별 결과 · 출처</span>
+          <span className="whitespace-nowrap">{open ? '근거 보고서 접기' : '근거 보고서 전체 보기'}</span>
+          <span className="min-w-0 truncate font-normal text-muted">요약 · 판단 기준 4가지 · 파일별 결과 · 출처</span>
           <IconChevronDown size={16} className={cx('ml-auto shrink-0 text-muted transition-transform duration-200', open && 'rotate-180')} />
         </button>
         <div id="report-body" className="collapse-grid" data-open={open} inert={!open}>
@@ -478,11 +472,6 @@ function WhyItem({ w, legal, ok, compact, dark }: { w: Why; legal: boolean; ok?:
         {w.text} {w.cites.length > 0 && <Cite ids={legal ? w.cites : w.cites.slice(0, 3)} />}
         {legal && (w.rules.length > 0 || w.formal.length > 0) && (
           <span className="mt-0.5 block text-[12.5px] leading-relaxed text-muted">
-            {w.rules.map((r) => (
-              <IdTag key={r} className="mr-1 !text-[11.5px] !leading-4">
-                {r}
-              </IdTag>
-            ))}
             {w.formal.join(' ')}
           </span>
         )}
@@ -510,7 +499,6 @@ function FileList({ files, cit, legal }: { files: FileResult[]; cit: Citations; 
               </p>
               <p className="mt-1 max-w-[65ch] text-[14px] leading-6 text-fg-2">
                 {top ? plainOf(top) : '걸리는 점이 없어요.'} {top && <Cite ids={legal ? cit.forRule(top.rule_id) : cit.forRule(top.rule_id).slice(0, 3)} />}
-                {legal && top && <IdTag className="ml-1 !text-[11.5px] !leading-4">{top.rule_id}</IdTag>}
               </p>
             </li>
           )

@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { cleanDetail } from '../lib/display'
 import { api } from './client'
 import type { AdjustmentInput, DecisionInput, RequestDetail, RequestInput, RequestListParams } from './types'
 
@@ -38,6 +39,8 @@ export function useRequestDetail(id: string | undefined, opts: { pollWhileReview
   return useQuery({
     queryKey: qk.detail(id ?? ''),
     queryFn: () => api.getRequest(id!),
+    // 화면에 보이는 문장 속 시스템 번호(S02 · CH-01)를 쉬운 이름으로
+    select: cleanDetail,
     enabled: !!id,
     // 로컬 LLM 이 답변 문장을 다듬는 중이거나 도면 분석이 끝나지 않았으면 2.5초마다,
     // 법무 검토 중이면 5초마다 다시 불러온다

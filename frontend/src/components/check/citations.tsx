@@ -6,7 +6,7 @@
 // 답변 화면의 결론·해야 할 일도 같은 번호를 쓴다 (같은 CitationProvider 안).
 import { Fragment, createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { Analysis, ClauseRef, PrecedentCard, Recommendation, RuleHit, SCode } from '../../api/types'
-import { FIELD_LABEL, REC_ANSWER, SEVERITY } from '../../lib/labels'
+import { FIELD_LABEL, REC_ANSWER, SEVERITY, noCodes } from '../../lib/labels'
 import { ExtLink, Pill, Tooltip, cx } from '../ui'
 
 export type Source = { kind: 'clause'; id: string; c: ClauseRef } | { kind: 'precedent'; id: string; p: PrecedentCard }
@@ -70,12 +70,12 @@ export function buildCitations(a: Analysis, catLabel: (c: string) => string, aud
   abstract.push({ text: `전체 권고는 '${rec}'입니다 — ${REC_ANSWER[rec]}.`, cites: recCites, memo: !recCites.length })
   for (const h of ranked.slice(0, 2)) {
     const cites = forRule(h.rule_id)
-    abstract.push({ text: (h.plain || h.reason || h.name).trim(), formal: `${h.rule_id} ${h.name}: ${h.reason || h.name}`, cites, memo: !cites.length })
+    abstract.push({ text: (h.plain || h.reason || h.name).trim(), formal: `${h.name}: ${h.reason || h.name}`, cites, memo: !cites.length })
   }
   const codes = [...new Set<string>([...a.model_categories, ...(a.employee_category_choice !== '모름' ? [a.employee_category_choice] : [])])].sort() as SCode[]
   if (codes.length) {
     const cites = uniq(codes.flatMap(forCode))
-    abstract.push({ text: `관련 기술 후보는 ${codes.map((c) => `${c} ${catLabel(c)}`).join(', ')}입니다 (관련 후보이며 해당 확정이 아님).`, cites, memo: !cites.length })
+    abstract.push({ text: `관련 기술 후보는 ${codes.map((c) => catLabel(c)).join(', ')}입니다 (관련 후보이며 해당 확정이 아님).`, cites, memo: !cites.length })
   } else {
     abstract.push({ text: '8개 핵심기술 관련 후보를 찾지 못했습니다.', cites: [], memo: true })
   }
@@ -123,13 +123,13 @@ export function sourceType(s: Source): string {
 }
 
 export function sourceTitle(s: Source): string {
-  return s.kind === 'clause' ? `${s.c.law_name} ${s.c.article_no}`.replace(/\s+/g, ' ') : `${s.p.court} ${s.p.case_no}`
+  return s.kind === 'clause' ? noCodes(`${s.c.law_name} ${s.c.article_no}`).replace(/\s+/g, ' ') : `${s.p.court} ${s.p.case_no}`
 }
 
 function shortTitle(s: Source): string {
   if (s.kind === 'precedent') return `${s.p.court} ${s.p.case_no}`
   const law = s.c.layer === 'notice' ? '국가핵심기술 고시' : s.c.law_name
-  return `${law} ${s.c.article_no}`
+  return noCodes(`${law} ${s.c.article_no}`)
 }
 
 function clip(t: string, n = 220) {

@@ -174,7 +174,7 @@ function Understood({ p, fields, setFields, disabled }: { p: PreviewOut; fields:
           disabled={disabled}
           text={
             codes.length
-              ? codes.map((c) => `${c} ${cats.find((x) => x.code === c)?.label ?? ''}`).join(', ')
+              ? codes.map((c) => cats.find((x) => x.code === c)?.label ?? c).join(', ')
               : p.tech_candidates.length
                 ? `${p.tech_candidates.map((c) => c.code).join(', ')} (단서 약함 · 미확정)`
                 : '기술 단서 없음'

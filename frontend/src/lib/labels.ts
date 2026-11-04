@@ -155,3 +155,25 @@ export function fmtSize(n?: number): string {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
+
+/** 기술 분류 쉬운 이름 — 화면에는 S01 같은 번호 대신 이것을 쓴다 */
+export const CAT_SHORT: Record<string, string> = {
+  S01: '선박·해양시스템 설계',
+  S02: 'LNG·수소·암모니아 저장',
+  S03: '생산·건조 공법',
+  S04: '추진·동력 핵심 부품',
+  S05: '항해·제어 시스템',
+  S06: '설계·생산 지원 SW',
+  S07: 'P&ID·기자재 설계',
+  S08: '연료 공급·재액화',
+}
+export const catShort = (code: string | null | undefined) => (!code || code === '모름' ? '잘 모르겠음' : (CAT_SHORT[code] ?? code))
+
+/** 화면 문장에서 시스템 번호를 뺀다 — [R04]·[P1] 꼬리표, CH-01 경로 번호, S02 기술 번호 */
+export const noCodes = (t: string) =>
+  t
+    .replace(/\[(?:R|P)\d{1,2}[a-z]?\]\s*/g, '')
+    .replace(/\(\s*CH-\d{2}\s*\)/g, '')
+    .replace(/CH-\d{2}\s*/g, '')
+    .replace(/\bS0\d\b,?\s*/g, '')
+    .trim()

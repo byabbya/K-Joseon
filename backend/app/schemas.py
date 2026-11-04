@@ -188,7 +188,7 @@ class EmployeeOut(BaseModel):
     employee_id: str
     name: str
     department: str
-    position: str = ""                                 # 직책 (예: 대리)
+    position: str = ""                                 # 직책 (사원·매니저·선임매니저·책임매니저)
     email: str = ""
     role: Literal["employee", "legal"]
 
